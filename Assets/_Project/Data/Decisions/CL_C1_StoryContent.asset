@@ -1,0 +1,241 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c0a1fed2000000000000000000000060, type: 3}
+  m_Name: "CL_C1_StoryContent"
+  m_EditorClassIdentifier: 
+  data:
+    encounters:
+    - id: "c1_hall_first_light"
+      npcName: "Mara"
+      graphId: "g_c1_hall_first_light"
+      startNodeId: "start"
+    decisions:
+    - id: "dec_c1_hall_first_light"
+      promptText: "The Fracture light hovers over the hall. It is waiting. How do you answer it?"
+      timeLimitSeconds: 0
+      timeoutOptionIndex: 0
+      codexEntryId: "c1_echo_first_light"
+      options:
+      - id: "ember_reach"
+        text: "Take it. Reach the light before the Choir does."
+        afterText: "Ari's palms open. The light pours in hot and red - and every wall in the hall suddenly looks like a door you could break."
+        conditions: []
+        effects:
+        - type: 0
+          key: "c1_hall_drive"
+          value: "ember"
+          amount: 0
+        - type: 2
+          key: "ember"
+          value: ""
+          amount: 10
+        - type: 4
+          key: "mara"
+          value: ""
+          amount: 5
+        - type: 7
+          key: "hall"
+          value: "ember"
+          amount: 0
+        - type: 8
+          key: "ember_marker"
+          value: "1"
+          amount: 0
+        - type: 9
+          key: "c1_echo_ember"
+          value: ""
+          amount: 0
+        - type: 10
+          key: ""
+          value: ""
+          amount: 15
+      - id: "tide_clear"
+        text: "Get the others out. The light can wait."
+        afterText: "You pull the twins clear, and the light settles where they were - soft. Like it is learning to watch you breathe."
+        conditions: []
+        effects:
+        - type: 0
+          key: "c1_hall_drive"
+          value: "tide"
+          amount: 0
+        - type: 2
+          key: "tide"
+          value: ""
+          amount: 10
+        - type: 4
+          key: "mara"
+          value: ""
+          amount: 10
+        - type: 7
+          key: "hall"
+          value: "tide"
+          amount: 0
+        - type: 8
+          key: "tide_marker"
+          value: "1"
+          amount: 0
+        - type: 8
+          key: "tide_bystanders"
+          value: "1"
+          amount: 0
+        - type: 9
+          key: "c1_echo_tide"
+          value: ""
+          amount: 0
+        - type: 10
+          key: ""
+          value: ""
+          amount: 20
+      - id: "stone_still"
+        text: "Stay still. Watch. Don't let the Choir see you move."
+        afterText: "You go quiet as the wall. The light circles once - and passes. It remembers patience."
+        conditions: []
+        effects:
+        - type: 0
+          key: "c1_hall_drive"
+          value: "stone"
+          amount: 0
+        - type: 2
+          key: "stone"
+          value: ""
+          amount: 10
+        - type: 4
+          key: "mara"
+          value: ""
+          amount: 3
+        - type: 7
+          key: "hall"
+          value: "stone"
+          amount: 0
+        - type: 8
+          key: "stone_marker"
+          value: "1"
+          amount: 0
+        - type: 9
+          key: "c1_echo_stone"
+          value: ""
+          amount: 0
+        - type: 10
+          key: ""
+          value: ""
+          amount: 15
+    graphs:
+    - id: "g_c1_hall_first_light"
+      nodes:
+      - id: "start"
+        speaker: ""
+        text: ""
+        nextId: ""
+        branchPrefix: "opener"
+        decisionId: ""
+        conditions: []
+        end: 0
+      - id: "opener_fresh"
+        speaker: "Mara"
+        text: "The light came through the ceiling - did you see it? Everyone's running. The Choir guards are sealing the doors."
+        nextId: "opener_fresh2"
+        branchPrefix: ""
+        decisionId: ""
+        conditions:
+        - type: 7
+          key: "dec_c1_hall_first_light"
+          value: ""
+          amount: 0
+        end: 0
+      - id: "opener_fresh2"
+        speaker: "Mara"
+        text: "But it looked at you, Ari. I saw it. That's not nothing."
+        nextId: "opener_fresh3"
+        branchPrefix: ""
+        decisionId: ""
+        conditions: []
+        end: 0
+      - id: "opener_fresh3"
+        speaker: "Mara"
+        text: "We can't both stand here. You decide - I'll follow you."
+        nextId: "decide"
+        branchPrefix: ""
+        decisionId: ""
+        conditions: []
+        end: 0
+      - id: "opener_again"
+        speaker: "Mara"
+        text: "You're still standing. Still the one the light watches. What now?"
+        nextId: "decide"
+        branchPrefix: ""
+        decisionId: ""
+        conditions:
+        - type: 6
+          key: "dec_c1_hall_first_light"
+          value: ""
+          amount: 0
+        end: 0
+      - id: "decide"
+        speaker: ""
+        text: ""
+        nextId: ""
+        branchPrefix: "after"
+        decisionId: "dec_c1_hall_first_light"
+        conditions: []
+        end: 0
+      - id: "after_ember"
+        speaker: "Mara"
+        text: "When you moved, the columns burned red. The Choir saw. They're coming for you now, Ari."
+        nextId: "end"
+        branchPrefix: ""
+        decisionId: ""
+        conditions:
+        - type: 0
+          key: "c1_hall_drive"
+          value: "ember"
+          amount: 0
+        end: 0
+      - id: "after_tide"
+        speaker: "Mara"
+        text: "You pulled the twins clear - they'll make it. I've got your back. We move together from here."
+        nextId: "end"
+        branchPrefix: ""
+        decisionId: ""
+        conditions:
+        - type: 0
+          key: "c1_hall_drive"
+          value: "tide"
+          amount: 0
+        end: 0
+      - id: "after_stone"
+        speaker: "Mara"
+        text: "The guards walked right past us. You're scaring me a little, Ari. That's the third time."
+        nextId: "end"
+        branchPrefix: ""
+        decisionId: ""
+        conditions:
+        - type: 0
+          key: "c1_hall_drive"
+          value: "stone"
+          amount: 0
+        end: 0
+      - id: "after"
+        speaker: "Mara"
+        text: "...Okay. That's what we do, then."
+        nextId: "end"
+        branchPrefix: ""
+        decisionId: ""
+        conditions: []
+        end: 0
+      - id: "end"
+        speaker: ""
+        text: ""
+        nextId: ""
+        branchPrefix: ""
+        decisionId: ""
+        conditions: []
+        end: 1

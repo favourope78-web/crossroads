@@ -1,7 +1,14 @@
 {
     "name": "Crossroads.UI",
     "rootNamespace": "Crossroads.UI",
-    "references": ["Crossroads.Core", "Crossroads.Input", "Crossroads.Gameplay", "Crossroads.Narrative"],
+    "references": [
+        "Crossroads.Core",
+        "Crossroads.Input",
+        "Crossroads.Gameplay",
+        "Crossroads.Narrative",
+        "UnityEngine.UI",
+        "Unity.InputSystem"
+    ],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,

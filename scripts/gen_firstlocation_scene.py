@@ -1,107 +1,49 @@
 """Generates Assets/Scenes/Prototype/FirstLocation.unity (+ .meta) from
-scripts/hall_layout.json, plus kit material .mat files and all .meta files
-for the Fracture Hall prototype. Deterministic GUID scheme c0a1fed2...."""
-import json, os, re
+scripts/hall_layout.json, the Fracture Hall kit + the Phase-DECISION story additions
+(Mara encounter NPC, consequence marker objects, story bootstrappers).
+Also writes kit/material metas and (write-if-missing) script metas.
+Deterministic GUID scheme c0a1fed2... - run gen_story_content.py first (registry).
+"""
+import json, os, hashlib
 
-ROOT = "/home/user"
-LAY = json.load(open(f"{ROOT}/scripts/hall_layout.json"))
-ENV = f"{ROOT}/Assets/Game/Environment"
-SCN = f"{ROOT}/Assets/Scenes/Prototype"
+HERE = os.path.dirname(os.path.abspath(__file__))
+ROOT = os.path.dirname(HERE)
+LAY = json.load(open(os.path.join(HERE, "hall_layout.json")))
+ENV = os.path.join(ROOT, "Assets/Game/Environment")
+SCN = os.path.join(ROOT, "Assets/Scenes/Prototype")
 os.makedirs(SCN, exist_ok=True)
 
-G = {}
+# ---------------------------------------------------------------- guid registry
+REG_PATH = os.path.join(HERE, "hall_guids.json")
+REG = json.load(open(REG_PATH)) if os.path.exists(REG_PATH) else {}
+
+def g32(n):
+    return ("c0a1fed2" + ("%024x" % n))[:32]
+
+def ensure(key, value):
+    if key in REG and REG[key] != value:
+        raise SystemExit("GUID conflict for %s: %s vs %s" % (key, REG[key], value))
+    REG[key] = value
+
 kit = ["SM_FloorTile","SM_Column","SM_LightBeam","SM_WallPanel","SM_GlazingPanel","SM_BalconyBlock",
        "SM_Railing","SM_Truss","SM_DoorFrame","SM_Door","SM_OrbCore","SM_OrbRing","SM_HoloPanel"]
-for i, k in enumerate(kit, 1): G[k] = f"c0a1fed2{'0'*19}{i:03x}"[:32] if False else f"c0a1fed2{'0'*20}{i:04x}"[:32]
-# ensure exactly 32 hex
-def g32(tag, i): return ("c0a1fed2" + f"{i:024x}")[:32]
-for i, k in enumerate(kit, 1): G[k] = g32("kit", i)
+for i, k in enumerate(kit, 1): ensure(k, g32(i))
 mats = ["M_Hall_Concrete","M_Hall_Metal","M_Hall_LightColumn","M_Hall_Glazing","M_Hall_OrbGold","M_Hall_Holo"]
-for i, m in enumerate(mats, 40): G[m] = g32("mat", i)
-scripts = {"ThirdPersonCameraController.cs": 80, "Interactable.cs": 81, "DoorInteractable.cs": 82,
-           "InteractInput.cs": 83, "FirstLocationBootstrap.cs": 84}
-for s, i in scripts.items(): G[s] = g32("scr", i)
-G["FirstLocation.unity"] = g32("scn", 90)
+for i, m in enumerate(mats, 40): ensure(m, g32(i))
+ensure("ThirdPersonCameraController.cs", g32(80))
+ensure("Interactable.cs", g32(81))
+ensure("DoorInteractable.cs", g32(82))
+ensure("FirstLocationBootstrap.cs", g32(84))
+ensure("FirstLocation.unity", g32(90))
+# story additions must already exist in the registry (see gen_story_content.py); sanity check:
+for need in ["PlayerInteraction.cs","StoryEncounterNPC.cs","StoryWorldState.cs","StoryModeBootstrap.cs",
+             "GameUIBootstrap.cs","ScriptableObjectAssets.cs","M_Seq_Ember","M_Seq_Tide","M_Seq_Stone",
+             "M_Npc_Mara","M_Npc_Civilian","CL_C1_StoryContent.asset"]:
+    if need not in REG:
+        raise SystemExit("registry missing %s - run scripts/gen_story_content.py first" % need)
+json.dump(REG, open(REG_PATH, "w"), indent=1)
 
 URP = "9335e4a172916944ba2695448482493a"
-def mat_yaml(name, color, smooth, emiss=None, transparent=False):
-    kw = []
-    if emiss: kw.append("_EMISSION")
-    if transparent: kw.append("_SURFACE_TYPE_TRANSPARENT")
-    ec = emiss or (0,0,0)
-    return f"""%YAML 1.1
-%TAG !u! tag:unity3d.com,2011:
---- !u!21 &2100000
-Material:
-  serializedVersion: 8
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {{fileID: 0}}
-  m_PrefabInstance: {{fileID: 0}}
-  m_PrefabAsset: {{fileID: 0}}
-  m_Name: {name}
-  m_Shader: {{fileID: 4800000, guid: {URP}, type: 3}}
-  m_Parent: {{fileID: 0}}
-  m_ModifiedSerializedProperties: 0
-  m_ValidKeywords: [{', '.join(kw)}]
-  m_InvalidKeywords: []
-  m_LightmapFlags: 4
-  m_EnableInstancingVariants: 1
-  m_DoubleSidedGI: 0
-  m_CustomRenderQueue: {'3000' if transparent else '-1'}
-  stringTagMap: {{}}
-  disabledShaderPasses: []
-  m_LockedProperties: 
-  m_SavedProperties:
-    serializedVersion: 3
-    m_TexEnvs:
-    - _BaseMap:
-        m_Texture: {{fileID: 0}}
-        m_Scale: {{x: 1, y: 1}}
-        m_Offset: {{x: 0, y: 0}}
-    - _BumpMap:
-        m_Texture: {{fileID: 0}}
-        m_Scale: {{x: 1, y: 1}}
-        m_Offset: {{x: 0, y: 0}}
-    m_Ints: []
-    m_Floats:
-    - _AlphaClip: 0
-    - _Blend: {'1' if transparent else '0'}
-    - _Cull: 2
-    - _Cutoff: 0.5
-    - _DstBlend: {'10' if transparent else '0'}
-    - _EnvironmentReflections: 1
-    - _GlossinessSource: 0
-    - _Metallic: 0
-    - _OcclusionStrength: 1
-    - _QueueOffset: 0
-    - _ReceiveShadows: 1
-    - _Smoothness: {smooth}
-    - _SpecularHighlights: 1
-    - _SrcBlend: {'5' if transparent else '1'}
-    - _Surface: {'1' if transparent else '0'}
-    - _WorkflowMode: 1
-    - _ZWrite: {'0' if transparent else '1'}
-    m_Colors:
-    - _BaseColor: {{r: {color[0]}, g: {color[1]}, b: {color[2]}, a: 1}}
-    - _EmissionColor: {{r: {ec[0]}, g: {ec[1]}, b: {ec[2]}, a: 1}}
-    - _SpecColor: {{r: 0.2, g: 0.2, b: 0.2, a: 1}}
-  m_BuildTextureStacks: []
-"""
-MATDEFS = {
- "M_Hall_Concrete":  ((0.42,0.42,0.45), 0.25, None, False),
- "M_Hall_Metal":     ((0.18,0.19,0.22), 0.45, None, False),
- "M_Hall_LightColumn":((0.40,0.85,0.91), 0.5, (0.40,0.85,0.91), False),
- "M_Hall_Glazing":   ((0.72,0.42,0.40), 0.6, (0.55,0.28,0.26), False),
- "M_Hall_OrbGold":   ((0.91,0.72,0.29), 0.7, (0.60,0.42,0.12), False),
- "M_Hall_Holo":      ((0.40,0.85,0.91), 0.5, (0.30,0.70,0.80), True),
-}
-SLOT2MAT = {"Concrete":"M_Hall_Concrete","Metal":"M_Hall_Metal","LightColumn":"M_Hall_LightColumn",
-            "Glazing":"M_Hall_Glazing","OrbGold":"M_Hall_OrbGold","Holo":"M_Hall_Holo"}
-for m,(c,s,e,t) in MATDEFS.items():
-    open(f"{ENV}/Materials/{m}.mat".replace("/Materials/", "/Materials/"), "w") if False else None
-os.makedirs(f"{ENV}/Materials", exist_ok=True)
-for m,(c,s,e,t) in MATDEFS.items():
-    open(f"{ENV}/Materials/{m}.mat","w").write(mat_yaml(m,c,s,e,t))
 
 NATIVE = """fileFormatVersion: 2
 guid: {g}
@@ -124,123 +66,38 @@ MonoImporter:
   assetBundleName: 
   assetBundleVariant: 
 """
-MODEL = """fileFormatVersion: 2
+
+def write_meta_if_missing(path, template, g):
+    meta = path + ".meta"
+    if not os.path.exists(meta):
+        open(meta, "w").write(template.format(g=g))
+
+KIT_DIR = os.path.join(ENV, "Kit")
+for k in kit:
+    write_meta_if_missing(os.path.join(KIT_DIR, k + ".fbx"), NATIVE, REG[k])
+MAT_DIR = os.path.join(ENV, "Materials")
+for m in mats + ["M_Seq_Ember", "M_Seq_Tide", "M_Seq_Stone", "M_Npc_Mara", "M_Npc_Civilian"]:
+    write_meta_if_missing(os.path.join(MAT_DIR, m + ".mat"), NATIVE, REG[m])
+write_meta_if_missing(os.path.join(ROOT, "Assets/Game/Scripts/ThirdPersonCameraController.cs"), MONO, REG["ThirdPersonCameraController.cs"])
+write_meta_if_missing(os.path.join(ROOT, "Assets/Game/Scripts/FirstLocationBootstrap.cs"), MONO, REG["FirstLocationBootstrap.cs"])
+write_meta_if_missing(os.path.join(ROOT, "Assets/_Project/Scripts/Gameplay/Interaction/Interactable.cs"), MONO, REG["Interactable.cs"])
+write_meta_if_missing(os.path.join(ROOT, "Assets/_Project/Scripts/Gameplay/Interaction/DoorInteractable.cs"), MONO, REG["DoorInteractable.cs"])
+for d in ["Assets/Game", "Assets/Game/Environment", "Assets/Game/Environment/Kit", "Assets/Game/Environment/Materials",
+          "Assets/Game/Scripts", "Assets/Scenes", "Assets/Scenes/Prototype"]:
+    meta = os.path.join(ROOT, d + ".meta")
+    if not os.path.exists(meta):
+        open(meta, "w").write("""fileFormatVersion: 2
 guid: {g}
-ModelImporter:
-  serializedVersion: 22200
-  internalIDToNameTable: []
+folderAsset: yes
+DefaultImporter:
   externalObjects: {{}}
-  materials:
-    materialImportMode: 0
-    materialName: 0
-    materialSearch: 1
-    materialLocation: 1
-  animations:
-    legacyGenerateClassPlugin: 0
-    legacyComputeAllNormalsFromSmoothingGroupsWhenMeshHasBlendShapes: 0
-    bakeSimulation: 0
-    resampleCurves: 1
-    optimizeGameObjects: 0
-    removeConstantScaleCurves: 0
-    motionNodeName: 
-    rigImportErrors: 
-    rigImportWarnings: 
-    animationImportErrors: 
-    animationImportWarnings: 
-    animationRetargetingWarnings: 
-    animationDoRetargetingWarnings: 0
-    importAnimatedCustomProperties: 0
-    importConstraints: 0
-    animationCompression: 1
-    animationRotationError: 0.5
-    animationPositionError: 0.5
-    animationScaleError: 0.5
-    animationWrapMode: 0
-    extraExposedTransformPaths: []
-    extraUserProperties: []
-    clipAnimations: []
-    isReadable: 0
-  meshes:
-    lODScreenPercentages: []
-    globalScale: 1
-    meshCompression: 0
-    addColliders: 0
-    useSRGBMaterialColor: 1
-    sortHierarchyByName: 1
-    importPhysicalCameras: 1
-    importVisibility: 0
-    importBlendShapes: 0
-    importCameras: 0
-    importLights: 0
-    nodeNameCollisionStrategy: 1
-    fileIdsGeneration: 2
-    swapUVChannels: 0
-    generateSecondaryUV: 0
-    useFileUnits: 1
-    keepQuads: 0
-    weldVertices: 1
-    bakeAxisConversion: 0
-    preserveHierarchy: 0
-    skinWeightsMode: 0
-    maxBonesPerVertex: 4
-    minBoneWeight: 0.001
-    optimizeBones: 1
-    meshOptimizationFlags: -1
-    indexFormat: 0
-    secondaryUVAngleDistortion: 8
-    secondaryUVAreaDistortion: 15.000001
-    secondaryUVHardAngle: 88
-    secondaryUVMarginMethod: 1
-    secondaryUVMinLightmapResolution: 40
-    secondaryUVMinObjectScale: 1
-    secondaryUVPackMargin: 4
-    useFileScale: 1
-    strictVertexDataChecks: 0
-  tangentSpace:
-    normalSmoothAngle: 60
-    normalImportMode: 0
-    tangentImportMode: 3
-    normalCalculationMode: 4
-    legacyComputeAllNormalsFromSmoothingGroupsWhenMeshHasBlendShapes: 0
-    normalSmoothingSource: 0
-  referencedClips: []
-  importAnimation: 0
-  humanDescription:
-    serializedVersion: 3
-    human: []
-    skeleton: []
-    armTwist: 0.5
-    foreArmTwist: 0.5
-    upperLegTwist: 0.5
-    legTwist: 0.5
-    armStretch: 0.05
-    legStretch: 0.05
-    feetSpacing: 0
-    globalScale: 1
-    rootMotionBoneName: 
-    hasTranslationDoF: 0
-    hasExtraRoot: 0
-    skeletonHasParents: 1
-  lastHumanDescriptionAvatarSource: {{instanceID: 0}}
-  autoGenerateAvatarMappingIfUnspecified: 1
-  animationType: 0
-  humanoidOversampling: 1
-  avatarSetup: 0
-  addHumanoidMeta: 0
-  additionalBone: 0
   userData: 
   assetBundleName: 
   assetBundleVariant: 
-"""
-for k in kit:
-    open(f"{ENV}/Kit/{k}.fbx.meta","w").write(MODEL.format(g=G[k]))
-for m in mats:
-    open(f"{ENV}/Materials/{m}.mat.meta","w").write(NATIVE.format(g=G[m]))
-for s in scripts:
-    open(f"{ROOT}/Assets/Game/Scripts/{s}.meta","w").write(MONO.format(g=G[s]))
+""".format(g=hashlib.md5(("folder:" + d).encode()).hexdigest()))
 
-# ---------------- scene ----------------
-COLLIDERS = {  # piece -> (type, size, center)
+# ---------------------------------------------------------------- scene emitters
+COLLIDERS = {
  "SM_FloorTile": ("box",(10,0.12,10),(0,0,0)),
  "SM_Column": ("box",(1.15,9.0,1.15),(0,4.5,0)),
  "SM_WallPanel": ("box",(10,6,0.55),(0,3,0)),
@@ -250,19 +107,20 @@ COLLIDERS = {  # piece -> (type, size, center)
  "SM_Door": ("box",(3.6,4.0,0.26),(0,2.0,0)),
 }
 DYNAMIC = {"SM_Door","SM_OrbCore","SM_OrbRing","SM_HoloPanel"}
-out = []
-out.append("%YAML 1.1")
-out.append("%TAG !u! tag:unity3d.com,2011:")
+
+out = ["%YAML 1.1", "%TAG !u! tag:unity3d.com,2011:"]
 fid = [1000]
+blocks = []
+root_gids = []
+
 def nid():
     fid[0] += 2
     return fid[0]
-def go(name, static=True):
-    g, t, tr = nid(), nid(), nid()
-    return g, t, tr
-blocks = []
-def add_block(txt): blocks.append(txt)
-# settings
+
+def add_block(txt):
+    blocks.append(txt)
+
+# settings (unchanged from the original prototype scene)
 add_block("""--- !u!29 &1
 OcclusionCullingSettings:
   m_ObjectHideFlags: 0
@@ -331,6 +189,7 @@ LightmapSettings:
     m_LightmapsBakeMode: 1
     m_TextureCompression: 1
     m_FinalGather: 0
+    m_FinalGatherFiltering: 1
     m_FinalGatherRayCount: 256
     m_ReflectionCompression: 2
     m_MixedBakeMode: 2
@@ -373,7 +232,7 @@ NavMeshSettings:
     agentSlope: 45
     agentClimb: 0.4
     ledgeDropHeight: 0
-    maxJumpAcrossHeight: 0
+    maxJumpAcrossDistance: 0
     minRegionArea: 2
     manualCellSize: 0
     cellSize: 0.16666667
@@ -386,63 +245,91 @@ NavMeshSettings:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}""")
 
-def emit_gameobject(name, comps, static):
-    g = fid[0]+1
+def emit_gameobject(name, comps, is_active=1):
+    g = fid[0] + 1
     ids = {}
     comp_lines = []
     for kind in comps:
         fid[0] += 2
         ids[kind] = fid[0]
-        comp_lines.append(f"  - component: {{fileID: {ids[kind]}}}")
-    add_block(f"""--- !u!1 &{g}
+        comp_lines.append("  - component: {fileID: %d}" % ids[kind])
+    add_block("""--- !u!1 &%d
 GameObject:
   m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {{fileID: 0}}
-  m_PrefabInstance: {{fileID: 0}}
-  m_PrefabAsset: {{fileID: 0}}
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-{chr(10).join(comp_lines)}
+%s
   m_Layer: 0
-  m_Name: {name}
-  m_Tag: Untagged""")
+  m_Name: %s
+  m_Tag: Untagged
+  m_IsActive: %d""" % (g, "\n".join(comp_lines), name, is_active))
     return g, ids
 
-def emit_transform(tid, gid, pos, rot_euler, scale, father=0):
-    add_block(f"""--- !u!4 &{tid}
+def euler_to_quat(euler_xyz):
+    """Unity Quaternion.Euler(x, y, z) == qy * qx * qz (Hamilton product), computed here
+    so placement yaw/pitch actually lands in the scene (latent rot bug in v1 fixed)."""
+    import math
+    rx, ry, rz = math.radians(euler_xyz[0]), math.radians(euler_xyz[1]), math.radians(euler_xyz[2])
+    sx, cx = math.sin(rx / 2), math.cos(rx / 2)
+    sy, cy = math.sin(ry / 2), math.cos(ry / 2)
+    # qy (0, sy, 0, cy) * qx (sx, 0, 0, cx) * qz (0, 0, sz, cz)
+    # qy*qx:
+    px, py, pz, pw = cy * sx, sy * cx, -sy * sx, cy * cx
+    sz, cz = math.sin(rz / 2), math.cos(rz / 2)
+    # (px,py,pz,pw) * (0,0,sz,cz):
+    x = pw * 0 + px * cz + py * sz - pz * 0
+    y = pw * 0 - px * sz + py * cz + pz * 0
+    z = pw * sz + px * 0 - py * 0 + pz * cz
+    w = pw * cz - px * 0 - py * 0 - pz * sz
+    return x, y, z, w
+
+def emit_transform(tid, gid, pos, rot_euler, scale, father=0, children=None):
+    ch = ("\n".join("  - {fileID: %d}" % c for c in children)) if children else ""
+    qx, qy, qz, qw = euler_to_quat(rot_euler)
+    add_block("""--- !u!4 &%d
 Transform:
   m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {{fileID: 0}}
-  m_PrefabInstance: {{fileID: 0}}
-  m_PrefabAsset: {{fileID: 0}}
-  m_GameObject: {{fileID: {gid}}}
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: %d}
   serializedVersion: 2
-  m_LocalRotation: {{x: 0, y: 0, z: 0, w: 1}}
-  m_LocalPosition: {{x: {pos[0]}, y: {pos[1]}, z: {pos[2]}}}
-  m_LocalScale: {{x: {scale[0]}, y: {scale[1]}, z: {scale[2]}}}
+  m_LocalRotation: {x: %.7f, y: %.7f, z: %.7f, w: %.7f}
+  m_LocalPosition: {x: %s, y: %s, z: %s}
+  m_LocalScale: {x: %s, y: %s, z: %s}
   m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {{fileID: {father}}}
-  m_LocalEulerAnglesHint: {{x: {rot_euler[0]}, y: {rot_euler[1]}, z: {rot_euler[2]}}}""")
+  m_Children:
+%s
+  m_Father: {fileID: %d}
+  m_LocalEulerAnglesHint: {x: %s, y: %s, z: %s}""" % (
+        tid, gid, qx, qy, qz, qw, pos[0], pos[1], pos[2], scale[0], scale[1], scale[2],
+        ch if ch else "  []", father, rot_euler[0], rot_euler[1], rot_euler[2]))
 
-def emit_meshfilter(mid, gid, meshguid):
-    add_block(f"""--- !u!33 &{mid}
+def emit_meshfilter(mid, gid, meshguid, builtin_fileid=None):
+    if builtin_fileid is not None:
+        m = "{fileID: %d, guid: 0000000000000000e000000000000000, type: 0}" % builtin_fileid
+    else:
+        m = "{fileID: 4300000, guid: %s, type: 3}" % meshguid
+    add_block("""--- !u!33 &%d
 MeshFilter:
   m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {{fileID: 0}}
-  m_PrefabInstance: {{fileID: 0}}
-  m_PrefabAsset: {{fileID: 0}}
-  m_GameObject: {{fileID: {gid}}}
-  m_Mesh: {{fileID: 4300000, guid: {meshguid}, type: 3}}""")
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: %d}
+  m_Mesh: %s""" % (mid, gid, m))
 
 def emit_renderer(rid, gid, matguid):
-    add_block(f"""--- !u!23 &{rid}
+    add_block("""--- !u!23 &%d
 MeshRenderer:
   m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {{fileID: 0}}
-  m_PrefabInstance: {{fileID: 0}}
-  m_PrefabAsset: {{fileID: 0}}
-  m_GameObject: {{fileID: {gid}}}
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: %d}
   m_Enabled: 1
   m_CastShadows: 0
   m_ReceiveShadows: 1
@@ -456,13 +343,13 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {{fileID: 2100000, guid: {matguid}, type: 2}}
+  - {fileID: 2100000, guid: %s, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
-  m_StaticBatchRoot: {{fileID: 0}}
-  m_ProbeAnchor: {{fileID: 0}}
-  m_LightProbeVolumeOverride: {{fileID: 0}}
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
   m_ScaleInLightmap: 1
   m_ReceiveGI: 1
   m_PreserveUVs: 0
@@ -473,59 +360,59 @@ MeshRenderer:
   m_MinimumChartSize: 4
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
-  m_LightmapParameters: {{fileID: 0}}
+  m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
-  m_AdditionalVertexStreams: {{fileID: 0}}""")
+  m_AdditionalVertexStreams: {fileID: 0}""" % (rid, gid, matguid))
 
 def emit_boxcollider(cid, gid, size, center):
-    add_block(f"""--- !u!65 &{cid}
+    add_block("""--- !u!65 &%d
 BoxCollider:
   m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {{fileID: 0}}
-  m_PrefabInstance: {{fileID: 0}}
-  m_PrefabAsset: {{fileID: 0}}
-  m_GameObject: {{fileID: {gid}}}
-  m_Material: {{fileID: 0}}
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: %d}
+  m_Material: {fileID: 0}
   m_IncludeGestures: 0
   m_IsTrigger: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {{x: {size[0]}, y: {size[1]}, z: {size[2]}}}
-  m_Center: {{x: {center[0]}, y: {center[1]}, z: {center[2]}}}""")
+  m_Size: {x: %s, y: %s, z: %s}
+  m_Center: {x: %s, y: %s, z: %s}""" % (cid, gid, size[0], size[1], size[2], center[0], center[1], center[2]))
 
-def emit_spherecollider(cid, gid, radius, center=(0,0,0)):
-    add_block(f"""--- !u!135 &{cid}
-SphereCollider:
+def emit_capsulecollider(cid, gid, radius, height, center):
+    add_block("""--- !u!136 &%d
+CapsuleCollider:
   m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {{fileID: 0}}
-  m_PrefabInstance: {{fileID: 0}}
-  m_PrefabAsset: {{fileID: 0}}
-  m_GameObject: {{fileID: {gid}}}
-  m_Material: {{fileID: 0}}
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: %d}
+  m_Material: {fileID: 0}
   m_IsTrigger: 0
   m_Enabled: 1
-  serializedVersion: 3
-  m_Radius: {radius}
-  m_Center: {{x: {center[0]}, y: {center[1]}, z: {center[2]}}}""")
+  m_Radius: %s
+  m_Height: %s
+  m_Direction: 1
+  m_Center: {x: %s, y: %s, z: %s}""" % (cid, gid, radius, height, center[0], center[1], center[2]))
 
-def emit_monobehaviour(bid, gid, scriptguid):
-    add_block(f"""--- !u!114 &{bid}
+def emit_monobehaviour(bid, gid, scriptguid, fields=""):
+    add_block("""--- !u!114 &%d
 MonoBehaviour:
   m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {{fileID: 0}}
-  m_PrefabInstance: {{fileID: 0}}
-  m_PrefabAsset: {{fileID: 0}}
-  m_GameObject: {{fileID: {gid}}}
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: %d}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {{fileID: 11500000, guid: {scriptguid}, type: 3}}
+  m_Script: {fileID: 11500000, guid: %s, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: """)
+  m_EditorClassIdentifier: %s""" % (bid, gid, scriptguid, ("\n" + fields) if fields else ""))
 
-# --- pieces ---
-import math
+# --- kit pieces (unchanged layout) ---
 for idx, e in enumerate(LAY["pieces"]):
     piece = e["piece"]
     pos, yaw, scale = e["pos"], e["yaw"], e["scale"]
@@ -533,37 +420,40 @@ for idx, e in enumerate(LAY["pieces"]):
     if piece in COLLIDERS: comps.append("collider")
     if e["interact"] == "Door": comps.append("door")
     if e["interact"] == "Inspect": comps.append("interact")
-    gid, ids = emit_gameobject(f"{piece}_{idx:03d}", comps, piece not in DYNAMIC)
+    gid, ids = emit_gameobject("%s_%03d" % (piece, idx), comps)
     emit_transform(ids["transform"], gid, pos, (0, yaw, 0), scale)
-    emit_meshfilter(ids["meshfilter"], gid, G[piece])
+    emit_meshfilter(ids["meshfilter"], gid, REG[piece])
     slot = {"SM_FloorTile":"Concrete","SM_Column":"Metal","SM_LightBeam":"LightColumn",
             "SM_WallPanel":"Concrete","SM_GlazingPanel":"Glazing","SM_BalconyBlock":"Concrete",
             "SM_Railing":"Metal","SM_Truss":"Metal","SM_DoorFrame":"Metal","SM_Door":"Metal",
             "SM_OrbCore":"OrbGold","SM_OrbRing":"OrbGold","SM_HoloPanel":"Holo"}[piece]
-    emit_renderer(ids["renderer"], gid, G[SLOT2MAT[slot]])
+    emit_renderer(ids["renderer"], gid, REG[{"Concrete":"M_Hall_Concrete","Metal":"M_Hall_Metal",
+        "LightColumn":"M_Hall_LightColumn","Glazing":"M_Hall_Glazing","OrbGold":"M_Hall_OrbGold",
+        "Holo":"M_Hall_Holo"}[slot]])
     if "collider" in ids:
         c = COLLIDERS[piece]
         emit_boxcollider(ids["collider"], gid, c[1], c[2])
     if "door" in ids:
-        emit_monobehaviour(ids["door"], gid, G["DoorInteractable.cs"])
+        emit_monobehaviour(ids["door"], gid, REG["DoorInteractable.cs"])
     if "interact" in ids:
-        emit_monobehaviour(ids["interact"], gid, G["Interactable.cs"])
+        emit_monobehaviour(ids["interact"], gid, REG["Interactable.cs"])
+    root_gids.append(gid)
 
 # --- directional light ---
-gid, ids = emit_gameobject("Directional Light", ["transform","light"], True)
+gid, ids = emit_gameobject("Directional Light", ["transform","light"])
 emit_transform(ids["transform"], gid, (0,12,0), (55,-30,0), (1,1,1))
-add_block(f"""--- !u!108 &{ids['light']}
+add_block("""--- !u!108 &%d
 Light:
   m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {{fileID: 0}}
-  m_PrefabInstance: {{fileID: 0}}
-  m_PrefabAsset: {{fileID: 0}}
-  m_GameObject: {{fileID: {gid}}}
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: %d}
   m_Enabled: 1
   serializedVersion: 10
   m_Type: 1
   m_Shape: 0
-  m_Color: {{r: 1, g: 0.93, b: 0.85, a: 1}}
+  m_Color: {r: 1, g: 0.93, b: 0.85, a: 1}
   m_Intensity: 1.1
   m_Range: 10
   m_SpotAngle: 30
@@ -595,9 +485,9 @@ Light:
       e32: 0
       e33: 1
     m_UseCullingMatrixOverride: 0
-  m_Cookie: {{fileID: 0}}
+  m_Cookie: {fileID: 0}
   m_DrawHalo: 0
-  m_Flare: {{fileID: 0}}
+  m_Flare: {fileID: 0}
   m_RenderMode: 0
   m_CullingMask:
     serializedVersion: 2
@@ -605,30 +495,31 @@ Light:
   m_RenderingLayerMask: 1
   m_Lightmapping: 4
   m_LightShadowCasterMode: 0
-  m_AreaSize: {{x: 1, y: 1}}
+  m_AreaSize: {x: 1, y: 1}
   m_BounceIntensity: 1
   m_ColorTemperature: 6570
   m_UseColorTemperature: 0
-  m_BoundingSphereOverride: {{x: 0, y: 0, z: 0, w: 0}}
+  m_BoundingSphereOverride: {x: 0, y: 0, z: 0, w: 0}
   m_UseBoundingSphereOverride: 0
   m_UseViewFrustumForShadowCasterCull: 1
   m_ShadowRadius: 0
-  m_ShadowAngle: 0""")
+  m_ShadowAngle: 0""" % (ids['light'], gid))
+root_gids.append(gid)
 
 # --- main camera + follow ---
-gid, ids = emit_gameobject("Main Camera", ["transform","camera","listener","follow"], True)
+gid, ids = emit_gameobject("Main Camera", ["transform","camera","listener","follow"])
 emit_transform(ids["transform"], gid, (0,2.6,-20.5), (12,0,0), (1,1,1))
-add_block(f"""--- !u!20 &{ids['camera']}
+add_block("""--- !u!20 &%d
 Camera:
   m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {{fileID: 0}}
-  m_PrefabInstance: {{fileID: 0}}
-  m_PrefabAsset: {{fileID: 0}}
-  m_GameObject: {{fileID: {gid}}}
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: %d}
   m_Enabled: 1
   serializedVersion: 2
   m_ClearFlags: 2
-  m_BackGroundColor: {{r: 0.30, g: 0.20, b: 0.19, a: 1}}
+  m_BackGroundColor: {r: 0.30, g: 0.20, b: 0.19, a: 1}
   m_projectionMatrixMode: 1
   m_GateFitMode: 2
   m_FOVAxisMode: 0
@@ -638,11 +529,11 @@ Camera:
   m_FocusDistance: 10
   m_FocalLength: 50
   m_BladeCount: 5
-  m_Curvature: {{x: 2, y: 11}}
+  m_Curvature: {x: 2, y: 11}
   m_BarrelClipping: 0.25
   m_Anamorphism: 0
-  m_SensorSize: {{x: 36, y: 24}}
-  m_LensShift: {{x: 0, y: 0}}
+  m_SensorSize: {x: 36, y: 24}
+  m_LensShift: {x: 0, y: 0}
   m_NormalizedViewPortRect:
     serializedVersion: 2
     x: 0
@@ -659,7 +550,7 @@ Camera:
     serializedVersion: 2
     m_Bits: 4294967295
   m_RenderingPath: -1
-  m_TargetTexture: {{fileID: 0}}
+  m_TargetTexture: {fileID: 0}
   m_TargetDisplay: 0
   m_TargetEye: 3
   m_HDR: 0
@@ -668,48 +559,102 @@ Camera:
   m_ForceIntoRT: 0
   m_OcclusionCulling: 1
   m_StereoConvergence: 10
-  m_StereoSeparation: 0.022""")
-add_block(f"""--- !u!81 &{ids['listener']}
+  m_StereoSeparation: 0.022""" % (ids['camera'], gid))
+add_block("""--- !u!81 &%d
 AudioListener:
   m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {{fileID: 0}}
-  m_PrefabInstance: {{fileID: 0}}
-  m_PrefabAsset: {{fileID: 0}}
-  m_GameObject: {{fileID: {gid}}}
-  m_Enabled: 1""")
-emit_monobehaviour(ids["follow"], gid, G["ThirdPersonCameraController.cs"])
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: %d}
+  m_Enabled: 1""" % (ids['listener'], gid))
+emit_monobehaviour(ids["follow"], gid, REG["ThirdPersonCameraController.cs"])
+root_gids.append(gid)
 
-# --- bootstrap ---
-gid, ids = emit_gameobject("FirstLocationBootstrap", ["transform","bootstrap"], True)
+# --- editor bootstrap (spawns Ari in the editor) ---
+gid, ids = emit_gameobject("FirstLocationBootstrap", ["transform","bootstrap"])
 emit_transform(ids["transform"], gid, tuple(LAY["spawn"]), (0,0,0), (1,1,1))
-emit_monobehaviour(ids["bootstrap"], gid, G["FirstLocationBootstrap.cs"])
+emit_monobehaviour(ids["bootstrap"], gid, REG["FirstLocationBootstrap.cs"])
+root_gids.append(gid)
+
+# ================================================================
+# DECISION-SYSTEM scene additions (data-driven first encounter)
+# ================================================================
+CUBE, CAPSULE, SPHERE = 10202, 10208, 10207  # built-in primitive mesh fileIDs
+
+def emit_char_root(root_name, comp_kinds, pos, rot_euler, is_active, primitives):
+    """Root GO (+ optional extra component slots) with primitive visual children.
+    primitives: list of (child_name, material_registry_key, builtin_mesh_id, local_pos, local_scale)"""
+    gid, ids = emit_gameobject(root_name, ["transform"] + comp_kinds, is_active=is_active)
+    root_gids.append(gid)
+    child_tids = []
+    for (cname, matkey, meshid, lpos, lscale) in primitives:
+        cgid, cids = emit_gameobject(cname, ["transform", "meshfilter", "renderer"])
+        emit_transform(cids["transform"], cgid, tuple(lpos), (0, 0, 0), tuple(lscale), father=ids["transform"])
+        emit_meshfilter(cids["meshfilter"], cgid, None, builtin_fileid=meshid)
+        emit_renderer(cids["renderer"], cgid, REG[matkey])
+        child_tids.append(cids["transform"])
+    emit_transform(ids["transform"], gid, tuple(pos), tuple(rot_euler), (1, 1, 1), children=child_tids)
+    return gid, ids
+
+# ---- Mara NPC: placeholder mannequin (primitive body + head; placeholder art per design) ----
+mara_gid, mara_ids = emit_char_root("Mara_NPC", ["collider", "npc"], (6.5, 0, -8), (0, 180, 0), 1, [
+    ("Body", "M_Npc_Mara", CAPSULE, (0, 0.78, 0), (0.55, 0.72, 0.55)),
+    ("Head", "M_Npc_Mara", SPHERE, (0, 1.62, 0), (0.34, 0.34, 0.34)),
+])
+emit_capsulecollider(mara_ids["collider"], mara_gid, 0.35, 1.7, (0, 0.85, 0))
+emit_monobehaviour(mara_ids["npc"], mara_gid, REG["StoryEncounterNPC.cs"],
+    "  encounterId: c1_hall_first_light\n  npcDisplayName: Mara\n  promptLabel: Talk to Mara\n  interactRadius: 3.2\n  priority: 20")
+
+# ---- consequence markers (start inactive; one is activated by the chosen path) ----
+def emit_marker(go_name, matkey, pos):
+    return emit_char_root(go_name, [], pos, (0, 0, 0), 0, [
+        ("Beam", matkey, CUBE, (0, 1.05, 0), (0.22, 2.0, 0.22)),
+        ("Base", "M_Hall_Metal", CUBE, (0, 0.07, 0), (0.72, 0.14, 0.72)),
+    ])
+
+m_ember, _ = emit_marker("Seq_Ember_Marker", "M_Seq_Ember", (3.2, 0, -3.2))
+m_tide, _  = emit_marker("Seq_Tide_Marker", "M_Seq_Tide", (-3.2, 0, -3.2))
+m_stone, _ = emit_marker("Seq_Stone_Marker", "M_Seq_Stone", (0, 0, 3.2))
+
+# ---- tide bystanders (the twins; exist only on the Tide path) ----
+by_gid, by_ids = emit_char_root("Seq_Tide_Bystanders", [], (14.5, 0, 0), (0, -90, 0), 0, [
+    ("Civilian_1", "M_Npc_Civilian", CAPSULE, (0, 0.78, 0), (0.5, 0.66, 0.5)),
+    ("Civilian_1_Head", "M_Npc_Civilian", SPHERE, (0, 1.5, 0), (0.30, 0.30, 0.30)),
+    ("Civilian_2", "M_Npc_Civilian", CAPSULE, (1.1, 0.78, 0), (0.5, 0.62, 0.5)),
+    ("Civilian_2_Head", "M_Npc_Civilian", SPHERE, (1.1, 1.44, 0), (0.28, 0.28, 0.28)),
+])
+
+# ---- story bootstrappers (services + UI) ----
+gid, ids = emit_gameobject("StoryModeBootstrap", ["transform", "story"])
+emit_transform(ids["transform"], gid, (0, 0, 0), (0, 0, 0), (1, 1, 1))
+emit_monobehaviour(ids["story"], gid, REG["StoryModeBootstrap.cs"],
+    "  contentLibrary: {fileID: 11400000, guid: %s, type: 2}\n  saveSlot: 0\n  sceneKey: FirstLocation\n  checkpointId: hall_spawn\n  devClearSaveOnStart: 0" % REG["CL_C1_StoryContent.asset"])
+root_gids.append(gid)
+
+gid, ids = emit_gameobject("GameUIBootstrap", ["transform", "ui"])
+emit_transform(ids["transform"], gid, (0, 0, 0), (0, 0, 0), (1, 1, 1))
+emit_monobehaviour(ids["ui"], gid, REG["GameUIBootstrap.cs"])
+root_gids.append(gid)
+
+# ---- world-state applier: replays persisted consequences on every load ----
+gid, ids = emit_gameobject("StoryWorldState", ["transform", "worldstate"])
+emit_transform(ids["transform"], gid, (0, 0, 0), (0, 0, 0), (1, 1, 1))
+emit_monobehaviour(ids["worldstate"], gid, REG["StoryWorldState.cs"],
+    "  entities:\n  - key: ember_marker\n    target: {fileID: %d}\n  - key: tide_marker\n    target: {fileID: %d}\n  - key: stone_marker\n    target: {fileID: %d}\n  - key: tide_bystanders\n    target: {fileID: %d}\n  areaVariants: []" % (m_ember, m_tide, m_stone, by_gid))
+root_gids.append(gid)
+
+# ---- SceneRoots (root order, Unity 6) ----
+roots_txt = "\n".join("  - {fileID: %d}" % g for g in root_gids)
+add_block("""--- !u!1660057539 &9223372036854775807
+SceneRoots:
+  m_ObjectHideFlags: 0
+  m_Roots:
+%s""" % roots_txt)
 
 scene = "\n".join(out + blocks) + "\n"
-open(f"{SCN}/FirstLocation.unity","w").write(scene)
-open(f"{SCN}/FirstLocation.unity.meta","w").write(f"""fileFormatVersion: 2
-guid: {G['FirstLocation.unity']}
-DefaultImporter:
-  externalObjects: {{}}
-  userData: 
-  assetBundleName: 
-  assetBundleVariant: 
-""")
-# folder metas
-import hashlib
-FOLDER = """fileFormatVersion: 2
-guid: {g}
-folderAsset: yes
-DefaultImporter:
-  externalObjects: {{}}
-  userData: 
-  assetBundleName: 
-  assetBundleVariant: 
-"""
-for d in ["Assets/Game","Assets/Game/Environment","Assets/Game/Environment/Kit","Assets/Game/Environment/Materials",
-          "Assets/Game/Scripts","Assets/Scenes","Assets/Scenes/Prototype"]:
-    meta = f"{ROOT}/{d}.meta"
-    if not os.path.exists(meta):
-        open(meta,"w").write(FOLDER.format(g=hashlib.md5(("folder:"+d).encode()).hexdigest()))
-json.dump(G, open(f"{ROOT}/scripts/hall_guids.json","w"), indent=1)
-print("scene objects:", len(LAY['pieces'])+3, "| fileID high:", fid[0])
+open(os.path.join(SCN, "FirstLocation.unity"), "w").write(scene)
+write_meta_if_missing(os.path.join(SCN, "FirstLocation.unity"), NATIVE, REG["FirstLocation.unity"])
+json.dump(REG, open(REG_PATH, "w"), indent=1)
+print("scene objects:", len(LAY['pieces']) + 3 + 4 + 7, "| fileID high:", fid[0])
 print("SCENE GENERATED")

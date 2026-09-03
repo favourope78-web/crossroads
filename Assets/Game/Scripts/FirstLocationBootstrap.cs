@@ -26,7 +26,8 @@ namespace Crossroads.Prototype
             inst.name = "Ari";
             inst.tag = "Player";
             inst.transform.SetPositionAndRotation(spawnPoint, Quaternion.identity);
-            if (inst.GetComponent<InteractInput>() == null) inst.AddComponent<InteractInput>();
+            if (inst.GetComponent<Crossroads.Gameplay.PlayerInteraction>() == null)
+                inst.AddComponent<Crossroads.Gameplay.PlayerInteraction>();
             Debug.Log("[CROSSROADS] Ari spawned in FirstLocation at " + spawnPoint);
 #else
             Debug.LogWarning("[CROSSROADS] FirstLocation bootstrap is editor-only.");

@@ -34,6 +34,17 @@ namespace Crossroads.Gameplay
 
         private void Update()
         {
+            // Dialogue / decision lock (GAME_DESIGN §4.5): the world keeps running, Ari doesn't move.
+            if (Crossroads.Core.InputLock.Active)
+            {
+                _velocity.y += gravity * Time.deltaTime;
+                _velocity.y = Mathf.Max(_velocity.y, -20f);
+                _cc.Move(new Vector3(0f, _velocity.y * Time.deltaTime, 0f));
+                _animator.SetFloat(SpeedHash, 0f, 0.15f, Time.deltaTime);
+                _animator.SetBool(TurningHash, false);
+                return;
+            }
+
             float h = Input.GetAxis("Horizontal");
             float v = Input.GetAxis("Vertical");
             Vector3 input = new Vector3(h, 0f, v);

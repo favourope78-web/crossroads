@@ -84,3 +84,8 @@ Desktop.ini
 
 # ----- Tool caches -----
 .cache/
+
+# ----- Headless C# test / compile-check artifacts (scripts/decision_system_tests) -----
+/scripts/decision_system_tests/*.exe
+/scripts/decision_system_tests/*.dll
+/scripts/decision_system_tests/*.mdb

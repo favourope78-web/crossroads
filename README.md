@@ -22,6 +22,8 @@ Visual-analysis deliverables: `CHARACTER_REFERENCE.md`, `ASSET_PIPELINE.md`, `FI
 Prototype character delivered (2026-09-03): Ari v1 — rigged/animated/textured FBX set + Unity prefab tooling + test scene; see `CHARACTER_PROTOTYPE_REPORT.md`. Runtime Unity test pending a machine with the editor (report §5–6).
 First environment delivered (2026-09-03): Fracture Hall — modular kit (13 pieces) + `Assets/Scenes/Prototype/FirstLocation.unity` + follow camera + interactables; see `ENVIRONMENT_PROTOTYPE_REPORT.md`.
 
+First playable interaction + decision system delivered (2026-09-03): proximity interaction with mobile [INTERACT] prompt, the data-driven **"The First Light"** encounter in the Fracture Hall (Mara, 3 affinity choices → distinct persisted states + condition-gated aftermath dialogue/re-talk), `DecisionManager`/`EncounterFlow`/`GameState`/`SaveSystem` per GAME_DESIGN §4/§12, runtime uGUI (dialogue sheet, choice cards, state HUD, toast), JSON persistence that survives restart, 115/115 headless flow tests + full compile check; see `DECISION_SYSTEM_REPORT.md`. Runtime Editor verification pending (same hand-off pattern as the prototypes).
+
 ## Tech stack (planned)
 
 - **Unity 6 LTS** (6000.x), **URP** (mobile-optimized)
