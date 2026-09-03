@@ -15,6 +15,11 @@ A decision-based 3D life/action game for mobile, built in Unity.
 
 Next step per the plan: **Phase 0 — Project Foundation** (create the Unity 6 LTS project in this repo root, folder structure, boot scenes, device build pipeline).
 
+### Phase 0 status (partially scaffolded in-sandbox, 2026-09-03)
+Already in repo: folder tree (`Assets/_Project/...` per GAME_DESIGN §13.3), 5 assembly definitions (`Crossroads.Core/Input/Gameplay/Narrative/UI`), `Packages/manifest.json` (URP 17, Input System, Cinemachine, UGUI + modules), `ProjectSettings/ProjectVersion.txt` (Unity 6000.0.23f1).
+On a dev machine: open the repo root in Unity Hub → editor completes steps 0.5–0.9 (URP config, boot scenes, device builds) and generates `.meta` files — **commit metas on first open**.
+Visual-analysis deliverables: `CHARACTER_REFERENCE.md`, `ASSET_PIPELINE.md`, `FIRST_ASSET_BRIEFS.md`, concept sheets in `reference/concept/`.
+
 ## Tech stack (planned)
 
 - **Unity 6 LTS** (6000.x), **URP** (mobile-optimized)
