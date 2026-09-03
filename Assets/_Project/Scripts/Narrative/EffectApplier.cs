@@ -68,8 +68,31 @@ namespace Crossroads.Narrative
                 case EffectType.GrantEchoes:
                     state.GrantEchoes(e.amount);
                     break;
+                case EffectType.AddReputation:
+                    state.AddReputation(e.key, e.amount);
+                    break;
+                case EffectType.SetReputation:
+                    state.SetReputation(e.key, e.amount);
+                    break;
+                case EffectType.UnlockAbility:
+                    state.UnlockAbility(e.key);
+                    break;
+                case EffectType.AddSkillLevel:
+                    state.AddSkillLevel(e.key, e.amount);
+                    break;
+                case EffectType.AddItem:
+                    state.AddItem(e.key);
+                    break;
+                case EffectType.RemoveItem:
+                    state.RemoveItem(e.key);
+                    break;
+                case EffectType.UnlockArea:
+                    state.UnlockArea(e.key);
+                    break;
             }
         }
+
+        private static string Signed(int v) { return v > 0 ? "+" + v : v.ToString(); }
 
         /// <summary>Compact summary e.g. "Ember +10 | bond mara +5 | world hall=ember | codex +1".</summary>
         public static string Summarize(List<DecisionEffectData> effects, StateMutator state)
@@ -94,6 +117,13 @@ namespace Crossroads.Narrative
                     case EffectType.SpawnEntity: sb.Append("entity ").Append(e.key).Append(e.value == "1" ? " on" : " off"); break;
                     case EffectType.AddCodex: sb.Append("codex +1"); break;
                     case EffectType.GrantEchoes: sb.Append("echoes +").Append(e.amount); break;
+                    case EffectType.AddReputation: sb.Append("rep ").Append(e.key).Append(" ").Append(Signed(e.amount)); break;
+                    case EffectType.SetReputation: sb.Append("rep ").Append(e.key).Append(" = ").Append(e.amount); break;
+                    case EffectType.UnlockAbility: sb.Append("ability +").Append(e.key); break;
+                    case EffectType.AddSkillLevel: sb.Append("skill ").Append(e.key).Append(" +").Append(e.amount); break;
+                    case EffectType.AddItem: sb.Append("item +").Append(e.key); break;
+                    case EffectType.RemoveItem: sb.Append("item -").Append(e.key); break;
+                    case EffectType.UnlockArea: sb.Append("area +").Append(e.key); break;
                 }
             }
             return sb.ToString();

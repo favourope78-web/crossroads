@@ -1,12 +1,12 @@
-"""Static validation for the CROSSROADS decision-system phase (no Unity needed):
+"""Static validation for the CROSSROADS decision/progression phase (no Unity needed):
 
   1. GUID integrity: every guid: reference in scene/.asset/.mat files resolves to a .meta
      (or to the built-in/package allowlist). No duplicate guids in the registry.
   2. Story content: the generated CL_C1_StoryContent.asset parses as YAML and matches
-     scripts/story_content.json field-for-field.
-  3. JSON <-> C# builder consistency: every dialogue/choice string in story_content.json
-     appears in StoryContentBuilder.cs (the code-built fallback must stay in sync).
-  4. Scene sanity: root count, interactables & the encounter wiring are present.
+     scripts/story_content.json field-for-field (encounters, decisions, graphs, progression).
+  3. JSON <-> C# builder consistency: every content string in story_content.json appears in
+     StoryContentBuilder.cs (the code-built fallback must stay in sync).
+  4. Scene sanity: cast, gate, annex, triggers and story bootstrappers are present.
 Run: python3 scripts/validate_assets.py"""
 import json, os, re, sys
 
@@ -42,7 +42,6 @@ ALLOWED_EXTERNAL = {
     "0000000000000000e000000000000000": "built-in meshes",
     "9335e4a172916944ba2695448482493a": "URP/Lit (package)",
 }
-# map name -> guid used by the scene generator (script refs use type 3)
 all_guids = dict(registry)
 all_guids.update(meta_guids)
 
@@ -66,10 +65,9 @@ for f in sorted(os.listdir(mat_dir)):
     if f.endswith(".mat"):
         check_text_refs(os.path.join(mat_dir, f), f)
 
-# every registry script guid should have a meta file (the moved interaction base included)
 for name, g in registry.items():
     if name.endswith(".cs") and g not in meta_guids:
-        warns.append("registry script %s has no meta yet (missing source file?)" % name)
+        warns.append("registry script %s has no meta yet" % name)
 
 # ---------------------------------------------------------------- 2. asset vs JSON
 content = json.load(open(os.path.join(HERE, "story_content.json")))
@@ -78,58 +76,79 @@ if yaml is None:
 else:
     asset_path = os.path.join(is_dir, "CL_C1_StoryContent.asset")
     txt = open(asset_path).read()
-    txt = txt.split("\n", 2)[2]                          # drop %YAML / %TAG directives
-    txt = txt.replace("--- !u!114 &11400000", "---")
-    doc = yaml.safe_load(txt)
-    data = doc["MonoBehaviour"]["data"]
+    txt = txt.split("\n", 2)[2].replace("--- !u!114 &11400000", "---")
+    try:
+        doc = yaml.safe_load(txt)
+    except Exception as e:
+        errors.append("asset YAML parse failed: " + str(e).split("\n")[0])
+        doc = None
+    if doc is not None:
+        data = doc["MonoBehaviour"]["data"]
 
-    # encounter
-    enc = data["encounters"][0]
-    for k in ("id", "npcName", "graphId", "startNodeId"):
-        if enc[k] != content["encounter"][k]:
-            errors.append("encounter.%s: asset=%r json=%r" % (k, enc[k], content["encounter"][k]))
+        # encounters
+        if len(data["encounters"]) != len(content["encounters"]):
+            errors.append("encounter count mismatch")
+        for a, b in zip(data["encounters"], content["encounters"]):
+            for k in ("id", "npcName", "graphId", "startNodeId"):
+                if a[k] != b[k]:
+                    errors.append("encounter %s: %s asset=%r json=%r" % (a["id"], k, a[k], b[k]))
 
-    # decision
-    dec = data["decisions"][0]
-    jd = content["decision"]
-    for k in ("id", "promptText", "codexEntryId"):
-        if dec[k] != jd[k]:
-            errors.append("decision.%s: asset=%r json=%r" % (k, dec[k], jd[k]))
-    if int(dec["timeLimitSeconds"]) != int(jd["timeLimitSeconds"]):
-        errors.append("decision.timeLimitSeconds mismatch")
-    if len(dec["options"]) != len(jd["options"]):
-        errors.append("decision option count mismatch")
-    for a, b in zip(dec["options"], jd["options"]):
-        for k in ("id", "text", "afterText"):
-            if a[k] != b[k]:
-                errors.append("option %s.%s: asset=%r json=%r" % (a["id"], k, a[k], b[k]))
-        for k in ("type", "key", "value", "amount"):
-            ea, eb = a["effects"], b["effects"]
-            if len(ea) != len(eb):
-                errors.append("option %s effects count mismatch" % a["id"])
-                break
-            for x, y in zip(ea, eb):
-                if x[k] != y[k]:
-                    errors.append("option %s effect.%s: asset=%r json=%r" % (a["id"], k, x[k], y[k]))
+        # decisions
+        if len(data["decisions"]) != len(content["decisions"]):
+            errors.append("decision count mismatch")
+        for a, b in zip(data["decisions"], content["decisions"]):
+            for k in ("id", "promptText", "codexEntryId"):
+                if a[k] != b[k]:
+                    errors.append("decision %s: %s asset=%r json=%r" % (a["id"], k, a[k], b[k]))
+            if int(a["timeLimitSeconds"]) != int(b["timeLimitSeconds"]):
+                errors.append("decision %s timeLimit mismatch" % a["id"])
+            if len(a["options"]) != len(b["options"]):
+                errors.append("decision %s option count mismatch" % a["id"])
+            for oa, ob in zip(a["options"], b["options"]):
+                for k in ("id", "text", "afterText"):
+                    if oa[k] != ob[k]:
+                        errors.append("option %s.%s: asset=%r json=%r" % (oa["id"], k, oa[k], ob[k]))
+                for lst_a, lst_b, lbl in ((oa["effects"], ob["effects"], "effects"), (oa["conditions"], ob["conditions"], "conditions")):
+                    if len(lst_a) != len(lst_b):
+                        errors.append("option %s %s count mismatch" % (oa["id"], lbl))
+                        continue
+                    for x, y in zip(lst_a, lst_b):
+                        for k in ("type", "key", "value", "amount"):
+                            if x[k] != y[k]:
+                                errors.append("option %s %s.%s: asset=%r json=%r" % (oa["id"], lbl, k, x[k], y[k]))
 
-    # graph
-    g = data["graphs"][0]
-    if g["id"] != content["dialogue"]["id"]:
-        errors.append("graph id mismatch")
-    if len(g["nodes"]) != len(content["dialogue"]["nodes"]):
-        errors.append("graph node count mismatch")
-    for a, b in zip(g["nodes"], content["dialogue"]["nodes"]):
-        for k in ("id", "speaker", "text", "nextId", "branchPrefix", "decisionId", "end"):
-            if a[k] != b[k]:
-                errors.append("node %s.%s: asset=%r json=%r" % (a["id"], k, a[k], b[k]))
-        ea, eb = a["conditions"], b["conditions"]
-        if len(ea) != len(eb):
-            errors.append("node %s conditions count mismatch" % a["id"])
-            continue
-        for x, y in zip(ea, eb):
-            for k in ("type", "key", "value", "amount"):
-                if x[k] != y[k]:
-                    errors.append("node %s condition.%s: asset=%r json=%r" % (a["id"], k, x[k], y[k]))
+        # graphs
+        if len(data["graphs"]) != len(content["graphs"]):
+            errors.append("graph count mismatch")
+        for ga, gb in zip(data["graphs"], content["graphs"]):
+            if ga["id"] != gb["id"]:
+                errors.append("graph id mismatch")
+            if len(ga["nodes"]) != len(gb["nodes"]):
+                errors.append("graph %s node count mismatch" % ga["id"])
+            for na, nb in zip(ga["nodes"], gb["nodes"]):
+                for k in ("id", "speaker", "text", "nextId", "branchPrefix", "decisionId", "end"):
+                    if na[k] != nb[k]:
+                        errors.append("node %s.%s: asset=%r json=%r" % (na["id"], k, na[k], nb[k]))
+                if len(na["conditions"]) != len(nb["conditions"]):
+                    errors.append("node %s conditions count mismatch" % na["id"])
+                    continue
+                for x, y in zip(na["conditions"], nb["conditions"]):
+                    for k in ("type", "key", "value", "amount"):
+                        if x[k] != y[k]:
+                            errors.append("node %s condition.%s: asset=%r json=%r" % (na["id"], k, x[k], y[k]))
+
+        # progression
+        p_asset, p_json = data["progression"], content["progression"]
+        for group in ("abilities", "skills", "items", "reputationGroups", "areas"):
+            ka = {"abilities": ["id", "name", "line", "description"], "skills": ["id", "name", "maxLevel"],
+                  "items": ["id", "name", "description"], "reputationGroups": ["id", "name"],
+                  "areas": ["id", "name"]}[group]
+            if len(p_asset[group]) != len(p_json[group]):
+                errors.append("progression %s count mismatch" % group)
+            for ra, rb in zip(p_asset[group], p_json[group]):
+                for k in ka:
+                    if str(ra[k]) != str(rb[k]):
+                        errors.append("progression %s.%s: asset=%r json=%r" % (group, k, ra[k], rb[k]))
 
 # ---------------------------------------------------------------- 3. JSON <-> C# builder
 builder = open(os.path.join(ROOT, "Assets/_Project/Scripts/Narrative/Content/StoryContentBuilder.cs")).read()
@@ -140,7 +159,7 @@ def walk_strings(o, out):
     elif isinstance(o, list):
         for v in o:
             walk_strings(v, out)
-    elif isinstance(o, str) and len(o) > 12 and not o.startswith("c1_") and not o.startswith("g_") and not o.startswith("dec_") and not o.startswith("CL_"):
+    elif isinstance(o, str) and len(o) > 12 and not (o.startswith("c1_") or o.startswith("g_") or o.startswith("dec_") or o.startswith("CL_")):
         out.append(o)
 strings = []
 walk_strings({k: v for k, v in content.items() if k != "_comment"}, strings)
@@ -151,14 +170,16 @@ for s in strings:
 # ---------------------------------------------------------------- 4. scene sanity
 root_count = len(re.findall(r"^  - \{fileID: \d+\}$", scene_txt.split("SceneRoots:")[-1], re.M)) if "SceneRoots:" in scene_txt else 0
 print("Scene roots:", root_count)
-for needle in ["Mara_NPC", "StoryWorldState", "StoryModeBootstrap", "GameUIBootstrap",
+for needle in ["Mara_NPC", "Sera_NPC", "EchoShard", "EnergySeal",
                "Seq_Ember_Marker", "Seq_Tide_Marker", "Seq_Stone_Marker", "Seq_Tide_Bystanders",
-               "m_IsActive: 0", "encounterId: c1_hall_first_light"]:
+               "AreaTrigger_Annex", "AreaTrigger_Hall", "SM_WallPanel_flank", "m_IsActive: 0",
+               "encounterId: c1_hall_first_light", "encounterId: c1_hall_shard", "encounterId: c1_hall_sera",
+               "areaId: annex", "defaultActive: 1", "m_IsTrigger: 1"]:
     if needle not in scene_txt:
         errors.append("scene missing: " + needle)
 
-# component guid wiring on the story objects
-for script_key in ["StoryEncounterNPC.cs", "StoryWorldState.cs", "StoryModeBootstrap.cs", "GameUIBootstrap.cs"]:
+for script_key in ["StoryEncounterNPC.cs", "StoryWorldState.cs", "StoryModeBootstrap.cs", "GameUIBootstrap.cs",
+                   "NpcFateDriver.cs", "AreaGate.cs", "StoryEventInteractable.cs", "AreaTrigger.cs"]:
     if scene_txt.count(registry[script_key]) == 0:
         errors.append("scene does not reference %s" % script_key)
 

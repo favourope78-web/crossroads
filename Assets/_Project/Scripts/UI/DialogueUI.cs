@@ -21,6 +21,7 @@ namespace Crossroads.UI
 
         private RectTransform _sheet;
         private Text _speaker;
+        private Text _titleChip;
         private Text _body;
         private Text _hint;
         private Text _timer;
@@ -65,7 +66,15 @@ namespace Crossroads.UI
             _speaker.rectTransform.anchorMax = new Vector2(1f, 1f);
             _speaker.rectTransform.pivot = new Vector2(0f, 1f);
             _speaker.rectTransform.offsetMin = new Vector2(44f, -18f);
-            _speaker.rectTransform.offsetMax = new Vector2(-44f, -78f);
+            _speaker.rectTransform.offsetMax = new Vector2(-44f, -74f);
+
+            // relation/state chip (e.g. "Mara · Warm") - consequence of state on dialogue framing
+            _titleChip = RuntimeMenuFactory.CreateText("TitleChip", _sheet, "", 26, RuntimeMenuFactory.TextDim, TextAnchor.MiddleLeft, FontStyle.Italic);
+            _titleChip.rectTransform.anchorMin = new Vector2(0f, 1f);
+            _titleChip.rectTransform.anchorMax = new Vector2(1f, 1f);
+            _titleChip.rectTransform.pivot = new Vector2(0f, 1f);
+            _titleChip.rectTransform.offsetMin = new Vector2(44f, -56f);
+            _titleChip.rectTransform.offsetMax = new Vector2(-44f, -92f);
 
             _body = RuntimeMenuFactory.CreateText("Body", _sheet, "", 40, RuntimeMenuFactory.TextMain, TextAnchor.UpperLeft);
             _body.rectTransform.anchorMin = Vector2.zero;
@@ -121,6 +130,7 @@ namespace Crossroads.UI
             _sheet.sizeDelta = new Vector2(0f, 400f);
             SetBodyMode(false);
             _speaker.text = "";
+            _titleChip.text = string.IsNullOrEmpty(e.npcTitle) ? "" : "· " + e.npcTitle;
             _body.text = "";
             _hint.text = "";
             _timer.text = "";
@@ -132,6 +142,7 @@ namespace Crossroads.UI
             _decisionMode = false;
             ClearChoices();
             _speaker.text = string.IsNullOrEmpty(e.speaker) ? "" : e.speaker;
+            _titleChip.text = "";
             _timer.text = "";
             _hint.text = e.hasNext ? "tap to continue  ▼" : "tap  ▼";
             _sheet.sizeDelta = new Vector2(0f, 400f);

@@ -22,7 +22,12 @@ namespace Crossroads.Narrative
         BondAtLeast,       // bond key >= amount
         DecisionWas,       // decision key resolved with option == value
         DecisionNotMade,   // decision key NOT resolved
-        CodexOwned         // codex contains key
+        CodexOwned,        // codex contains key
+        ReputationAtLeast, // reputation key >= amount  (progression)
+        ItemHeld,          // items contains key
+        AbilityOwned,      // abilities contains key
+        AreaUnlocked,      // unlockAreas contains key
+        SkillAtLeast       // skills[key] >= amount
     }
 
     /// <summary>Effect whitelist (§4.2) - applied by EffectApplier on selection.</summary>
@@ -38,7 +43,14 @@ namespace Crossroads.Narrative
         SetWorldState,
         SpawnEntity,       // key = entity id, active/dormant = value ("1"/"0")
         AddCodex,
-        GrantEchoes
+        GrantEchoes,
+        AddReputation,     // key = group id  (progression)
+        SetReputation,
+        UnlockAbility,     // key = ability id
+        AddSkillLevel,     // key = skill id
+        AddItem,           // key = item id
+        RemoveItem,        // key = item id
+        UnlockArea         // key = area id
     }
 
     [Serializable]
@@ -134,12 +146,77 @@ namespace Crossroads.Narrative
         public string startNodeId = "start";
     }
 
+    // =====================================================================================
+    // Progression definitions (data-driven player attributes, §progression): reputation
+    // groups, abilities/skills, items/resources, areas. Gameplay code only ever uses these
+    // ids + the names from here - new rows never require code changes.
+    // =====================================================================================
+
+    [Serializable]
+    public class AbilityDefinitionData
+    {
+        public string id = "";
+        public string name = "";
+        public string line = "";      // ember | tide | stone | hollow
+        public string description = "";
+    }
+
+    [Serializable]
+    public class SkillDefinitionData
+    {
+        public string id = "";
+        public string name = "";
+        public int maxLevel = 3;
+    }
+
+    [Serializable]
+    public class ItemDefinitionData
+    {
+        public string id = "";
+        public string name = "";
+        public string description = "";
+    }
+
+    [Serializable]
+    public class ReputationGroupData
+    {
+        public string id = "";
+        public string name = "";
+    }
+
+    [Serializable]
+    public class AreaDefinitionData
+    {
+        public string id = "";
+        public string name = "";
+    }
+
+    [Serializable]
+    public class ProgressionContentData
+    {
+        public List<AbilityDefinitionData> abilities = new List<AbilityDefinitionData>();
+        public List<SkillDefinitionData> skills = new List<SkillDefinitionData>();
+        public List<ItemDefinitionData> items = new List<ItemDefinitionData>();
+        public List<ReputationGroupData> reputationGroups = new List<ReputationGroupData>();
+        public List<AreaDefinitionData> areas = new List<AreaDefinitionData>();
+    }
+
+    /// <summary>Data-driven gate rule: when conditions match, the gate opens (or stays shut with text).</summary>
+    [Serializable]
+    public class GateRuleData
+    {
+        public List<DecisionConditionData> conditions = new List<DecisionConditionData>();
+        public bool opens;
+        public string text = "";
+    }
+
     [Serializable]
     public class StoryContentData
     {
         public List<EncounterDefinitionData> encounters = new List<EncounterDefinitionData>();
         public List<DecisionNodeData> decisions = new List<DecisionNodeData>();
         public List<DialogueGraphData> graphs = new List<DialogueGraphData>();
+        public ProgressionContentData progression = new ProgressionContentData();
 
         public EncounterDefinitionData FindEncounter(string id)
         {

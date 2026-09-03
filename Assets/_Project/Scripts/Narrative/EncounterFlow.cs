@@ -27,6 +27,7 @@ namespace Crossroads.Narrative
         public string CurrentEncounterId { get; private set; }
         public string CurrentDecisionId { get; private set; }
         public string CurrentNodeId { get; private set; }
+        public string CurrentNpcTitle { get; private set; }
 
         private DialogueGraphData _graph;
         private string _pendingAfterNext = ""; // node entered only after player advances past the afterText line
@@ -39,13 +40,14 @@ namespace Crossroads.Narrative
         }
 
         // ---------------------------------------------------------------- entry
-        public void Run(string encounterId)
+        public void Run(string encounterId, string npcTitle = "")
         {
             if (IsRunning)
             {
                 StoryLog.LogWarning("[CROSSROADS] Run(" + encounterId + ") ignored - an encounter is already running");
                 return;
             }
+            CurrentNpcTitle = npcTitle ?? "";
 
             EncounterDefinitionData enc = _content != null ? _content.GetEncounter(encounterId) : null;
             if (enc == null || string.IsNullOrEmpty(enc.graphId))
@@ -68,7 +70,7 @@ namespace Crossroads.Narrative
             CurrentDecisionId = "";
             _pendingAfterNext = "";
             InputLock.Set(true, "dialogue:" + encounterId);
-            EventBus.Publish(new DialogueStartedEvent { encounterId = encounterId });
+            EventBus.Publish(new DialogueStartedEvent { encounterId = encounterId, npcTitle = CurrentNpcTitle });
             StoryLog.Log("[CROSSROADS] Encounter started: " + encounterId);
 
             EnterNode(enc.startNodeId);
@@ -107,12 +109,8 @@ namespace Crossroads.Narrative
                 return;
             }
 
-            if (node.end)
-            {
-                EndRun();
-                return;
-            }
-
+            // A node with a final line (end:true) publishes it and waits for Advance to close -
+            // final lines must be readable, never dropped (Advance() ends end-nodes).
             EventBus.Publish(new DialogueLineEvent
             {
                 encounterId = CurrentEncounterId,
@@ -234,6 +232,7 @@ namespace Crossroads.Narrative
             CurrentEncounterId = "";
             CurrentNodeId = "";
             CurrentDecisionId = "";
+            CurrentNpcTitle = "";
             _pendingAfterNext = "";
             _graph = null;
             InputLock.Set(false, "");

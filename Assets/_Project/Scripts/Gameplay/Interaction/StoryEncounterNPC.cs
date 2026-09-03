@@ -33,7 +33,9 @@ namespace Crossroads.Gameplay
                 Debug.LogWarning("[CROSSROADS] GameServices not initialized - cannot run " + encounterId);
                 return;
             }
-            GameServices.Encounters.Run(encounterId);
+            // Behavior/title consequences come from the NpcFateDriver if present (state -> title).
+            var fate = GetComponent<Gameplay.NpcFateDriver>();
+            GameServices.Encounters.Run(encounterId, fate != null ? fate.CurrentTitle : "");
             Debug.Log("[CROSSROADS] Encounter started via NPC: " + encounterId);
         }
     }

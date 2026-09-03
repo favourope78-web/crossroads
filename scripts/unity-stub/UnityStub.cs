@@ -314,7 +314,35 @@ namespace UnityEngine
         }
     }
 
-    public class CharacterController : Component
+    public class Collider : Component
+    {
+        public bool isTrigger;
+        public bool enabled = true;
+    }
+
+    public class BoxCollider : Collider { public Vector3 size, center; }
+    public class SphereCollider : Collider { public float radius; public Vector3 center; }
+    public class CapsuleCollider : Collider { public float radius, height; public int direction; public Vector3 center; }
+    public class MeshFilter : Component { }
+    public class MeshRenderer : Renderer { }
+
+    public class Renderer : Component
+    {
+        public Material sharedMaterial;
+        public Material material { get { return sharedMaterial; } set { sharedMaterial = value; } }
+        public bool enabled = true;
+    }
+
+    public class Material : Object
+    {
+        public Material() { }
+        public Material(Shader s) { }
+        public Color color { get; set; }
+    }
+
+    public class Shader : Object { }
+
+    public class CharacterController : Collider
     {
         public float height, radius, stepOffset, skinWidth;
         public Vector3 center;

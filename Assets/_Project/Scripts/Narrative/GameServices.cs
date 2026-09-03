@@ -22,6 +22,9 @@ namespace Crossroads.Narrative
         public static EncounterFlow Encounters { get; private set; }
         public static IEncounterSource Content { get; private set; }
 
+        /// <summary>Player-current-state façade (reputation, bonds, skills, unlocks, areas, attributes).</summary>
+        public static GameStateManager Progress { get; private set; }
+
         public static string SceneKey { get; private set; }
         public static string CheckpointId { get; private set; }
 
@@ -37,9 +40,12 @@ namespace Crossroads.Narrative
 
             Content = content ?? new RuntimeContentSource();
             State = new StateMutator(new GameState());
+            Progress = null;
             Save = new SaveSystem(json ?? new UnityJsonSerializer(), paths);
             Decisions = new DecisionManager(State);
             Decisions.RegisterAll(Content.Content != null ? Content.Content.decisions : null);
+            Progress = new GameStateManager(State, Content);
+            Decisions.Index = Progress.Index;
             Encounters = new EncounterFlow(Content, Decisions, State);
 
             SceneKey = sceneKey;
@@ -61,6 +67,8 @@ namespace Crossroads.Narrative
             }
 
             Decisions.Resolved += OnDecisionResolved;
+            EventBus.Subscribe<AreaUnlockedEvent>(OnAreaUnlocked);
+            EventBus.Subscribe<AreaChangedEvent>(OnAreaChanged);
 
             IsInitialized = true;
             EventBus.Publish(new StateLoadedEvent { hadSave = hadSave, path = path });
@@ -71,6 +79,9 @@ namespace Crossroads.Narrative
         {
             PersistNow(autosaveMirror: true);
         }
+
+        private static void OnAreaUnlocked(AreaUnlockedEvent e) { PersistNow(autosaveMirror: true); }
+        private static void OnAreaChanged(AreaChangedEvent e) { PersistNow(autosaveMirror: true); }
 
         /// <summary>Writes the live state to disk (decisions, flags, affinities, world state...).</summary>
         public static SaveReport PersistNow(bool autosaveMirror = true)
@@ -95,6 +106,8 @@ namespace Crossroads.Narrative
         public static void Shutdown(bool silent = false)
         {
             if (Decisions != null) Decisions.Resolved -= OnDecisionResolved;
+            EventBus.Unsubscribe<AreaUnlockedEvent>(OnAreaUnlocked);
+            EventBus.Unsubscribe<AreaChangedEvent>(OnAreaChanged);
             AppServices.Clear();
             InputLock.Clear();
             IsInitialized = false;

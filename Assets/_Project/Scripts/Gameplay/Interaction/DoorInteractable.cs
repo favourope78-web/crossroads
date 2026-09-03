@@ -3,35 +3,49 @@ using UnityEngine;
 
 namespace Crossroads.Prototype
 {
-    /// <summary>Sliding door for the hall prototype (pivot-free, mobile-cheap).</summary>
+    /// <summary>Sliding door for the hall prototype (pivot-free, mobile-cheap).
+    /// Extensible: GatedDoor subclasses it to gate area access behind state.</summary>
     public class DoorInteractable : Interactable
     {
-        [SerializeField] private float openOffset = 3.4f;
-        [SerializeField] private float slideTime = 0.9f;
+        [SerializeField] protected float openOffset = 3.4f;
+        [SerializeField] protected float slideTime = 0.9f;
 
-        private Vector3 _start;
-        private bool _open;
-        private bool _busy;
+        protected Vector3 _start;
+        protected bool _open;
+        protected bool _busy;
 
         private void Awake() { _start = transform.localPosition; }
+
+        /// <summary>True when the door is (or is sliding to) open.</summary>
+        public bool IsOpen { get { return _open; } }
+
+        /// <summary>Animates (or instantly sets) the door to the given state.</summary>
+        public void SetOpen(bool open, bool instant = false)
+        {
+            if (_open == open) return;
+            _open = open;
+            StartCoroutine(Slide(open ? 1f : 0f, instant));
+            Debug.Log("[CROSSROADS] Door " + (open ? "opened" : "closed") + ": " + name);
+        }
 
         public override void OnInteract(GameObject player)
         {
             if (_busy) return;
-            _open = !_open;
-            StartCoroutine(Slide(_open ? 1f : 0f));
-            Debug.Log($"[CROSSROADS] Door {(_open ? "opened" : "closed")}: {name}");
+            SetOpen(!_open, false);
         }
 
-        private IEnumerator Slide(float t)
+        private IEnumerator Slide(float t, bool instant)
         {
             _busy = true;
-            float elapsed = 0f;
-            float from = _open ? 0f : 1f; // current normalized state before flip handled by t
-            float startT = Mathf.InverseLerp(0f, 1f, (transform.localPosition.x - _start.x) / Mathf.Max(0.001f, openOffset) * Mathf.Sign(transform.localScale.x));
-            // simpler: lerp from current local pos to target
             Vector3 fromPos = transform.localPosition;
             Vector3 toPos = _start + transform.right * (openOffset * t) * Mathf.Sign(transform.localScale.x);
+            if (instant)
+            {
+                transform.localPosition = toPos;
+                _busy = false;
+                yield break;
+            }
+            float elapsed = 0f;
             while (elapsed < slideTime)
             {
                 elapsed += Time.deltaTime;

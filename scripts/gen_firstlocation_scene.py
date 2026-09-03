@@ -417,7 +417,8 @@ for idx, e in enumerate(LAY["pieces"]):
     piece = e["piece"]
     pos, yaw, scale = e["pos"], e["yaw"], e["scale"]
     comps = ["transform","meshfilter","renderer"]
-    if piece in COLLIDERS: comps.append("collider")
+    is_open_frame = (piece == "SM_DoorFrame" and e["pos"][0] == 0 and e["pos"][2] == 20)
+    if piece in COLLIDERS and not is_open_frame: comps.append("collider")
     if e["interact"] == "Door": comps.append("door")
     if e["interact"] == "Inspect": comps.append("interact")
     gid, ids = emit_gameobject("%s_%03d" % (piece, idx), comps)
@@ -578,47 +579,60 @@ emit_monobehaviour(ids["bootstrap"], gid, REG["FirstLocationBootstrap.cs"])
 root_gids.append(gid)
 
 # ================================================================
-# DECISION-SYSTEM scene additions (data-driven first encounter)
+# ================================================================
+# STORY/PROGRESSION scene additions (data-driven encounters + gates)
 # ================================================================
 CUBE, CAPSULE, SPHERE = 10202, 10208, 10207  # built-in primitive mesh fileIDs
 
 def emit_char_root(root_name, comp_kinds, pos, rot_euler, is_active, primitives):
-    """Root GO (+ optional extra component slots) with primitive visual children.
-    primitives: list of (child_name, material_registry_key, builtin_mesh_id, local_pos, local_scale)"""
+    """Root GO with primitive visual children. Returns (gid, ids, children_info) where
+    children_info = [(child_name, transform_id, renderer_id), ...]."""
     gid, ids = emit_gameobject(root_name, ["transform"] + comp_kinds, is_active=is_active)
     root_gids.append(gid)
     child_tids = []
+    children_info = []
     for (cname, matkey, meshid, lpos, lscale) in primitives:
         cgid, cids = emit_gameobject(cname, ["transform", "meshfilter", "renderer"])
         emit_transform(cids["transform"], cgid, tuple(lpos), (0, 0, 0), tuple(lscale), father=ids["transform"])
         emit_meshfilter(cids["meshfilter"], cgid, None, builtin_fileid=meshid)
         emit_renderer(cids["renderer"], cgid, REG[matkey])
         child_tids.append(cids["transform"])
+        children_info.append((cname, cids["transform"], cids["renderer"]))
     emit_transform(ids["transform"], gid, tuple(pos), tuple(rot_euler), (1, 1, 1), children=child_tids)
-    return gid, ids
+    return gid, ids, children_info
 
-# ---- Mara NPC: placeholder mannequin (primitive body + head; placeholder art per design) ----
-mara_gid, mara_ids = emit_char_root("Mara_NPC", ["collider", "npc"], (6.5, 0, -8), (0, 180, 0), 1, [
+def child_renderer_id(children_info, name):
+    for (cn, tid, rid) in children_info:
+        if cn == name: return rid
+    return 0
+
+# ---- Mara NPC (first encounter) ----
+mara_gid, mara_ids, mara_children = emit_char_root("Mara_NPC", ["collider", "npc", "fate"],
+    (6.5, 0, -8), (0, 180, 0), 1, [
     ("Body", "M_Npc_Mara", CAPSULE, (0, 0.78, 0), (0.55, 0.72, 0.55)),
     ("Head", "M_Npc_Mara", SPHERE, (0, 1.62, 0), (0.34, 0.34, 0.34)),
 ])
 emit_capsulecollider(mara_ids["collider"], mara_gid, 0.35, 1.7, (0, 0.85, 0))
 emit_monobehaviour(mara_ids["npc"], mara_gid, REG["StoryEncounterNPC.cs"],
     "  encounterId: c1_hall_first_light\n  npcDisplayName: Mara\n  promptLabel: Talk to Mara\n  interactRadius: 3.2\n  priority: 20")
+emit_monobehaviour(mara_ids["fate"], mara_gid, REG["NpcFateDriver.cs"],
+    "  variants:\n  - conditions:\n    - type: 5\n      key: mara\n      value: \"\"\n      amount: 8\n    bodyMaterial: {fileID: 2100000, guid: %s, type: 2}\n    title: Mara - Trusting\n  baseTitle: Mara\n  baseMaterial: {fileID: 2100000, guid: %s, type: 2}\n  bodyRenderer: {fileID: %d}" %
+    (REG["M_Seq_Tide"], REG["M_Npc_Mara"], child_renderer_id(mara_children, "Body")))
 
 # ---- consequence markers (start inactive; one is activated by the chosen path) ----
 def emit_marker(go_name, matkey, pos):
-    return emit_char_root(go_name, [], pos, (0, 0, 0), 0, [
+    gid, _, _ = emit_char_root(go_name, [], pos, (0, 0, 0), 0, [
         ("Beam", matkey, CUBE, (0, 1.05, 0), (0.22, 2.0, 0.22)),
         ("Base", "M_Hall_Metal", CUBE, (0, 0.07, 0), (0.72, 0.14, 0.72)),
     ])
+    return gid
 
-m_ember, _ = emit_marker("Seq_Ember_Marker", "M_Seq_Ember", (3.2, 0, -3.2))
-m_tide, _  = emit_marker("Seq_Tide_Marker", "M_Seq_Tide", (-3.2, 0, -3.2))
-m_stone, _ = emit_marker("Seq_Stone_Marker", "M_Seq_Stone", (0, 0, 3.2))
+m_ember = emit_marker("Seq_Ember_Marker", "M_Seq_Ember", (3.2, 0, -3.2))
+m_tide  = emit_marker("Seq_Tide_Marker", "M_Seq_Tide", (-3.2, 0, -3.2))
+m_stone = emit_marker("Seq_Stone_Marker", "M_Seq_Stone", (0, 0, 3.2))
 
 # ---- tide bystanders (the twins; exist only on the Tide path) ----
-by_gid, by_ids = emit_char_root("Seq_Tide_Bystanders", [], (14.5, 0, 0), (0, -90, 0), 0, [
+by_gid, _, _ = emit_char_root("Seq_Tide_Bystanders", [], (14.5, 0, 0), (0, -90, 0), 0, [
     ("Civilian_1", "M_Npc_Civilian", CAPSULE, (0, 0.78, 0), (0.5, 0.66, 0.5)),
     ("Civilian_1_Head", "M_Npc_Civilian", SPHERE, (0, 1.5, 0), (0.30, 0.30, 0.30)),
     ("Civilian_2", "M_Npc_Civilian", CAPSULE, (1.1, 0.78, 0), (0.5, 0.62, 0.5)),
@@ -637,11 +651,164 @@ emit_transform(ids["transform"], gid, (0, 0, 0), (0, 0, 0), (1, 1, 1))
 emit_monobehaviour(ids["ui"], gid, REG["GameUIBootstrap.cs"])
 root_gids.append(gid)
 
+# ================================================================
+# PROGRESSION/CONSEQUENCE scene additions (annex + gate + cast)
+# ================================================================
+
+# ---- wall fills sealing the north-wall flanks (scaled panels -> real doorway) ----
+for (fx, tag) in [(6.5, "L"), (-6.5, "R")]:
+    gid, ids = emit_gameobject("SM_WallPanel_flank_" + tag, ["transform", "meshfilter", "renderer", "collider"])
+    emit_transform(ids["transform"], gid, (fx, 3, 20), (0, 0, 0), (0.7, 1, 1))
+    emit_meshfilter(ids["meshfilter"], gid, REG["SM_WallPanel"])
+    emit_renderer(ids["renderer"], gid, REG["M_Hall_Concrete"])
+    emit_boxcollider(ids["collider"], gid, (10, 6, 0.55), (0, 3, 0))
+    root_gids.append(gid)
+
+# ---- annex room (20 x 10, beyond the north gate) ----
+ANNEX = [
+    ("SM_FloorTile", (-5, 0.05, 25), 0),
+    ("SM_FloorTile", (5, 0.05, 25), 0),
+    ("SM_WallPanel", (-10, 3, 25), 90),
+    ("SM_WallPanel", (10, 3, 25), 90),
+    ("SM_WallPanel", (-5, 3, 30), 0),
+    ("SM_WallPanel", (5, 3, 30), 0),
+    ("SM_Column", (-7, 0, 27), 0),
+    ("SM_Column", (7, 0, 27), 0),
+    ("SM_Truss", (0, 9.2, 25), 0),
+]
+for (piece, pos, yaw) in ANNEX:
+    comps = ["transform", "meshfilter", "renderer"]
+    if piece in COLLIDERS: comps.append("collider")
+    gid, ids = emit_gameobject("%s_annex_%s_%s" % (piece, pos[0], pos[2]), comps)
+    emit_transform(ids["transform"], gid, pos, (0, yaw, 0), (1, 1, 1))
+    emit_meshfilter(ids["meshfilter"], gid, REG[piece])
+    mat = {"SM_FloorTile": "M_Hall_Concrete", "SM_WallPanel": "M_Hall_Concrete",
+           "SM_Column": "M_Hall_Metal", "SM_Truss": "M_Hall_Metal"}[piece]
+    emit_renderer(ids["renderer"], gid, REG[mat])
+    if "collider" in ids:
+        c = COLLIDERS[piece]
+        emit_boxcollider(ids["collider"], gid, c[1], c[2])
+    root_gids.append(gid)
+
+for pos in [(-7, 0, 27), (7, 0, 27)]:
+    gid, ids = emit_gameobject("SM_LightBeam_annex_%s_%s" % (pos[0], pos[2]), ["transform", "meshfilter", "renderer"])
+    emit_transform(ids["transform"], gid, pos, (0, 0, 0), (1, 1, 1))
+    emit_meshfilter(ids["meshfilter"], gid, REG["SM_LightBeam"])
+    emit_renderer(ids["renderer"], gid, REG["M_Hall_LightColumn"])
+    root_gids.append(gid)
+
+# ---- energy seal gate (data-driven accessible-area consequence) ----
+seal_gid, seal_ids, seal_children = emit_char_root("EnergySeal", ["collider", "gate"], (0, 1.7, 20.5), (0, 0, 0), 1, [
+    ("Plate", "M_Hall_Holo", CUBE, (0, 0, 0), (6.0, 3.4, 0.22)),
+])
+emit_boxcollider(seal_ids["collider"], seal_gid, (6.0, 3.4, 0.22), (0, 0, 0))
+seal_plate_renderer = child_renderer_id(seal_children, "Plate")
+p_l, _, _ = emit_char_root("SealBase_L", [], (-3.3, 0, 20), (0, 0, 0), 1, [
+    ("Block", "M_Hall_Metal", CUBE, (0, 0.85, 0), (0.5, 1.7, 0.6))])
+p_r, _, _ = emit_char_root("SealBase_R", [], (3.3, 0, 20), (0, 0, 0), 1, [
+    ("Block", "M_Hall_Metal", CUBE, (0, 0.85, 0), (0.5, 1.7, 0.6))])
+gate_fields = (
+    "  rules:\n"
+    "  - conditions:\n    - type: 11\n      key: ember_pulse\n      value: \"\"\n      amount: 0\n"
+    "    opens: 1\n    text: The seal drinks the echo and parts. North Annex lies open.\n"
+    "  - conditions:\n    - type: 11\n      key: tide_mend\n      value: \"\"\n      amount: 0\n"
+    "    opens: 1\n    text: The seal softens like water around your hand. North Annex lies open.\n"
+    "  - conditions:\n    - type: 11\n      key: stone_ward\n      value: \"\"\n      amount: 0\n"
+    "    opens: 1\n    text: The seal holds, then yields - unhurried, the way you asked it to. North Annex lies open.\n"
+    "  - conditions: []\n    opens: 0\n"
+    "    text: A seal of the hall's own light, bent around nothing you carry. It only parts for an echoed voice.\n"
+    "  areaId: annex\n"
+    "  variants:\n"
+    "  - conditions:\n    - type: 0\n      key: c1_hall_drive\n      value: ember\n      amount: 0\n    material: {fileID: 2100000, guid: %s, type: 2}\n"
+    "  - conditions:\n    - type: 0\n      key: c1_hall_drive\n      value: tide\n      amount: 0\n    material: {fileID: 2100000, guid: %s, type: 2}\n"
+    "  - conditions:\n    - type: 0\n      key: c1_hall_drive\n      value: stone\n      amount: 0\n    material: {fileID: 2100000, guid: %s, type: 2}\n"
+    "  blocker: {fileID: %d}\n"
+    "  visuals:\n  - {fileID: %d}\n  - {fileID: %d}\n  - {fileID: %d}\n"
+    "  sealRenderer: {fileID: %d}\n"
+    "  promptLabel: Energy Seal\n  interactRadius: 3.4\n  priority: 15\n"
+    "  openPrompt: Enter the Annex\n  closedPrompt: Energy Seal\n"
+    "  openNotice: The seal is open.\n  sealedNotice: The energy seal shimmers. It does not know you."
+) % (REG["M_Seq_Ember"], REG["M_Seq_Tide"], REG["M_Seq_Stone"],
+     seal_ids["collider"], seal_gid, p_l, p_r, seal_plate_renderer)
+emit_monobehaviour(seal_ids["gate"], seal_gid, REG["AreaGate.cs"], gate_fields)
+
+# ---- the Fracture Shard (annex loot; the interactable vanishes once taken) ----
+shard_gid, shard_ids, _ = emit_char_root("EchoShard", ["shard"], (0, 0, 26.5), (20, 0, 0), 1, [
+    ("Pedestal", "M_Hall_Metal", CUBE, (0, 0.09, 0), (1.1, 0.18, 1.1)),
+    ("Crystal", "M_Hall_OrbGold", CUBE, (0, 1.02, 0), (0.34, 0.62, 0.34)),
+])
+emit_monobehaviour(shard_ids["shard"], shard_gid, REG["StoryEventInteractable.cs"],
+    "  encounterId: c1_hall_shard\n  promptLabel: The Fracture Shard\n  interactRadius: 3.2\n  priority: 25")
+
+# ---- Sera (second NPC: behaviour/dialogue/choices depend on the first decision) ----
+sera_gid, sera_ids, sera_children = emit_char_root("Sera_NPC", ["collider", "npc", "fate"],
+    (17.5, 0, 2.5), (0, -90, 0), 1, [
+    ("Body", "M_Npc_Civilian", CAPSULE, (0, 0.72, 0), (0.5, 0.66, 0.5)),
+    ("Head", "M_Npc_Civilian", SPHERE, (0, 1.5, 0), (0.3, 0.3, 0.3)),
+])
+emit_capsulecollider(sera_ids["collider"], sera_gid, 0.32, 1.6, (0, 0.8, 0))
+emit_monobehaviour(sera_ids["npc"], sera_gid, REG["StoryEncounterNPC.cs"],
+    "  encounterId: c1_hall_sera\n  npcDisplayName: Sera\n  promptLabel: Talk to Sera\n  interactRadius: 3.0\n  priority: 20")
+emit_monobehaviour(sera_ids["fate"], sera_gid, REG["NpcFateDriver.cs"],
+    "  variants:\n"
+    "  - conditions:\n    - type: 0\n      key: c1_hall_drive\n      value: ember\n      amount: 0\n    bodyMaterial: {fileID: 2100000, guid: %s, type: 2}\n    title: Sera - Watchful\n"
+    "  - conditions:\n    - type: 0\n      key: c1_hall_drive\n      value: tide\n      amount: 0\n    bodyMaterial: {fileID: 2100000, guid: %s, type: 2}\n    title: Sera - Grateful\n"
+    "  - conditions:\n    - type: 0\n      key: c1_hall_drive\n      value: stone\n      amount: 0\n    bodyMaterial: {fileID: 2100000, guid: %s, type: 2}\n    title: Sera - Intrigued\n"
+    "  baseTitle: Sera\n  baseMaterial: {fileID: 2100000, guid: %s, type: 2}\n  bodyRenderer: {fileID: %d}" %
+    (REG["M_Seq_Ember"], REG["M_Seq_Tide"], REG["M_Seq_Stone"], REG["M_Npc_Civilian"],
+     child_renderer_id(sera_children, "Body")))
+
+# ---- area tracking (persisted currentArea) ----
+trig_annex_gid, trig_annex_ids = emit_gameobject("AreaTrigger_Annex", ["transform", "col_annex", "area_annex"])
+emit_transform(trig_annex_ids["transform"], trig_annex_gid, (0, 1.5, 22.4), (0, 0, 0), (1, 1, 1))
+add_block("""--- !u!65 &%d
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: %d}
+  m_Material: {fileID: 0}
+  m_IncludeGestures: 0
+  m_IsTrigger: 1
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 5.6, y: 3, z: 1.1}
+  m_Center: {x: 0, y: 0, z: 0}""" % (trig_annex_ids["col_annex"], trig_annex_gid))
+emit_monobehaviour(trig_annex_ids["area_annex"], trig_annex_gid, REG["AreaTrigger.cs"], "  areaId: annex")
+root_gids.append(trig_annex_gid)
+
+trig_hall_gid, trig_hall_ids = emit_gameobject("AreaTrigger_Hall", ["transform", "col_hall", "area_hall"])
+emit_transform(trig_hall_ids["transform"], trig_hall_gid, (0, 1.5, 17.6), (0, 0, 0), (1, 1, 1))
+add_block("""--- !u!65 &%d
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: %d}
+  m_Material: {fileID: 0}
+  m_IncludeGestures: 0
+  m_IsTrigger: 1
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 5.6, y: 3, z: 1.1}
+  m_Center: {x: 0, y: 0, z: 0}""" % (trig_hall_ids["col_hall"], trig_hall_gid))
+emit_monobehaviour(trig_hall_ids["area_hall"], trig_hall_gid, REG["AreaTrigger.cs"], "  areaId: hall")
+root_gids.append(trig_hall_gid)
+
+# ---- world-state applier: replays persisted consequences on every load ----
 # ---- world-state applier: replays persisted consequences on every load ----
 gid, ids = emit_gameobject("StoryWorldState", ["transform", "worldstate"])
 emit_transform(ids["transform"], gid, (0, 0, 0), (0, 0, 0), (1, 1, 1))
 emit_monobehaviour(ids["worldstate"], gid, REG["StoryWorldState.cs"],
-    "  entities:\n  - key: ember_marker\n    target: {fileID: %d}\n  - key: tide_marker\n    target: {fileID: %d}\n  - key: stone_marker\n    target: {fileID: %d}\n  - key: tide_bystanders\n    target: {fileID: %d}\n  areaVariants: []" % (m_ember, m_tide, m_stone, by_gid))
+    "  entities:\n"
+    "  - key: ember_marker\n    target: {fileID: %d}\n    defaultActive: 0\n"
+    "  - key: tide_marker\n    target: {fileID: %d}\n    defaultActive: 0\n"
+    "  - key: stone_marker\n    target: {fileID: %d}\n    defaultActive: 0\n"
+    "  - key: tide_bystanders\n    target: {fileID: %d}\n    defaultActive: 0\n"
+    "  - key: echo_shard\n    target: {fileID: %d}\n    defaultActive: 1\n"
+    "  areaVariants: []" % (m_ember, m_tide, m_stone, by_gid, shard_gid))
 root_gids.append(gid)
 
 # ---- SceneRoots (root order, Unity 6) ----

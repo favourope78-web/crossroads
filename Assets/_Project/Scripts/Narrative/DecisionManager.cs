@@ -15,6 +15,9 @@ namespace Crossroads.Narrative
         private readonly Dictionary<string, DecisionNodeData> _registered = new Dictionary<string, DecisionNodeData>();
         private readonly StateMutator _state;
 
+        /// <summary>Display-name index used to build the post-choice change notices.</summary>
+        public ProgressionIndex Index { get; set; }
+
         /// <summary>Fired after a choice is committed (before autosave); used to request persistence.</summary>
         public event Action<string, string> Resolved;
 
@@ -105,6 +108,7 @@ namespace Crossroads.Narrative
 
             // 1. apply effects through the mutator (single write path)
             evt.affinityDeltas = EffectApplier.Apply(option.effects, _state);
+            evt.notices = EffectNotices.Build(option.effects, _state, Index);
             string summary = EffectApplier.Summarize(option.effects, _state);
 
             // 2. record the decision (persistent history + future condition checks)

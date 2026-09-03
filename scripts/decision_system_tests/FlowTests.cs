@@ -391,6 +391,333 @@ namespace Crossroads.Tests
             GameServices.Shutdown(silent: true);
         }
 
+
+        // ---------------------------------------------------------------- 9. GameStateManager + progression attributes
+        private static void TestProgressionManager()
+        {
+            Log.Add("[9] GameStateManager: data-driven player attributes (rep/relationships/resources/skills/unlocks/flags)");
+            string dir = Path.Combine(Path.GetTempPath(), "crossroads_test_prog_" + Guid.NewGuid().ToString("N"));
+            Harness.Reset();
+            IEncounterSource content;
+            NewRun(dir, out content);
+            var m = GameServices.Progress;
+
+            CheckEq(m.CurrentArea, "hall", "current area defaults to hall");
+            Check(!m.AreaUnlocked("annex"), "annex locked initially");
+            CheckEq(m.Reputation("choir"), 0, "reputation starts neutral");
+            Check(!m.HasAbility("ember_pulse"), "no abilities yet");
+            CheckEq(m.Skill("echo_attunement"), 0, "skill level 0");
+            Check(!m.HasItem("echo_shard"), "no items yet");
+            CheckEq(m.Bond("mara"), 0, "bond starts neutral");
+            CheckEq(m.BondTier("mara"), "New", "bond tier label");
+
+            // apply a decision, then read everything through the manager
+            var dm = GameServices.Decisions;
+            dm.Resolve("dec_c1_hall_first_light", "ember_reach");
+            CheckEq(m.Reputation("choir"), -10, "reputation: choir -10");
+            CheckEq(m.Reputation("folk"), 5, "reputation: folk +5");
+            Check(m.HasAbility("ember_pulse"), "ability unlocked: Ember Pulse");
+            CheckEq(m.Skill("echo_attunement"), 1, "skill level +1");
+            Check(m.HasDecision("dec_c1_hall_first_light"), "decision recorded");
+            CheckEq(m.DecisionOption("dec_c1_hall_first_light"), "ember_reach", "decision exposed");
+            CheckEq(m.BondTier("mara"), "Warm", "bond tier reflects the stored bond (5)");
+            Check(m.FlagIs("c1_hall_drive", "ember"), "story flag drives state");
+
+            // manager writes also persist + expose
+            m.UnlockArea("annex");
+            m.SetCurrentArea("annex");
+            Check(m.AreaUnlocked("annex"), "area unlock via manager");
+            CheckEq(m.CurrentArea, "annex", "current area via manager");
+            m.AddItem("echo_shard");
+            m.AddReputation("wards", 8);
+            m.AddSkill("echo_attunement", 1);
+            Check(m.HasItem("echo_shard") && m.ItemCount("echo_shard") == 1, "item added");
+            CheckEq(m.Skill("echo_attunement"), 2, "skill raw-levelled");
+            CheckEq(m.Reputation("wards"), 8, "rep raw-added");
+
+            // player card for the HUD
+            var lines = m.StatusLines();
+            Check(lines.Count >= 6, "player card has status lines");
+            Check(lines[0].Contains("Ember 10"), "card shows affinities");
+            Check(m.Describe().Contains("abilities=1"), "describe() exposes the run summary");
+
+            GameServices.Shutdown(silent: true);
+            Directory.Delete(dir, true);
+        }
+
+        // ---------------------------------------------------------------- 10. shard encounter (annex loot)
+        private static void TestShardFlow()
+        {
+            Log.Add("[10] Fracture Shard: per-path line + take/leave consequences + re-talk");
+            string dir = Path.Combine(Path.GetTempPath(), "crossroads_test_shard_" + Guid.NewGuid().ToString("N"));
+            Harness.Reset();
+            IEncounterSource content;
+            NewRun(dir, out content);
+
+            // set the drive flag as if choice A was made (data path identical to runtime)
+            GameServices.State.SetFlag("c1_hall_drive", "ember");
+            GameServices.State.UnlockArea("annex");
+            var flow = GameServices.Encounters;
+            flow.Run(StoryContentBuilder.EncounterShard);
+            Check(Harness.Lines.Count == 1 && Harness.Lines[0].text.Contains("compass stuck on your name"),
+                  "shard line variant A (embeds the first decision)");
+            flow.Advance();
+            Check(Harness.Prompts.Count == 1 && Harness.Prompts[0].choices.Count == 2, "take/leave prompt (2 choices)");
+            flow.SelectChoice("take");
+            Check(GameServices.Progress.HasItem("echo_shard"), "shard added to inventory");
+            CheckEq(GameServices.Progress.Echoes, 25, "echoes +25");
+            CheckEq(GameServices.Progress.Skill("echo_attunement"), 1, "attunement +1");
+            Check(!GameServices.State.GetEntity("echo_shard", true), "shard entity switched off (gone from the world)");
+            flow.Advance();
+            Check(!flow.IsRunning, "take aftermath resolved");
+
+            // re-talk: the shard is gone - quiet-now line, no re-prompt
+            flow.Run(StoryContentBuilder.EncounterShard);
+            Check(Harness.Prompts.Count == 1, "no re-prompt on re-talk (still only the first prompt)");
+            Check(Harness.Lines[Harness.Lines.Count - 1].text.Contains("quiet now"), "re-talk variant: took it");
+            flow.Advance(); // final line shown - tap closes
+            Check(!flow.IsRunning, "re-talk ended");
+
+            // leave path in a fresh run
+            Harness.Reset();
+            GameServices.ResetRun();
+            GameServices.State.SetFlag("c1_hall_drive", "stone");
+            GameServices.State.UnlockArea("annex");
+            var flow2 = GameServices.Encounters;
+            flow2.Run(StoryContentBuilder.EncounterShard);
+            Check(Harness.Lines[0].text.Contains("measure it"), "shard line variant C (stone)");
+            flow2.Advance();
+            flow2.SelectChoice("leave");
+            Check(!GameServices.Progress.HasItem("echo_shard"), "leave: no item");
+            flow2.Advance();
+            Check(!flow2.IsRunning, "leave aftermath resolved");
+            flow2.Run(StoryContentBuilder.EncounterShard);
+            Check(Harness.Lines[Harness.Lines.Count - 1].text.Contains("choice stays yours"), "re-talk variant: left it");
+
+            GameServices.Shutdown(silent: true);
+            Directory.Delete(dir, true);
+        }
+
+        // ---------------------------------------------------------------- 11. Sera (NPC behaviour/dialogue/choices per state)
+        private static void TestSeraFlow()
+        {
+            Log.Add("[11] Sera: behaviour + dialogue + FUTURE CHOICES depend on previous decisions/state");
+            string dir = Path.Combine(Path.GetTempPath(), "crossroads_test_sera_" + Guid.NewGuid().ToString("N"));
+            Harness.Reset();
+            IEncounterSource content;
+            NewRun(dir, out content);
+
+            // ---- tide run: lookout option visible, banner text differs ----
+            GameServices.State.SetFlag("c1_hall_drive", "tide");
+            var flow = GameServices.Encounters;
+            flow.Run(StoryContentBuilder.EncounterSera);
+            Check(Harness.Lines[0].text.Contains("I owe you"), "Sera's opener differs per first choice (tide)");
+            flow.Advance();
+            var prompt = Harness.Prompts[0];
+            var ids = prompt.choices.ConvertAll(c => c.optionId);
+            Check(ids.Contains("lookout"), "tide: lookout choice available");
+            Check(!ids.Contains("shard_show"), "tide (no shard): shard_show choice hidden");
+            Check(ids.Contains("keep_low"), "fallback choice always available");
+            flow.SelectChoice("lookout");
+            CheckEq(GameServices.Progress.Bond("sera"), 10, "sera bond +10");
+            Check(GameServices.State.FlagIs("sera_watch", "1"), "sera_watch flag set");
+            Check(GameServices.State.GetEntity("sera_lamp"), "lookout entity spawned");
+            flow.Advance(); // aftermath line
+            Check(Harness.Lines[Harness.Lines.Count - 1].text.Contains("Nothing crosses"), "aftermath matches the choice");
+            flow.Advance();
+            Check(!flow.IsRunning, "sera encounter ended");
+
+            // ---- ember run + shard: shard_show becomes available (item-gated) ----
+            Harness.Reset();
+            GameServices.ResetRun();
+            GameServices.State.SetFlag("c1_hall_drive", "ember");
+            GameServices.State.AddItem("echo_shard");
+            var flow2 = GameServices.Encounters;
+            flow2.Run(StoryContentBuilder.EncounterSera);
+            Check(Harness.Lines[0].text.Contains("scent"), "Sera's opener differs per first choice (ember)");
+            flow2.Advance();
+            var ids2 = Harness.Prompts[0].choices.ConvertAll(c => c.optionId);
+            Check(ids2.Contains("shard_show"), "shard_show choice appears only AFTER the shard decision (ItemHeld)");
+            Check(!ids2.Contains("lookout"), "lookout choice hidden off the tide path");
+            flow2.SelectChoice("shard_show");
+            CheckEq(GameServices.Progress.Bond("sera"), 5, "sera bond +5 via shard_show");
+            flow2.Advance();
+            Check(Harness.Lines[Harness.Lines.Count - 1].text.Contains("Archivist"), "shard aftermath line");
+            flow2.Advance();
+            Check(!flow2.IsRunning, "sera (ember) ended");
+
+            // ---- stone run: only the fallback choice ----
+            Harness.Reset();
+            GameServices.ResetRun();
+            GameServices.State.SetFlag("c1_hall_drive", "stone");
+            var flow3 = GameServices.Encounters;
+            flow3.Run(StoryContentBuilder.EncounterSera);
+            Check(Harness.Lines[0].text.Contains("still as the wall"), "Sera's opener differs per first choice (stone)");
+            flow3.Advance();
+            var ids3 = Harness.Prompts[0].choices.ConvertAll(c => c.optionId);
+            Check(ids3.Count == 1 && ids3[0] == "keep_low", "stone (no shard): exactly the fallback choice");
+
+            GameServices.Shutdown(silent: true);
+            Directory.Delete(dir, true);
+        }
+
+        // ---------------------------------------------------------------- 12. area gate rules (accessible areas)
+        private static void TestGateRules()
+        {
+            Log.Add("[12] Area gates: ability-gated access + unlock persistence + variant colors");
+            string dir = Path.Combine(Path.GetTempPath(), "crossroads_test_gate_" + Guid.NewGuid().ToString("N"));
+            Harness.Reset();
+            IEncounterSource content;
+            NewRun(dir, out content);
+
+            var rules = new List<GateRuleData>
+            {
+                new GateRuleData { conditions = new List<DecisionConditionData> { new DecisionConditionData { type = ConditionType.AbilityOwned, key = "ember_pulse" } }, opens = true, text = "Ember text" },
+                new GateRuleData { conditions = new List<DecisionConditionData> { new DecisionConditionData { type = ConditionType.AbilityOwned, key = "tide_mend" } }, opens = true, text = "Tide text" },
+                new GateRuleData { opens = false, text = "Sealed text" }
+            };
+
+            Check(GateRuleEvaluator.FirstMatch(rules, GameServices.State).text == "Sealed text", "no ability -> sealed fallback");
+            Check(GateRuleEvaluator.FirstMatch(rules, GameServices.State).opens == false, "fallback keeps the gate shut");
+
+            GameServices.Decisions.Resolve("dec_c1_hall_first_light", "ember_reach");
+            var match = GateRuleEvaluator.FirstMatch(rules, GameServices.State);
+            Check(match.opens && match.text == "Ember text", "ember ability -> gate opens with its flavor");
+
+            GameServices.Progress.UnlockArea("annex");
+            GameServices.State.SetCurrentArea("annex");
+            Check(GameServices.Progress.AreaUnlocked("annex") && GameServices.Progress.CurrentArea == "annex",
+                  "unlock + current area persisted in state");
+
+            // tide path: the same rules yield the tide flavor
+            GameServices.ResetRun();
+            GameServices.Decisions.Resolve("dec_c1_hall_first_light", "tide_clear");
+            Check(GateRuleEvaluator.FirstMatch(rules, GameServices.State).text == "Tide text", "tide ability -> tide flavor");
+
+            GameServices.Shutdown(silent: true);
+            Directory.Delete(dir, true);
+        }
+
+        // ---------------------------------------------------------------- 13. restart: full progression persists
+        private static void TestRestartProgression()
+        {
+            Log.Add("[13] Restart: decisions STILL affect the world (abilities/items/rep/areas/skills restored)");
+            string dir = Path.Combine(Path.GetTempPath(), "crossroads_test_progrestart_" + Guid.NewGuid().ToString("N"));
+            Harness.Reset();
+            IEncounterSource content;
+            NewRun(dir, out content);
+
+            // --- session 1: choose A, unlock the gate, take the shard, talk to Sera ---
+            var flow = GameServices.Encounters;
+            flow.Run(StoryContentBuilder.EncounterFirstLight);
+            flow.Advance(); flow.Advance(); flow.Advance();
+            flow.SelectChoice("ember_reach");
+            flow.Advance(); flow.Advance();
+
+            GameServices.Progress.UnlockArea("annex");
+            GameServices.State.SetCurrentArea("annex");
+            flow.Run(StoryContentBuilder.EncounterShard);
+            flow.Advance();
+            flow.SelectChoice("take");
+            flow.Advance(); flow.Advance();
+            GameServices.State.SetCurrentArea("hall");
+            flow.Run(StoryContentBuilder.EncounterSera);
+            flow.Advance();
+            flow.SelectChoice("keep_low");
+            flow.Advance(); flow.Advance();
+
+            var m = GameServices.Progress;
+            Check(m.HasDecision("dec_c1_hall_first_light"), "session1: decision A recorded");
+            Check(m.HasDecision("dec_east_shard"), "session1: shard decision recorded");
+            Check(m.HasDecision("dec_sera_lookout"), "session1: sera decision recorded");
+            Check(m.HasAbility("ember_pulse") && m.AreaUnlocked("annex"), "session1: progression applied");
+            Check(m.HasItem("echo_shard"), "session1: item held");
+            CheckEq(m.Reputation("choir"), -10, "session1: reputation applied");
+
+            // --- kill the app ---
+            Harness.Unsubscribe();
+            GameServices.Shutdown(silent: true);
+            Harness.Reset();
+
+            // --- session 2: relaunch ---
+            NewRun(dir, out content);
+            var m2 = GameServices.Progress;
+            CheckEq(m2.State.State.decisions.Count, 3, "session2: all 3 decisions restored");
+            CheckEq(m2.DecisionOption("dec_c1_hall_first_light"), "ember_reach", "session2: choice A restored");
+            Check(m2.HasAbility("ember_pulse"), "session2: ability restored (gate would open)");
+            Check(m2.AreaUnlocked("annex"), "session2: area access restored");
+
+            var rules = new List<GateRuleData>
+            {
+                new GateRuleData { conditions = new List<DecisionConditionData> { new DecisionConditionData { type = ConditionType.AbilityOwned, key = "ember_pulse" } }, opens = true },
+                new GateRuleData { opens = false }
+            };
+            Check(GateRuleEvaluator.FirstMatch(rules, m2.State).opens, "session2: gate evaluates OPEN from the restored ability");
+
+            Check(m2.HasItem("echo_shard"), "session2: item restored");
+            CheckEq(m2.Reputation("choir"), -10, "session2: reputation restored");
+            CheckEq(m2.Skill("echo_attunement"), 2, "session2: skill levels restored (choice + shard)");
+            CheckEq(m2.CurrentArea, "hall", "session2: current area restored");
+            Check(!GameServices.State.GetEntity("echo_shard", true), "session2: shard entity stays OFF (already taken)");
+
+            GameServices.Shutdown(silent: true);
+            Directory.Delete(dir, true);
+        }
+
+        // ---------------------------------------------------------------- 14. post-choice notices + schema upgrade
+        private static void TestNoticesAndUpgrade()
+        {
+            Log.Add("[14] Change notices (brief what-changed) + v1->v2 save upgrade");
+            string dir = Path.Combine(Path.GetTempPath(), "crossroads_test_notice_" + Guid.NewGuid().ToString("N"));
+            Harness.Reset();
+            IEncounterSource content;
+            NewRun(dir, out content);
+            Harness.Reset(); // ignore boot events
+
+            var evt = GameServices.Decisions.Resolve("dec_c1_hall_first_light", "ember_reach");
+            Check(evt.notices.Count >= 3, "notices generated for the choice");
+            string joined = string.Join("|", evt.notices.ConvertAll(n => n.text));
+            Check(joined.Contains("Ember +10"), "notice: affinity line");
+            Check(joined.Contains("Ability: Ember Pulse"), "notice: ability unlock (data-driven name)");
+            Check(joined.Contains("The Choir -10"), "notice: reputation group (data-driven name)");
+            Check(joined.Contains("Area open") == false, "no area notice on this choice");
+
+            // another run: shard take -> item + resource notices
+            GameServices.ResetRun();
+            GameServices.State.SetFlag("c1_hall_drive", "tide");
+            GameServices.State.UnlockArea("annex");
+            var flow = GameServices.Encounters;
+            flow.Run(StoryContentBuilder.EncounterShard);
+            flow.Advance();
+            var evt2 = GameServices.Decisions.Resolve("dec_east_shard", "take");
+            string joined2 = string.Join("|", evt2.notices.ConvertAll(n => n.text));
+            Check(joined2.Contains("Fracture Shard"), "notice: item name");
+            Check(joined2.Contains("Echoes +25"), "notice: resource");
+            GameServices.Shutdown(silent: true);
+            Directory.Delete(dir, true);
+
+            // ---- schema upgrade: hand-written v1 file with legacy fields ----
+            Log.Add("[15] SaveSystem upgrades v1 files in memory (progression fields default)");
+            string dir2 = Path.Combine(Path.GetTempPath(), "crossroads_test_v1_" + Guid.NewGuid().ToString("N"));
+            System.IO.Directory.CreateDirectory(dir2);
+            string v1 = "{\"schemaVersion\":1,\"meta\":{\"slotName\":\"v1 save\",\"timestamp\":\"x\",\"playtimeSec\":0},"
+                + "\"scene\":{\"sceneKey\":\"FirstLocation\",\"checkpointId\":\"hall_spawn\"},"
+                + "\"gameState\":{\"flags\":[{\"key\":\"c1_hall_drive\",\"value\":\"stone\"}],"
+                + "\"decisions\":[{\"decisionId\":\"dec_c1_hall_first_light\",\"optionId\":\"stone_still\",\"summary\":\"s\",\"resolvedAt\":\"t\"}],"
+                + "\"stone\":10,\"echoBank\":15}}";
+            File.WriteAllText(Path.Combine(dir2, "save_slot_0.json"), v1);
+            var save = new SaveSystem(new TestJsonAdapter(), new TempPaths(dir2));
+            var data = save.Load(0);
+            Check(data != null, "v1 file loads (not refused)");
+            Check(data.schemaVersion == SaveData.CurrentSchemaVersion, "upgraded to current schema in memory");
+            CheckEq(data.gameState.DecisionOption("dec_c1_hall_first_light"), "stone_still", "legacy decision preserved");
+            CheckEq(data.gameState.GetFlag("c1_hall_drive"), "stone", "legacy flag preserved");
+            CheckEq(data.gameState.stone, 10, "legacy affinity preserved");
+            Check(!data.gameState.HasAbility("ember_pulse") && !data.gameState.IsAreaUnlocked("annex"),
+                  "new progression fields default (v1 had none)");
+            Directory.Delete(dir2, true);
+        }
+
         public static int Main(string[] args)
         {
             Console.WriteLine("CROSSROADS decision-system flow tests");
@@ -404,6 +731,12 @@ namespace Crossroads.Tests
             TestDecisionManagerApi();
             TestSaveResilience();
             TestContentContracts();
+            TestProgressionManager();
+            TestShardFlow();
+            TestSeraFlow();
+            TestGateRules();
+            TestRestartProgression();
+            TestNoticesAndUpgrade();
 
             Console.WriteLine("======================================");
             foreach (var line in Log) Console.WriteLine(line);

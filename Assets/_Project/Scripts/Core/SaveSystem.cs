@@ -79,10 +79,17 @@ namespace Crossroads.Core
                 SaveData data = _json.FromJson<SaveData>(json);
                 if (data == null || data.schemaVersion < 1 || data.schemaVersion > SaveData.CurrentSchemaVersion)
                 {
-                    // Future-proof: keep the file, refuse silently (SaveMigrator arrives with schema v2+)
+                    // Future-proof: keep the file, refuse silently (SaveMigrator table arrives with schema v3+)
                     StoryLog.LogWarning("[CROSSROADS] Save schema v" + (data != null ? data.schemaVersion.ToString() : "?") +
                                                  " not supported (current " + SaveData.CurrentSchemaVersion + ") - ignoring " + path);
                     return null;
+                }
+                if (data.schemaVersion < SaveData.CurrentSchemaVersion)
+                {
+                    // In-memory migration: v1 -> v2 (progression fields come up defaulted by the
+                    // deserializer's field initializers). The upgraded version is stamped on next persist.
+                    StoryLog.Log("[CROSSROADS] Save upgraded v" + data.schemaVersion + " -> v" + SaveData.CurrentSchemaVersion);
+                    data.schemaVersion = SaveData.CurrentSchemaVersion;
                 }
                 _fileName = Path.GetFileName(path);
                 Current = data;

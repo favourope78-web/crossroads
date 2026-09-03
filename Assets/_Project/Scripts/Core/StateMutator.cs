@@ -158,6 +158,99 @@ namespace Crossroads.Core
         public string DecisionOption(string decisionId) { return State.DecisionOption(decisionId); }
         public ResolvedDecisionEntry GetDecision(string decisionId) { return State.GetDecision(decisionId); }
 
+        // ------------------------------------------------ reputation (faction standing, -100..100)
+        public int GetReputation(string groupId) { return State.GetReputation(groupId); }
+
+        public void AddReputation(string groupId, int amount)
+        {
+            if (amount == 0 || string.IsNullOrEmpty(groupId)) return;
+            int next = GetReputation(groupId) + amount;
+            if (next < -100) next = -100;
+            if (next > 100) next = 100;
+            SetReputation(groupId, next);
+            EventBus.Publish(new ReputationChangedEvent { groupId = groupId, delta = amount, total = next });
+            StoryLog.Log("[STATE] reputation " + groupId + " " + (amount > 0 ? "+" : "") + amount + " -> " + next);
+        }
+
+        public void SetReputation(string groupId, int amount)
+        {
+            var e = GameState.FindEntry(State.reputation, groupId);
+            if (e == null) State.reputation.Add(new StringIntEntry(groupId, amount));
+            else if (e.value == amount) return;
+            else e.value = amount;
+        }
+
+        // ------------------------------------------------ unlocks (player abilities / powers)
+        public bool HasAbility(string abilityId) { return State.HasAbility(abilityId); }
+
+        public void UnlockAbility(string abilityId)
+        {
+            if (string.IsNullOrEmpty(abilityId) || State.HasAbility(abilityId)) return;
+            State.abilities.Add(new StringEntry(abilityId, "1"));
+            EventBus.Publish(new AbilityUnlockedEvent { abilityId = abilityId });
+            StoryLog.Log("[STATE] ability unlocked: " + abilityId);
+        }
+
+        // ------------------------------------------------ skills (levels)
+        public int GetSkill(string skillId) { return State.GetSkill(skillId); }
+
+        public void AddSkillLevel(string skillId, int delta)
+        {
+            if (delta == 0 || string.IsNullOrEmpty(skillId)) return;
+            int next = GetSkill(skillId) + delta;
+            SetSkillLevel(skillId, next);
+            EventBus.Publish(new SkillChangedEvent { skillId = skillId, delta = delta, level = next });
+            StoryLog.Log("[STATE] skill " + skillId + " " + (delta > 0 ? "+" : "") + delta + " -> " + next);
+        }
+
+        public void SetSkillLevel(string skillId, int level)
+        {
+            var e = GameState.FindEntry(State.skills, skillId);
+            if (e == null) State.skills.Add(new StringIntEntry(skillId, level));
+            else if (e.value == level) return;
+            else e.value = level;
+        }
+
+        // ------------------------------------------------ resources / items
+        public bool HasItem(string itemId) { return State.HasItem(itemId); }
+        public int ItemCount(string itemId) { return State.ItemCount(itemId); }
+
+        public void AddItem(string itemId)
+        {
+            if (string.IsNullOrEmpty(itemId)) return;
+            State.items.Add(new StringEntry(itemId, "1"));
+            EventBus.Publish(new ItemChangedEvent { itemId = itemId, added = true, count = State.ItemCount(itemId) });
+            StoryLog.Log("[STATE] item + " + itemId + " (x" + State.ItemCount(itemId) + ")");
+        }
+
+        public void RemoveItem(string itemId)
+        {
+            var e = GameState.FindEntry(State.items, itemId);
+            if (e == null) return;
+            State.items.Remove(e);
+            EventBus.Publish(new ItemChangedEvent { itemId = itemId, added = false, count = State.ItemCount(itemId) });
+            StoryLog.Log("[STATE] item - " + itemId);
+        }
+
+        // ------------------------------------------------ accessible areas
+        public bool IsAreaUnlocked(string areaId) { return State.IsAreaUnlocked(areaId); }
+
+        public void UnlockArea(string areaId)
+        {
+            if (string.IsNullOrEmpty(areaId) || State.IsAreaUnlocked(areaId)) return;
+            State.unlockAreas.Add(new StringEntry(areaId, "1"));
+            EventBus.Publish(new AreaUnlockedEvent { areaId = areaId });
+            StoryLog.Log("[STATE] area unlocked: " + areaId);
+        }
+
+        public void SetCurrentArea(string areaId)
+        {
+            if (string.IsNullOrEmpty(areaId) || State.currentArea == areaId) return;
+            State.currentArea = areaId;
+            EventBus.Publish(new AreaChangedEvent { areaId = areaId });
+            StoryLog.Log("[STATE] area -> " + areaId);
+        }
+
         // ------------------------------------------------ echoes currency (§3.3)
         public void GrantEchoes(int amount)
         {
@@ -176,6 +269,12 @@ namespace Crossroads.Core
             State.entities = saved.entities;
             State.vars = saved.vars;
             State.bonds = saved.bonds;
+            State.reputation = saved.reputation;
+            State.abilities = saved.abilities;
+            State.items = saved.items;
+            State.skills = saved.skills;
+            State.unlockAreas = saved.unlockAreas;
+            State.currentArea = saved.currentArea;
             State.decisions = saved.decisions;
             State.codex = saved.codex;
             State.ember = saved.ember; State.tide = saved.tide; State.stone = saved.stone; State.hollow = saved.hollow;

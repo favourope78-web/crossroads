@@ -63,5 +63,13 @@
  "StateMutator.cs": "c0a1fed200000000000000000000008b",
  "UnityJsonSerializer.cs": "c0a1fed200000000000000000000008c",
  "PersistentDataPathProvider.cs": "c0a1fed200000000000000000000008d",
- "CL_C1_StoryContent.asset": "c0a1fed2000000000000000000000090"
+ "CL_C1_StoryContent.asset": "c0a1fed2000000000000000000000090",
+ "GameStateManager.cs": "c0a1fed2000000000000000000000079",
+ "ProgressionIndex.cs": "c0a1fed200000000000000000000007a",
+ "EffectNotices.cs": "c0a1fed200000000000000000000007b",
+ "GateRuleEvaluator.cs": "c0a1fed200000000000000000000007c",
+ "AreaGate.cs": "c0a1fed2000000000000000000000061",
+ "StoryEventInteractable.cs": "c0a1fed2000000000000000000000062",
+ "NpcFateDriver.cs": "c0a1fed200000000000000000000005b",
+ "AreaTrigger.cs": "c0a1fed200000000000000000000005c"
 }

@@ -12,6 +12,8 @@ namespace Crossroads.Gameplay
     {
         public string key = "";
         public GameObject target;
+        [Tooltip("Active state before any decision ever touched this key (e.g. an item that exists until taken).")]
+        public bool defaultActive = false;
     }
 
     /// <summary>Maps a district variant key to a dressing object (the "city remembers" system).</summary>
@@ -28,6 +30,7 @@ namespace Crossroads.Gameplay
     /// - On start (after the save is loaded): activates exactly the consequence objects the
     ///   saved decisions produced -> proof of persistence after restart.
     /// - On runtime EntityStateChangedEvent (a choice just made): toggles immediately.
+    /// - Handles state resets (dev replay) and per-entity defaults.
     /// Consequences are NOT cosmetic-only: the same keys/flags feed ConditionEvaluator, so
     /// later encounters can gate dialogue, spawns, paths and endings on them.
     /// </summary>
@@ -40,11 +43,13 @@ namespace Crossroads.Gameplay
         {
             ApplyFromState();
             EventBus.Subscribe<EntityStateChangedEvent>(OnEntityStateChanged);
+            EventBus.Subscribe<StateResetEvent>(OnStateReset);
         }
 
         private void OnDestroy()
         {
             EventBus.Unsubscribe<EntityStateChangedEvent>(OnEntityStateChanged);
+            EventBus.Unsubscribe<StateResetEvent>(OnStateReset);
         }
 
         /// <summary>Replays the persisted state (called at boot after GameServices loaded the save).</summary>
@@ -56,7 +61,10 @@ namespace Crossroads.Gameplay
             {
                 EntityBinding b = entities[i];
                 if (b == null || b.target == null) continue;
-                bool active = GameServices.State.GetEntity(b.key, false);
+                bool active = b.defaultActive;
+                if (GameServices.State.State.entities != null)
+                    foreach (var e in GameServices.State.State.entities)
+                        if (e != null && b.key == e.key) { active = e.value; break; }
                 if (b.target.activeSelf != active) b.target.SetActive(active);
             }
 
@@ -73,6 +81,11 @@ namespace Crossroads.Gameplay
         private void OnEntityStateChanged(EntityStateChangedEvent e)
         {
             SetEntity(e.entityKey, e.active);
+        }
+
+        private void OnStateReset(StateResetEvent e)
+        {
+            ApplyFromState();
         }
 
         public void SetEntity(string key, bool active)

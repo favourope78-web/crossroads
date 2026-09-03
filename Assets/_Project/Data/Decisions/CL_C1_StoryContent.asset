@@ -18,6 +18,14 @@ MonoBehaviour:
       npcName: "Mara"
       graphId: "g_c1_hall_first_light"
       startNodeId: "start"
+    - id: "c1_hall_shard"
+      npcName: "The Shard"
+      graphId: "g_c1_hall_shard"
+      startNodeId: "start"
+    - id: "c1_hall_sera"
+      npcName: "Sera"
+      graphId: "g_c1_hall_sera"
+      startNodeId: "start"
     decisions:
     - id: "dec_c1_hall_first_light"
       promptText: "The Fracture light hovers over the hall. It is waiting. How do you answer it?"
@@ -42,6 +50,14 @@ MonoBehaviour:
           key: "mara"
           value: ""
           amount: 5
+        - type: 11
+          key: "choir"
+          value: ""
+          amount: -10
+        - type: 11
+          key: "folk"
+          value: ""
+          amount: 5
         - type: 7
           key: "hall"
           value: "ember"
@@ -50,6 +66,14 @@ MonoBehaviour:
           key: "ember_marker"
           value: "1"
           amount: 0
+        - type: 13
+          key: "ember_pulse"
+          value: ""
+          amount: 0
+        - type: 14
+          key: "echo_attunement"
+          value: ""
+          amount: 1
         - type: 9
           key: "c1_echo_ember"
           value: ""
@@ -75,6 +99,14 @@ MonoBehaviour:
           key: "mara"
           value: ""
           amount: 10
+        - type: 11
+          key: "folk"
+          value: ""
+          amount: 8
+        - type: 11
+          key: "choir"
+          value: ""
+          amount: -3
         - type: 7
           key: "hall"
           value: "tide"
@@ -87,6 +119,14 @@ MonoBehaviour:
           key: "tide_bystanders"
           value: "1"
           amount: 0
+        - type: 13
+          key: "tide_mend"
+          value: ""
+          amount: 0
+        - type: 14
+          key: "echo_attunement"
+          value: ""
+          amount: 1
         - type: 9
           key: "c1_echo_tide"
           value: ""
@@ -112,6 +152,18 @@ MonoBehaviour:
           key: "mara"
           value: ""
           amount: 3
+        - type: 11
+          key: "wards"
+          value: ""
+          amount: 8
+        - type: 11
+          key: "folk"
+          value: ""
+          amount: 2
+        - type: 11
+          key: "choir"
+          value: ""
+          amount: -2
         - type: 7
           key: "hall"
           value: "stone"
@@ -120,6 +172,14 @@ MonoBehaviour:
           key: "stone_marker"
           value: "1"
           amount: 0
+        - type: 13
+          key: "stone_ward"
+          value: ""
+          amount: 0
+        - type: 14
+          key: "echo_attunement"
+          value: ""
+          amount: 1
         - type: 9
           key: "c1_echo_stone"
           value: ""
@@ -128,6 +188,135 @@ MonoBehaviour:
           key: ""
           value: ""
           amount: 15
+    - id: "dec_east_shard"
+      promptText: "The shard hums against your hand. The hall shifts its weight, waiting."
+      timeLimitSeconds: 0
+      timeoutOptionIndex: 0
+      codexEntryId: "c1_shard"
+      options:
+      - id: "take"
+        text: "Take it. It hums when you touch it."
+        afterText: "Cold... no, warm. The shard settles against your palm like it has been waiting for you."
+        conditions: []
+        effects:
+        - type: 15
+          key: "echo_shard"
+          value: ""
+          amount: 0
+        - type: 10
+          key: ""
+          value: ""
+          amount: 25
+        - type: 14
+          key: "echo_attunement"
+          value: ""
+          amount: 1
+        - type: 0
+          key: "shard_taken"
+          value: "1"
+          amount: 0
+        - type: 8
+          key: "echo_shard"
+          value: "0"
+          amount: 0
+        - type: 9
+          key: "c1_shard"
+          value: ""
+          amount: 0
+        - type: 4
+          key: "mara"
+          value: ""
+          amount: 3
+      - id: "leave"
+        text: "Leave it. Maybe the hall needs it more."
+        afterText: "You step away. The shard dims, and for a second the hall seems to breathe with relief."
+        conditions: []
+        effects:
+        - type: 0
+          key: "shard_left"
+          value: "1"
+          amount: 0
+        - type: 11
+          key: "folk"
+          value: ""
+          amount: 2
+        - type: 4
+          key: "mara"
+          value: ""
+          amount: 2
+        - type: 9
+          key: "c1_shard_left"
+          value: ""
+          amount: 0
+    - id: "dec_sera_lookout"
+      promptText: "Sera watches the hall. What do you say?"
+      timeLimitSeconds: 0
+      timeoutOptionIndex: 0
+      codexEntryId: ""
+      options:
+      - id: "lookout"
+        text: "I'd feel better with an eye on that north seal."
+        afterText: "Sera nods once and takes up a spot by the north wall, eyes on the seal."
+        conditions:
+        - type: 0
+          key: "c1_hall_drive"
+          value: "tide"
+          amount: 0
+        effects:
+        - type: 4
+          key: "sera"
+          value: ""
+          amount: 10
+        - type: 11
+          key: "folk"
+          value: ""
+          amount: 3
+        - type: 0
+          key: "sera_watch"
+          value: "1"
+          amount: 0
+        - type: 8
+          key: "sera_lamp"
+          value: "1"
+          amount: 0
+        - type: 9
+          key: "c1_sera_lookout"
+          value: ""
+          amount: 0
+      - id: "shard_show"
+        text: "Show her what you found in the annex."
+        afterText: "Sera traces its edge. 'They'll want this. Keep it hidden, and keep moving.'"
+        conditions:
+        - type: 10
+          key: "echo_shard"
+          value: ""
+          amount: 0
+        effects:
+        - type: 4
+          key: "sera"
+          value: ""
+          amount: 5
+        - type: 11
+          key: "folk"
+          value: ""
+          amount: 2
+        - type: 9
+          key: "c1_archivist_hint"
+          value: ""
+          amount: 0
+      - id: "keep_low"
+        text: "Keep your head down, Sera."
+        afterText: "Sera melts back into the shadows. You almost lose her."
+        conditions: []
+        effects:
+        - type: 4
+          key: "sera"
+          value: ""
+          amount: 3
+        - type: 0
+          key: "sera_low"
+          value: "1"
+          amount: 0
     graphs:
     - id: "g_c1_hall_first_light"
       nodes:
@@ -239,3 +428,265 @@ MonoBehaviour:
         decisionId: ""
         conditions: []
         end: 1
+    - id: "g_c1_hall_shard"
+      nodes:
+      - id: "start"
+        speaker: ""
+        text: ""
+        nextId: ""
+        branchPrefix: "shard_line"
+        decisionId: ""
+        conditions: []
+        end: 0
+      - id: "shard_line_ember"
+        speaker: "The Shard"
+        text: "It is still warm where the light fell. It tilts toward you - like a compass stuck on your name."
+        nextId: "shard_offer"
+        branchPrefix: ""
+        decisionId: ""
+        conditions:
+        - type: 0
+          key: "c1_hall_drive"
+          value: "ember"
+          amount: 0
+        - type: 7
+          key: "dec_east_shard"
+          value: ""
+          amount: 0
+        end: 0
+      - id: "shard_line_tide"
+        speaker: "The Shard"
+        text: "It hums low, like a held breath. You feel the twins' fear in it - and their relief."
+        nextId: "shard_offer"
+        branchPrefix: ""
+        decisionId: ""
+        conditions:
+        - type: 0
+          key: "c1_hall_drive"
+          value: "tide"
+          amount: 0
+        - type: 7
+          key: "dec_east_shard"
+          value: ""
+          amount: 0
+        end: 0
+      - id: "shard_line_stone"
+        speaker: "The Shard"
+        text: "It does not move. It waits, the way you waited. It watches you measure it."
+        nextId: "shard_offer"
+        branchPrefix: ""
+        decisionId: ""
+        conditions:
+        - type: 0
+          key: "c1_hall_drive"
+          value: "stone"
+          amount: 0
+        - type: 7
+          key: "dec_east_shard"
+          value: ""
+          amount: 0
+        end: 0
+      - id: "shard_line_left"
+        speaker: "The Shard"
+        text: "You left it before. It still hums - quieter. The choice stays yours."
+        nextId: "shard_left_end"
+        branchPrefix: ""
+        decisionId: ""
+        conditions:
+        - type: 6
+          key: "dec_east_shard"
+          value: "leave"
+          amount: 0
+        end: 0
+      - id: "shard_left_end"
+        speaker: "The Shard"
+        text: "The shard pulses once - acknowledgement - and dims."
+        nextId: ""
+        branchPrefix: ""
+        decisionId: ""
+        conditions: []
+        end: 1
+      - id: "shard_line_done"
+        speaker: "The Shard"
+        text: "The shard is quiet now. It chose you once."
+        nextId: ""
+        branchPrefix: ""
+        decisionId: ""
+        conditions:
+        - type: 6
+          key: "dec_east_shard"
+          value: "take"
+          amount: 0
+        end: 1
+      - id: "shard_offer"
+        speaker: ""
+        text: ""
+        nextId: ""
+        branchPrefix: "shard_after"
+        decisionId: "dec_east_shard"
+        conditions: []
+        end: 0
+      - id: "shard_after_take"
+        speaker: ""
+        text: ""
+        nextId: ""
+        branchPrefix: ""
+        decisionId: ""
+        conditions:
+        - type: 6
+          key: "dec_east_shard"
+          value: "take"
+          amount: 0
+        end: 1
+      - id: "shard_after_leave"
+        speaker: ""
+        text: ""
+        nextId: ""
+        branchPrefix: ""
+        decisionId: ""
+        conditions:
+        - type: 6
+          key: "dec_east_shard"
+          value: "leave"
+          amount: 0
+        end: 1
+    - id: "g_c1_hall_sera"
+      nodes:
+      - id: "start"
+        speaker: ""
+        text: ""
+        nextId: ""
+        branchPrefix: "sera_line"
+        decisionId: ""
+        conditions: []
+        end: 0
+      - id: "sera_line_ember"
+        speaker: "Sera"
+        text: "You're the one who reached for it. The Choir has your scent now. I'd stay off the street."
+        nextId: "sera_offer"
+        branchPrefix: ""
+        decisionId: ""
+        conditions:
+        - type: 0
+          key: "c1_hall_drive"
+          value: "ember"
+          amount: 0
+        end: 0
+      - id: "sera_line_tide"
+        speaker: "Sera"
+        text: "You got my sisters out. I owe you. If you need an eye on that north seal - I'm your lookout."
+        nextId: "sera_offer"
+        branchPrefix: ""
+        decisionId: ""
+        conditions:
+        - type: 0
+          key: "c1_hall_drive"
+          value: "tide"
+          amount: 0
+        end: 0
+      - id: "sera_line_stone"
+        speaker: "Sera"
+        text: "You went still as the wall and the sweep passed right through. I don't know if that's luck - or something else."
+        nextId: "sera_offer"
+        branchPrefix: ""
+        decisionId: ""
+        conditions:
+        - type: 0
+          key: "c1_hall_drive"
+          value: "stone"
+          amount: 0
+        end: 0
+      - id: "sera_line_default"
+        speaker: "Sera"
+        text: "Careful. The Choir just swept the hall again. Something in there is looking at you."
+        nextId: "sera_offer"
+        branchPrefix: ""
+        decisionId: ""
+        conditions: []
+        end: 0
+      - id: "sera_offer"
+        speaker: ""
+        text: ""
+        nextId: ""
+        branchPrefix: "sera_after"
+        decisionId: "dec_sera_lookout"
+        conditions: []
+        end: 0
+      - id: "sera_after_lookout"
+        speaker: "Sera"
+        text: "I'll be here. Nothing crosses that seal without me knowing it."
+        nextId: "end"
+        branchPrefix: ""
+        decisionId: ""
+        conditions:
+        - type: 6
+          key: "dec_sera_lookout"
+          value: "lookout"
+          amount: 0
+        end: 0
+      - id: "sera_after_shard_show"
+        speaker: "Sera"
+        text: "A shard from the light... The Archivist would pay to study that. Stay careful, Ari."
+        nextId: "end"
+        branchPrefix: ""
+        decisionId: ""
+        conditions:
+        - type: 6
+          key: "dec_sera_lookout"
+          value: "shard_show"
+          amount: 0
+        end: 0
+      - id: "sera_after_keep_low"
+        speaker: "Sera"
+        text: "...Yeah. Low is good. Low is what keeps you breathing."
+        nextId: "end"
+        branchPrefix: ""
+        decisionId: ""
+        conditions:
+        - type: 6
+          key: "dec_sera_lookout"
+          value: "keep_low"
+          amount: 0
+        end: 0
+      - id: "end"
+        speaker: ""
+        text: ""
+        nextId: ""
+        branchPrefix: ""
+        decisionId: ""
+        conditions: []
+        end: 1
+    progression:
+      abilities:
+        - id: "ember_pulse"
+          name: "Ember Pulse"
+          line: "ember"
+          description: "The first echo. Heat answers your will. (Gates: hall energy seals.)"
+        - id: "tide_mend"
+          name: "Tide Mend"
+          line: "tide"
+          description: "The first echo. The hall breathes easier around you. (Gates: hall energy seals.)"
+        - id: "stone_ward"
+          name: "Stone Ward"
+          line: "stone"
+          description: "The first echo. Stillness bends around you. (Gates: hall energy seals.)"
+      skills:
+        - id: "echo_attunement"
+          name: "Echo Attunement"
+          maxLevel: 3
+      items:
+        - id: "echo_shard"
+          name: "Fracture Shard"
+          description: "A cold-warm sliver of the Fracture light. It held still for you."
+      reputationGroups:
+        - id: "choir"
+          name: "The Choir"
+        - id: "folk"
+          name: "People of Vessa"
+        - id: "wards"
+          name: "The Wardens"
+      areas:
+        - id: "hall"
+          name: "Fracture Hall"
+        - id: "annex"
+          name: "North Annex"

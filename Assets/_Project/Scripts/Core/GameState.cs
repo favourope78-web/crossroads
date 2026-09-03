@@ -22,6 +22,14 @@ namespace Crossroads.Core
         public List<StringIntEntry> vars = new List<StringIntEntry>();
         public List<StringIntEntry> bonds = new List<StringIntEntry>();   // npcId -> -100..100
 
+        // ---- progression attributes (all decision-driven, all persisted) ----
+        public List<StringIntEntry> reputation = new List<StringIntEntry>(); // groupId -> -100..100
+        public List<StringEntry> abilities = new List<StringEntry>();        // unlocked ability ids
+        public List<StringEntry> items = new List<StringEntry>();            // carried item ids (stacking)
+        public List<StringIntEntry> skills = new List<StringIntEntry>();     // skillId -> level
+        public List<StringEntry> unlockAreas = new List<StringEntry>();      // accessible area ids
+        public string currentArea = "hall";                                  // where the player is now
+
         public List<ResolvedDecisionEntry> decisions = new List<ResolvedDecisionEntry>();
         public List<string> codex = new List<string>();
 
@@ -40,6 +48,16 @@ namespace Crossroads.Core
         public int GetBond(string npcId) { return GetEntry(bonds, npcId, 0); }
         public bool GetEntity(string key, bool fallback = false) { return GetBoolEntry(entities, key, fallback); }
         public bool HasFlag(string key) { return FindEntry(flags, key) != null; }
+
+        // ---- progression helpers (read-only; writes belong to StateMutator) ----
+        public int GetReputation(string groupId, int fallback = 0) { return GetEntry(reputation, groupId, fallback); }
+        public bool HasAbility(string abilityId) { return ContainsKey(abilities, abilityId); }
+        public int AbilityCount(string abilityId) { return CountKeys(abilities, abilityId); }
+        public bool HasItem(string itemId) { return ContainsKey(items, itemId); }
+        public int ItemCount(string itemId) { return CountKeys(items, itemId); }
+        public int GetSkill(string skillId, int fallback = 0) { return GetEntry(skills, skillId, fallback); }
+        public bool IsAreaUnlocked(string areaId) { return ContainsKey(unlockAreas, areaId); }
+        public string CurrentArea { get { return string.IsNullOrEmpty(currentArea) ? "hall" : currentArea; } }
         public bool HasCodex(string id) { return codex != null && codex.Contains(id); }
         public ResolvedDecisionEntry GetDecision(string decisionId)
         {
@@ -105,6 +123,19 @@ namespace Crossroads.Core
             if (list == null) return null;
             for (int i = 0; i < list.Count; i++) if (list[i] != null && list[i].key == key) return list[i];
             return null;
+        }
+
+        private static bool ContainsKey(List<StringEntry> list, string key)
+        {
+            return FindEntry(list, key) != null;
+        }
+
+        private static int CountKeys(List<StringEntry> list, string key)
+        {
+            if (list == null) return 0;
+            int n = 0;
+            for (int i = 0; i < list.Count; i++) if (list[i] != null && list[i].key == key) n++;
+            return n;
         }
     }
 }

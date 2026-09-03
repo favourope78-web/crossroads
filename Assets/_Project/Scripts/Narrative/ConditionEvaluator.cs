@@ -56,6 +56,21 @@ namespace Crossroads.Narrative
                 case ConditionType.CodexOwned:
                     return state.HasCodex(c.key);
 
+                case ConditionType.ReputationAtLeast:
+                    return state.GetReputation(c.key) >= c.amount;
+
+                case ConditionType.ItemHeld:
+                    return state.HasItem(c.key);
+
+                case ConditionType.AbilityOwned:
+                    return state.HasAbility(c.key);
+
+                case ConditionType.AreaUnlocked:
+                    return state.IsAreaUnlocked(c.key);
+
+                case ConditionType.SkillAtLeast:
+                    return state.GetSkill(c.key) >= c.amount;
+
                 default:
                     return true;
             }

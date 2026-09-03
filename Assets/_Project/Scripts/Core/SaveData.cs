@@ -2,11 +2,13 @@ using System;
 
 namespace Crossroads.Core
 {
-    /// <summary>Save-file payload, mirrors GAME_DESIGN §12.2 (schema-versioned JSON).</summary>
+    /// <summary>Save-file payload, mirrors GAME_DESIGN §12.2 (schema-versioned JSON).
+    /// v2 adds the progression attributes (reputation/abilities/items/skills/area unlocks);
+    /// v1 files are upgraded in memory on load (new fields default).</summary>
     [Serializable]
     public class SaveData
     {
-        public const int CurrentSchemaVersion = 1;
+        public const int CurrentSchemaVersion = 2;
 
         public int schemaVersion = CurrentSchemaVersion;
         public SaveMeta meta = new SaveMeta();

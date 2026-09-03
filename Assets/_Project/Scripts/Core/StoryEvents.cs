@@ -17,6 +17,7 @@ namespace Crossroads.Core
     public struct DialogueStartedEvent
     {
         public string encounterId;
+        public string npcTitle;   // e.g. "Mara · Bonded" (from NpcFateDriver) - shown as a chip
     }
 
     /// <summary>Fired for every spoken line of the encounter (UI renders + typewriter).</summary>
@@ -54,6 +55,16 @@ namespace Crossroads.Core
         public int timeoutOptionIndex;      // auto-resolved option when the timer expires
     }
 
+    /// <summary>A short, UI-ready line describing what a choice changed (toast/hud).</summary>
+    [Serializable]
+    public struct ChangeNotice
+    {
+        public string category;   // affinity | rep | bond | ability | item | skill | area | resource | flag | codex | world
+        public string text;       // e.g. "Ember +10 (10)", "Ability: Ember Pulse", "Mara +10"
+
+        public ChangeNotice(string category, string text) { this.category = category; this.text = text; }
+    }
+
     /// <summary>Fired after a choice is committed and effects applied.</summary>
     public struct DecisionResolvedEvent
     {
@@ -61,6 +72,7 @@ namespace Crossroads.Core
         public string optionId;
         public string summary;
         public List<AffinityDelta> affinityDeltas;
+        public List<ChangeNotice> notices;   // brief "what changed" indication (§change-notice rule)
     }
 
     // ------------------------------------------------------------------ state change events
@@ -88,6 +100,49 @@ namespace Crossroads.Core
     {
         public string areaKey;
         public string variantKey;
+    }
+
+    // ------------------------------------------------------------------ progression events
+    public struct ReputationChangedEvent
+    {
+        public string groupId;
+        public int delta;
+        public int total;
+    }
+
+    public struct AbilityUnlockedEvent
+    {
+        public string abilityId;
+    }
+
+    public struct SkillChangedEvent
+    {
+        public string skillId;
+        public int delta;
+        public int level;
+    }
+
+    public struct ItemChangedEvent
+    {
+        public string itemId;
+        public bool added;
+        public int count;
+    }
+
+    public struct AreaUnlockedEvent
+    {
+        public string areaId;
+    }
+
+    public struct AreaChangedEvent
+    {
+        public string areaId;
+    }
+
+    /// <summary>Generic one-shot notice (gates, pickups, world events) for the toast UI.</summary>
+    public struct NoticeRequestEvent
+    {
+        public string text;
     }
 
     public struct EntityStateChangedEvent
