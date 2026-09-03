@@ -20,6 +20,7 @@ Already in repo: folder tree (`Assets/_Project/...` per GAME_DESIGN §13.3), 5 a
 On a dev machine: open the repo root in Unity Hub → editor completes steps 0.5–0.9 (URP config, boot scenes, device builds) and generates `.meta` files — **commit metas on first open**.
 Visual-analysis deliverables: `CHARACTER_REFERENCE.md`, `ASSET_PIPELINE.md`, `FIRST_ASSET_BRIEFS.md`, concept sheets in `reference/concept/`.
 Prototype character delivered (2026-09-03): Ari v1 — rigged/animated/textured FBX set + Unity prefab tooling + test scene; see `CHARACTER_PROTOTYPE_REPORT.md`. Runtime Unity test pending a machine with the editor (report §5–6).
+First environment delivered (2026-09-03): Fracture Hall — modular kit (13 pieces) + `Assets/Scenes/Prototype/FirstLocation.unity` + follow camera + interactables; see `ENVIRONMENT_PROTOTYPE_REPORT.md`.
 
 ## Tech stack (planned)
 

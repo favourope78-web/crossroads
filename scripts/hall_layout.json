@@ -1,0 +1,1658 @@
+{
+ "pieces": [
+  {
+   "piece": "SM_FloorTile",
+   "pos": [
+    -15,
+    0.05,
+    -15
+   ],
+   "yaw": 0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "tag": "",
+   "interact": ""
+  },
+  {
+   "piece": "SM_FloorTile",
+   "pos": [
+    -15,
+    0.05,
+    -5
+   ],
+   "yaw": 0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "tag": "",
+   "interact": ""
+  },
+  {
+   "piece": "SM_FloorTile",
+   "pos": [
+    -15,
+    0.05,
+    5
+   ],
+   "yaw": 0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "tag": "",
+   "interact": ""
+  },
+  {
+   "piece": "SM_FloorTile",
+   "pos": [
+    -15,
+    0.05,
+    15
+   ],
+   "yaw": 0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "tag": "",
+   "interact": ""
+  },
+  {
+   "piece": "SM_FloorTile",
+   "pos": [
+    -5,
+    0.05,
+    -15
+   ],
+   "yaw": 0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "tag": "",
+   "interact": ""
+  },
+  {
+   "piece": "SM_FloorTile",
+   "pos": [
+    -5,
+    0.05,
+    -5
+   ],
+   "yaw": 0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "tag": "",
+   "interact": ""
+  },
+  {
+   "piece": "SM_FloorTile",
+   "pos": [
+    -5,
+    0.05,
+    5
+   ],
+   "yaw": 0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "tag": "",
+   "interact": ""
+  },
+  {
+   "piece": "SM_FloorTile",
+   "pos": [
+    -5,
+    0.05,
+    15
+   ],
+   "yaw": 0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "tag": "",
+   "interact": ""
+  },
+  {
+   "piece": "SM_FloorTile",
+   "pos": [
+    5,
+    0.05,
+    -15
+   ],
+   "yaw": 0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "tag": "",
+   "interact": ""
+  },
+  {
+   "piece": "SM_FloorTile",
+   "pos": [
+    5,
+    0.05,
+    -5
+   ],
+   "yaw": 0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "tag": "",
+   "interact": ""
+  },
+  {
+   "piece": "SM_FloorTile",
+   "pos": [
+    5,
+    0.05,
+    5
+   ],
+   "yaw": 0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "tag": "",
+   "interact": ""
+  },
+  {
+   "piece": "SM_FloorTile",
+   "pos": [
+    5,
+    0.05,
+    15
+   ],
+   "yaw": 0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "tag": "",
+   "interact": ""
+  },
+  {
+   "piece": "SM_FloorTile",
+   "pos": [
+    15,
+    0.05,
+    -15
+   ],
+   "yaw": 0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "tag": "",
+   "interact": ""
+  },
+  {
+   "piece": "SM_FloorTile",
+   "pos": [
+    15,
+    0.05,
+    -5
+   ],
+   "yaw": 0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "tag": "",
+   "interact": ""
+  },
+  {
+   "piece": "SM_FloorTile",
+   "pos": [
+    15,
+    0.05,
+    5
+   ],
+   "yaw": 0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "tag": "",
+   "interact": ""
+  },
+  {
+   "piece": "SM_FloorTile",
+   "pos": [
+    15,
+    0.05,
+    15
+   ],
+   "yaw": 0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "tag": "",
+   "interact": ""
+  },
+  {
+   "piece": "SM_Column",
+   "pos": [
+    -10,
+    0,
+    -16
+   ],
+   "yaw": 0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "tag": "",
+   "interact": ""
+  },
+  {
+   "piece": "SM_LightBeam",
+   "pos": [
+    -10,
+    0,
+    -16
+   ],
+   "yaw": 0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "tag": "",
+   "interact": ""
+  },
+  {
+   "piece": "SM_Column",
+   "pos": [
+    -10,
+    0,
+    -8
+   ],
+   "yaw": 0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "tag": "",
+   "interact": ""
+  },
+  {
+   "piece": "SM_LightBeam",
+   "pos": [
+    -10,
+    0,
+    -8
+   ],
+   "yaw": 0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "tag": "",
+   "interact": ""
+  },
+  {
+   "piece": "SM_Column",
+   "pos": [
+    -10,
+    0,
+    0
+   ],
+   "yaw": 0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "tag": "",
+   "interact": ""
+  },
+  {
+   "piece": "SM_LightBeam",
+   "pos": [
+    -10,
+    0,
+    0
+   ],
+   "yaw": 0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "tag": "",
+   "interact": ""
+  },
+  {
+   "piece": "SM_Column",
+   "pos": [
+    -10,
+    0,
+    8
+   ],
+   "yaw": 0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "tag": "",
+   "interact": ""
+  },
+  {
+   "piece": "SM_LightBeam",
+   "pos": [
+    -10,
+    0,
+    8
+   ],
+   "yaw": 0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "tag": "",
+   "interact": ""
+  },
+  {
+   "piece": "SM_Column",
+   "pos": [
+    -10,
+    0,
+    16
+   ],
+   "yaw": 0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "tag": "",
+   "interact": ""
+  },
+  {
+   "piece": "SM_LightBeam",
+   "pos": [
+    -10,
+    0,
+    16
+   ],
+   "yaw": 0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "tag": "",
+   "interact": ""
+  },
+  {
+   "piece": "SM_Column",
+   "pos": [
+    10,
+    0,
+    -16
+   ],
+   "yaw": 0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "tag": "",
+   "interact": ""
+  },
+  {
+   "piece": "SM_LightBeam",
+   "pos": [
+    10,
+    0,
+    -16
+   ],
+   "yaw": 0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "tag": "",
+   "interact": ""
+  },
+  {
+   "piece": "SM_Column",
+   "pos": [
+    10,
+    0,
+    -8
+   ],
+   "yaw": 0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "tag": "",
+   "interact": ""
+  },
+  {
+   "piece": "SM_LightBeam",
+   "pos": [
+    10,
+    0,
+    -8
+   ],
+   "yaw": 0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "tag": "",
+   "interact": ""
+  },
+  {
+   "piece": "SM_Column",
+   "pos": [
+    10,
+    0,
+    0
+   ],
+   "yaw": 0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "tag": "",
+   "interact": ""
+  },
+  {
+   "piece": "SM_LightBeam",
+   "pos": [
+    10,
+    0,
+    0
+   ],
+   "yaw": 0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "tag": "",
+   "interact": ""
+  },
+  {
+   "piece": "SM_Column",
+   "pos": [
+    10,
+    0,
+    8
+   ],
+   "yaw": 0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "tag": "",
+   "interact": ""
+  },
+  {
+   "piece": "SM_LightBeam",
+   "pos": [
+    10,
+    0,
+    8
+   ],
+   "yaw": 0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "tag": "",
+   "interact": ""
+  },
+  {
+   "piece": "SM_Column",
+   "pos": [
+    10,
+    0,
+    16
+   ],
+   "yaw": 0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "tag": "",
+   "interact": ""
+  },
+  {
+   "piece": "SM_LightBeam",
+   "pos": [
+    10,
+    0,
+    16
+   ],
+   "yaw": 0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "tag": "",
+   "interact": ""
+  },
+  {
+   "piece": "SM_WallPanel",
+   "pos": [
+    -15,
+    3,
+    -20
+   ],
+   "yaw": 0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "tag": "",
+   "interact": ""
+  },
+  {
+   "piece": "SM_WallPanel",
+   "pos": [
+    15,
+    3,
+    -20
+   ],
+   "yaw": 0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "tag": "",
+   "interact": ""
+  },
+  {
+   "piece": "SM_WallPanel",
+   "pos": [
+    -15,
+    3,
+    20
+   ],
+   "yaw": 0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "tag": "",
+   "interact": ""
+  },
+  {
+   "piece": "SM_WallPanel",
+   "pos": [
+    15,
+    3,
+    20
+   ],
+   "yaw": 0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "tag": "",
+   "interact": ""
+  },
+  {
+   "piece": "SM_WallPanel",
+   "pos": [
+    -20,
+    3,
+    -15
+   ],
+   "yaw": 90,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "tag": "",
+   "interact": ""
+  },
+  {
+   "piece": "SM_WallPanel",
+   "pos": [
+    -20,
+    3,
+    -5
+   ],
+   "yaw": 90,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "tag": "",
+   "interact": ""
+  },
+  {
+   "piece": "SM_WallPanel",
+   "pos": [
+    -20,
+    3,
+    5
+   ],
+   "yaw": 90,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "tag": "",
+   "interact": ""
+  },
+  {
+   "piece": "SM_WallPanel",
+   "pos": [
+    -20,
+    3,
+    15
+   ],
+   "yaw": 90,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "tag": "",
+   "interact": ""
+  },
+  {
+   "piece": "SM_WallPanel",
+   "pos": [
+    20,
+    3,
+    -15
+   ],
+   "yaw": 90,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "tag": "",
+   "interact": ""
+  },
+  {
+   "piece": "SM_WallPanel",
+   "pos": [
+    20,
+    3,
+    -5
+   ],
+   "yaw": 90,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "tag": "",
+   "interact": ""
+  },
+  {
+   "piece": "SM_WallPanel",
+   "pos": [
+    20,
+    3,
+    5
+   ],
+   "yaw": 90,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "tag": "",
+   "interact": ""
+  },
+  {
+   "piece": "SM_WallPanel",
+   "pos": [
+    20,
+    3,
+    15
+   ],
+   "yaw": 90,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "tag": "",
+   "interact": ""
+  },
+  {
+   "piece": "SM_WallPanel",
+   "pos": [
+    -3.5,
+    3,
+    -20
+   ],
+   "yaw": 0,
+   "scale": [
+    0.3,
+    1,
+    1
+   ],
+   "tag": "",
+   "interact": ""
+  },
+  {
+   "piece": "SM_WallPanel",
+   "pos": [
+    3.5,
+    3,
+    -20
+   ],
+   "yaw": 0,
+   "scale": [
+    0.3,
+    1,
+    1
+   ],
+   "tag": "",
+   "interact": ""
+  },
+  {
+   "piece": "SM_GlazingPanel",
+   "pos": [
+    -15,
+    8.2,
+    -19.65
+   ],
+   "yaw": 0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "tag": "",
+   "interact": ""
+  },
+  {
+   "piece": "SM_GlazingPanel",
+   "pos": [
+    -5,
+    8.2,
+    -19.65
+   ],
+   "yaw": 0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "tag": "",
+   "interact": ""
+  },
+  {
+   "piece": "SM_GlazingPanel",
+   "pos": [
+    5,
+    8.2,
+    -19.65
+   ],
+   "yaw": 0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "tag": "",
+   "interact": ""
+  },
+  {
+   "piece": "SM_GlazingPanel",
+   "pos": [
+    15,
+    8.2,
+    -19.65
+   ],
+   "yaw": 0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "tag": "",
+   "interact": ""
+  },
+  {
+   "piece": "SM_GlazingPanel",
+   "pos": [
+    -15,
+    8.2,
+    19.65
+   ],
+   "yaw": 0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "tag": "",
+   "interact": ""
+  },
+  {
+   "piece": "SM_GlazingPanel",
+   "pos": [
+    -5,
+    8.2,
+    19.65
+   ],
+   "yaw": 0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "tag": "",
+   "interact": ""
+  },
+  {
+   "piece": "SM_GlazingPanel",
+   "pos": [
+    5,
+    8.2,
+    19.65
+   ],
+   "yaw": 0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "tag": "",
+   "interact": ""
+  },
+  {
+   "piece": "SM_GlazingPanel",
+   "pos": [
+    15,
+    8.2,
+    19.65
+   ],
+   "yaw": 0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "tag": "",
+   "interact": ""
+  },
+  {
+   "piece": "SM_GlazingPanel",
+   "pos": [
+    -19.65,
+    8.2,
+    -15
+   ],
+   "yaw": 90,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "tag": "",
+   "interact": ""
+  },
+  {
+   "piece": "SM_GlazingPanel",
+   "pos": [
+    -19.65,
+    8.2,
+    -5
+   ],
+   "yaw": 90,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "tag": "",
+   "interact": ""
+  },
+  {
+   "piece": "SM_GlazingPanel",
+   "pos": [
+    -19.65,
+    8.2,
+    5
+   ],
+   "yaw": 90,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "tag": "",
+   "interact": ""
+  },
+  {
+   "piece": "SM_GlazingPanel",
+   "pos": [
+    -19.65,
+    8.2,
+    15
+   ],
+   "yaw": 90,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "tag": "",
+   "interact": ""
+  },
+  {
+   "piece": "SM_GlazingPanel",
+   "pos": [
+    19.65,
+    8.2,
+    -15
+   ],
+   "yaw": 90,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "tag": "",
+   "interact": ""
+  },
+  {
+   "piece": "SM_GlazingPanel",
+   "pos": [
+    19.65,
+    8.2,
+    -5
+   ],
+   "yaw": 90,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "tag": "",
+   "interact": ""
+  },
+  {
+   "piece": "SM_GlazingPanel",
+   "pos": [
+    19.65,
+    8.2,
+    5
+   ],
+   "yaw": 90,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "tag": "",
+   "interact": ""
+  },
+  {
+   "piece": "SM_GlazingPanel",
+   "pos": [
+    19.65,
+    8.2,
+    15
+   ],
+   "yaw": 90,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "tag": "",
+   "interact": ""
+  },
+  {
+   "piece": "SM_BalconyBlock",
+   "pos": [
+    -18.4,
+    2.2,
+    -10
+   ],
+   "yaw": 90,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "tag": "",
+   "interact": ""
+  },
+  {
+   "piece": "SM_Railing",
+   "pos": [
+    -17.0,
+    2.4,
+    -10
+   ],
+   "yaw": 90,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "tag": "",
+   "interact": ""
+  },
+  {
+   "piece": "SM_BalconyBlock",
+   "pos": [
+    -18.4,
+    2.2,
+    0
+   ],
+   "yaw": 90,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "tag": "",
+   "interact": ""
+  },
+  {
+   "piece": "SM_Railing",
+   "pos": [
+    -17.0,
+    2.4,
+    0
+   ],
+   "yaw": 90,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "tag": "",
+   "interact": ""
+  },
+  {
+   "piece": "SM_BalconyBlock",
+   "pos": [
+    -18.4,
+    2.2,
+    10
+   ],
+   "yaw": 90,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "tag": "",
+   "interact": ""
+  },
+  {
+   "piece": "SM_Railing",
+   "pos": [
+    -17.0,
+    2.4,
+    10
+   ],
+   "yaw": 90,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "tag": "",
+   "interact": ""
+  },
+  {
+   "piece": "SM_BalconyBlock",
+   "pos": [
+    18.4,
+    2.2,
+    -10
+   ],
+   "yaw": 90,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "tag": "",
+   "interact": ""
+  },
+  {
+   "piece": "SM_Railing",
+   "pos": [
+    17.0,
+    2.4,
+    -10
+   ],
+   "yaw": 90,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "tag": "",
+   "interact": ""
+  },
+  {
+   "piece": "SM_BalconyBlock",
+   "pos": [
+    18.4,
+    2.2,
+    0
+   ],
+   "yaw": 90,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "tag": "",
+   "interact": ""
+  },
+  {
+   "piece": "SM_Railing",
+   "pos": [
+    17.0,
+    2.4,
+    0
+   ],
+   "yaw": 90,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "tag": "",
+   "interact": ""
+  },
+  {
+   "piece": "SM_BalconyBlock",
+   "pos": [
+    18.4,
+    2.2,
+    10
+   ],
+   "yaw": 90,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "tag": "",
+   "interact": ""
+  },
+  {
+   "piece": "SM_Railing",
+   "pos": [
+    17.0,
+    2.4,
+    10
+   ],
+   "yaw": 90,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "tag": "",
+   "interact": ""
+  },
+  {
+   "piece": "SM_Truss",
+   "pos": [
+    -10,
+    9.2,
+    -10
+   ],
+   "yaw": 0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "tag": "",
+   "interact": ""
+  },
+  {
+   "piece": "SM_Truss",
+   "pos": [
+    -10,
+    9.2,
+    0
+   ],
+   "yaw": 0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "tag": "",
+   "interact": ""
+  },
+  {
+   "piece": "SM_Truss",
+   "pos": [
+    -10,
+    9.2,
+    10
+   ],
+   "yaw": 0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "tag": "",
+   "interact": ""
+  },
+  {
+   "piece": "SM_Truss",
+   "pos": [
+    0,
+    9.2,
+    -10
+   ],
+   "yaw": 0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "tag": "",
+   "interact": ""
+  },
+  {
+   "piece": "SM_Truss",
+   "pos": [
+    0,
+    9.2,
+    0
+   ],
+   "yaw": 0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "tag": "",
+   "interact": ""
+  },
+  {
+   "piece": "SM_Truss",
+   "pos": [
+    0,
+    9.2,
+    10
+   ],
+   "yaw": 0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "tag": "",
+   "interact": ""
+  },
+  {
+   "piece": "SM_Truss",
+   "pos": [
+    10,
+    9.2,
+    -10
+   ],
+   "yaw": 0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "tag": "",
+   "interact": ""
+  },
+  {
+   "piece": "SM_Truss",
+   "pos": [
+    10,
+    9.2,
+    0
+   ],
+   "yaw": 0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "tag": "",
+   "interact": ""
+  },
+  {
+   "piece": "SM_Truss",
+   "pos": [
+    10,
+    9.2,
+    10
+   ],
+   "yaw": 0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "tag": "",
+   "interact": ""
+  },
+  {
+   "piece": "SM_DoorFrame",
+   "pos": [
+    0,
+    0,
+    -20
+   ],
+   "yaw": 0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "tag": "",
+   "interact": ""
+  },
+  {
+   "piece": "SM_Door",
+   "pos": [
+    -0.95,
+    0,
+    -20
+   ],
+   "yaw": 0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "tag": "Interactable",
+   "interact": "Door"
+  },
+  {
+   "piece": "SM_Door",
+   "pos": [
+    0.95,
+    0,
+    -20
+   ],
+   "yaw": 0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "tag": "Interactable",
+   "interact": "Door"
+  },
+  {
+   "piece": "SM_DoorFrame",
+   "pos": [
+    0,
+    0,
+    20
+   ],
+   "yaw": 180,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "tag": "",
+   "interact": ""
+  },
+  {
+   "piece": "SM_Door",
+   "pos": [
+    -0.95,
+    0,
+    20
+   ],
+   "yaw": 180,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "tag": "Interactable",
+   "interact": "Door"
+  },
+  {
+   "piece": "SM_Door",
+   "pos": [
+    0.95,
+    0,
+    20
+   ],
+   "yaw": 180,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "tag": "Interactable",
+   "interact": "Door"
+  },
+  {
+   "piece": "SM_DoorFrame",
+   "pos": [
+    20,
+    0,
+    0
+   ],
+   "yaw": 90,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "tag": "",
+   "interact": ""
+  },
+  {
+   "piece": "SM_Door",
+   "pos": [
+    20,
+    0,
+    -0.95
+   ],
+   "yaw": 90,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "tag": "Interactable",
+   "interact": "Door"
+  },
+  {
+   "piece": "SM_Door",
+   "pos": [
+    20,
+    0,
+    0.95
+   ],
+   "yaw": 90,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "tag": "Interactable",
+   "interact": "Door"
+  },
+  {
+   "piece": "SM_OrbCore",
+   "pos": [
+    0,
+    6,
+    0
+   ],
+   "yaw": 0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "tag": "Interactable",
+   "interact": "Inspect"
+  },
+  {
+   "piece": "SM_OrbRing",
+   "pos": [
+    0,
+    6,
+    0
+   ],
+   "yaw": 0,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "tag": "",
+   "interact": ""
+  },
+  {
+   "piece": "SM_OrbRing",
+   "pos": [
+    0,
+    6,
+    0
+   ],
+   "yaw": 90,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "tag": "",
+   "interact": ""
+  },
+  {
+   "piece": "SM_HoloPanel",
+   "pos": [
+    -10.9,
+    2.0,
+    -5
+   ],
+   "yaw": 90,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "tag": "Interactable",
+   "interact": "Inspect"
+  },
+  {
+   "piece": "SM_HoloPanel",
+   "pos": [
+    10.9,
+    2.0,
+    5
+   ],
+   "yaw": 90,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "tag": "Interactable",
+   "interact": "Inspect"
+  },
+  {
+   "piece": "SM_HoloPanel",
+   "pos": [
+    -10.9,
+    2.0,
+    8
+   ],
+   "yaw": 90,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "tag": "Interactable",
+   "interact": "Inspect"
+  },
+  {
+   "piece": "SM_HoloPanel",
+   "pos": [
+    10.9,
+    2.0,
+    -8
+   ],
+   "yaw": 90,
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "tag": "Interactable",
+   "interact": "Inspect"
+  }
+ ],
+ "spawn": [
+  0,
+  0,
+  -16
+ ],
+ "spawnYaw": 0
+}
