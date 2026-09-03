@@ -9964,11 +9964,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 1777}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c0a1fed2000000000000000000000056, type: 3}
+  m_Script: {fileID: 11500000, guid: c0a1fed2000000000000000000000094, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  encounterId: c1_hall_first_light
-  npcDisplayName: Mara
+  npc: {fileID: 1784}
   promptLabel: Talk to Mara
   interactRadius: 3.2
   priority: 20
@@ -9981,20 +9980,22 @@ MonoBehaviour:
   m_GameObject: {fileID: 1777}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c0a1fed200000000000000000000005b, type: 3}
+  m_Script: {fileID: 11500000, guid: c0a1fed2000000000000000000000093, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  variants:
+  npcId: mara
+  baseTitle: ""
+  playerRef: {fileID: 0}
+  bodyRenderer: {fileID: 1790}
+  baseMaterial: {fileID: 2100000, guid: c0a1fed2000000000000000000000034, type: 2}
+  avatarPrefab: {fileID: 0}
+  visualVariants:
   - conditions:
     - type: 5
       key: mara
       value: ""
       amount: 8
-    bodyMaterial: {fileID: 2100000, guid: c0a1fed2000000000000000000000032, type: 2}
-    title: Mara - Trusting
-  baseTitle: Mara
-  baseMaterial: {fileID: 2100000, guid: c0a1fed2000000000000000000000034, type: 2}
-  bodyRenderer: {fileID: 1790}
+    material: {fileID: 2100000, guid: c0a1fed2000000000000000000000032, type: 2}
 --- !u!1 &1797
 GameObject:
   m_ObjectHideFlags: 0
@@ -13062,11 +13063,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 2015}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c0a1fed2000000000000000000000056, type: 3}
+  m_Script: {fileID: 11500000, guid: c0a1fed2000000000000000000000094, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  encounterId: c1_hall_sera
-  npcDisplayName: Sera
+  npc: {fileID: 2022}
   promptLabel: Talk to Sera
   interactRadius: 3.0
   priority: 20
@@ -13079,34 +13079,34 @@ MonoBehaviour:
   m_GameObject: {fileID: 2015}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c0a1fed200000000000000000000005b, type: 3}
+  m_Script: {fileID: 11500000, guid: c0a1fed2000000000000000000000093, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  variants:
+  npcId: sera
+  baseTitle: ""
+  playerRef: {fileID: 0}
+  bodyRenderer: {fileID: 2028}
+  baseMaterial: {fileID: 2100000, guid: c0a1fed2000000000000000000000035, type: 2}
+  avatarPrefab: {fileID: 0}
+  visualVariants:
   - conditions:
     - type: 0
       key: c1_hall_drive
       value: ember
       amount: 0
-    bodyMaterial: {fileID: 2100000, guid: c0a1fed2000000000000000000000031, type: 2}
-    title: Sera - Watchful
+    material: {fileID: 2100000, guid: c0a1fed2000000000000000000000031, type: 2}
   - conditions:
     - type: 0
       key: c1_hall_drive
       value: tide
       amount: 0
-    bodyMaterial: {fileID: 2100000, guid: c0a1fed2000000000000000000000032, type: 2}
-    title: Sera - Grateful
+    material: {fileID: 2100000, guid: c0a1fed2000000000000000000000032, type: 2}
   - conditions:
     - type: 0
       key: c1_hall_drive
       value: stone
       amount: 0
-    bodyMaterial: {fileID: 2100000, guid: c0a1fed2000000000000000000000033, type: 2}
-    title: Sera - Intrigued
-  baseTitle: Sera
-  baseMaterial: {fileID: 2100000, guid: c0a1fed2000000000000000000000035, type: 2}
-  bodyRenderer: {fileID: 2028}
+    material: {fileID: 2100000, guid: c0a1fed2000000000000000000000033, type: 2}
 --- !u!1 &2035
 GameObject:
   m_ObjectHideFlags: 0

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Crossroads.Core;
 
 namespace Crossroads.Narrative
 {
@@ -210,6 +211,100 @@ namespace Crossroads.Narrative
         public string text = "";
     }
 
+    // =====================================================================================
+    // NPC definitions (§9 - cast & fate states). One character = one definition (this data)
+    // + one prefab (scene NpcAgent.avatarPrefab when real meshes exist) + conditions that
+    // drive their look, behaviour and dialogue. Adding a character = adding a row here;
+    // the framework (NpcBrain/NpcLogic/NpcAgent) never changes.
+    // =====================================================================================
+
+    /// <summary>Behaviour presets the runtime understands (GAME_DESIGN §9.2: max 2 profiles per NPC).</summary>
+    public enum NpcPersonality
+    {
+        Reserved = 0, // stands, watches, never approaches
+        Friendly = 1, // approaches the player when idle and nearby
+        Wary = 2,     // keeps distance: backs away if the player gets too close
+        Curious = 3   // approaches, but stops at a respectful distance
+    }
+
+    /// <summary>Base movement/social behaviour numbers (overridable per fate-state).</summary>
+    [Serializable]
+    public class NpcBehaviourData
+    {
+        public NpcPersonality personality = NpcPersonality.Reserved;
+        public bool facesPlayer = true;   // turn to face the player when they are near
+        public float reactRadius = 4.5f;  // distance at which the NPC notices the player
+        public float approachDistance = 0f; // >0: walks toward player when idle & in react radius
+        public float avoidDistance = 0f;    // >0: steps back if the player comes closer than this
+        public float talkDistance = 2.2f;   // stops approaching at this distance
+        public float moveSpeed = 1.1f;      // m/s
+        public float turnSpeed = 6f;        // rad-ish slerp factor per second
+        public bool usesRoutine = false;    // walks the routine loop when the player is away
+    }
+
+    /// <summary>One waypoint of an NPC's routine loop (dwell = seconds idle at the stop).</summary>
+    [Serializable]
+    public class NpcStopData
+    {
+        public Point3 position;
+        public float dwellSeconds = 2f;
+    }
+
+    /// <summary>
+    /// A fate-state variant (GAME_DESIGN §5.4/§9.2): when the conditions match the player's
+    /// current state, this NPC switches title, mood line and behaviour overrides.
+    /// First matching state wins; -1 on an override means "inherit the base behaviour".
+    /// </summary>
+    [Serializable]
+    public class NpcStateData
+    {
+        public List<DecisionConditionData> conditions = new List<DecisionConditionData>();
+        public string title = "";
+        public string moodLine = "";        // one-liner shown when this state activates live
+        public float approachDistance = -1f; // >0 overrides base; -1 inherit; 0 = never approach
+        public float avoidDistance = -1f;    // >0 overrides base; -1 inherit; 0 = never avoid
+        public float moveSpeed = -1f;        // >0 overrides base; -1 inherit
+        public float reactRadius = -1f;      // >0 overrides base; -1 inherit
+    }
+
+    /// <summary>An available interaction: label + encounter (dialogue graph), condition-gated.</summary>
+    [Serializable]
+    public class NpcInteractionData
+    {
+        public string id = "talk";
+        public string label = "Talk";       // INTERACT button label
+        public string encounterId = "";     // dialogue graph to run (see EncounterDefinitionData)
+        public List<DecisionConditionData> conditions = new List<DecisionConditionData>();
+    }
+
+    /// <summary>
+    /// Complete data-driven NPC definition (task: reusable NPC framework, modular data).
+    /// The runtime resolves everything from here: display name, personality + behaviour,
+    /// fate states (conditions -> title/mood/behaviour), available interactions,
+    /// routine. Character visuals follow CHARACTER_REFERENCE sheetRef (one canonical
+    /// character = one canonical prefab, consistent across scenes).
+    /// </summary>
+    [Serializable]
+    public class NpcDefinitionData
+    {
+        public string id = "";              // unique NPC id (bond key, decision keys)
+        public string displayName = "";     // "Mara"
+        public string sheetRef = "";        // CHARACTER_REFERENCE sheet id (REF-02 ...)
+        public string description = "";     // one-line personality blurb (journal/debug)
+        public NpcBehaviourData behaviour = new NpcBehaviourData();
+        public List<NpcStateData> states = new List<NpcStateData>();
+        public List<NpcInteractionData> interactions = new List<NpcInteractionData>();
+        public List<NpcStopData> routine = new List<NpcStopData>();
+
+        public NpcInteractionData FindInteraction(string id)
+        {
+            if (interactions == null) return null;
+            for (int i = 0; i < interactions.Count; i++)
+                if (interactions[i] != null && interactions[i].id == id) return interactions[i];
+            return null;
+        }
+    }
+
     [Serializable]
     public class StoryContentData
     {
@@ -217,6 +312,7 @@ namespace Crossroads.Narrative
         public List<DecisionNodeData> decisions = new List<DecisionNodeData>();
         public List<DialogueGraphData> graphs = new List<DialogueGraphData>();
         public ProgressionContentData progression = new ProgressionContentData();
+        public List<NpcDefinitionData> npcs = new List<NpcDefinitionData>();
 
         public EncounterDefinitionData FindEncounter(string id)
         {
@@ -231,6 +327,12 @@ namespace Crossroads.Narrative
         public DialogueGraphData FindGraph(string id)
         {
             for (int i = 0; i < graphs.Count; i++) if (graphs[i] != null && graphs[i].id == id) return graphs[i];
+            return null;
+        }
+        public NpcDefinitionData FindNpc(string id)
+        {
+            if (npcs == null) return null;
+            for (int i = 0; i < npcs.Count; i++) if (npcs[i] != null && npcs[i].id == id) return npcs[i];
             return null;
         }
     }

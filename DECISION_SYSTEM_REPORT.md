@@ -1,279 +1,238 @@
-# DECISION_SYSTEM_REPORT.md — Interaction, Decision, Consequence & Progression
+# DECISION_SYSTEM_REPORT.md — Interaction, Decision, Consequence, Progression & NPC Systems
 ### CROSSROADS Foundation (Phase 2-native systems, built on the Phase 0–1 prototypes)
 
 | | |
 |---|---|
 | **Date** | 2026-09-03 |
-| **Branch** | `feat/consequence-progression` (on top of `feat/decision-system`, merged to `dev` + `main`) |
+| **Branch** | `feat/npc-system` (on top of `feat/consequence-progression`, merged to `dev` + `main`) |
 | **Scene** | `Assets/Scenes/Prototype/FirstLocation.unity` (environment + Ari **unchanged**; story additions additive) |
 | **Character** | Ari prototype v1 — **unchanged** |
-| **Design refs** | `GAME_DESIGN.md` §2.1/§4 (decision system), §5.2 (world state), §8.3 (interaction), §9.1 (Mara), §12 (save), §13.4 (services) |
-| **This phase** | 10/10 requirements of the **Consequence & Progression** task implemented; 204/204 headless checks; compile clean in both input defines |
+| **Design refs** | `GAME_DESIGN.md` §5.4/§9.1/§9.2 (NPC cast, fate states, one prefab + state driver), §4.2 (data-driven), §12 (save), §13.4 (services); `CHARACTER_REFERENCE.md` (visual bible: REF-02 Mara, REF-04 civilian) |
+| **This phase** | 10/10 requirements of the **Core NPC System** task implemented; **277/277** headless checks; compile clean in both input defines; static validation 0 warnings |
 
 ---
 
-## 1. Phase 2a — What was built (interaction + branching decisions)
-
-| # | Task | Where |
-|---|------|-------|
-| 1 | Reusable interaction system | `PlayerInteraction` + `Interactable` base (proximity scan, nearest-wins, priority ties) — doors/holo-panels keep working |
-| 2 | Clear interaction prompt when close | Mobile **[INTERACT]** button bottom-left (`InteractionHUD`), label per target ("TALK TO MARA") |
-| 3 | First story encounter from GAME_DESIGN | **"The First Light"** — Mara in the Fracture Hall, the awakening beat (§11.2 P→C1L1); content in `CL_C1_StoryContent.asset` + `StoryContentBuilder` |
-| 4 | Short dialogue/story event | `EncounterFlow` + `DialogueUI` (typewriter, speaker chip, tap-to-advance) |
-| 5 | 2–3 meaningful choices | Exactly 3, one per affinity line (Ember / Tide / Stone) |
-| 6 | Choice stored persistently | `ResolvedDecisionEntry` in `GameState.decisions`, autosaved at resolution |
-| 7 | Choices produce different consequences | Flags + affinity + Mara bond + **world state** + **spawnable consequence objects** + different aftermath dialogue + different re-talk dialogue (all condition-gated) |
-| 8 | `DecisionManager` | Register / Store / Check (`IsResolved`, `ResolvedOption`) / Expose (`AllDecisions`, `VisibleOptions`, `Get`) |
-| 9 | Branching test A→A, B→B, C→C | Headless suite: 3 flows, each asserts its own state (see §4) |
-| 10 | Data-driven, no code changes per encounter | Content = `StoryContentData` POCOs via ScriptableObject asset; adding an encounter = one asset entry (recipe in §6) |
-| 11 | Decisions persist after restart | JSON at `persistentDataPath/crossroads/save_slot_0.json`; boot reloads and replays world state |
-| 12 | Android/mobile UI | Runtime-built uGUI: SafeArea, ≥88dp targets, big choice cards, landscape layout per §8.1 |
-
----
-
-## 2. Phase 2b — Consequence & Progression system (this phase, maps 1:1 to the task list)
+## 1. Phase 2c — Core NPC System (this phase, maps 1:1 to the task list)
 
 | # | Task | Implementation |
 |---|------|----------------|
-| 1 | `GameStateManager` tracking current player state | `Assets/_Project/Scripts/Narrative/GameStateManager.cs` — façade over `GameState`: `Reputation(groupId)`, `Bond`, `BondTier`, `HasAbility`, `HasItem`, `Skill`, `CurrentArea`, `AreaUnlocked`, `StatusLines()` (player card), `Describe()` |
-| 2 | Data-driven player attributes | `GameState`: `reputation` (groupId→−100..100), `bonds` (npcId→−100..100 + `BondTier` Hostile/Wary/New/Warm/Bonded/Kin), `abilities`, `items`, `skills` (skillId→level), `unlockAreas`, `currentArea` — alongside existing affinities/echoBank/flags/worldStates/entities/decisions/codex. Named via `ProgressionIndex` (content-driven display names, zero hardcoding) |
-| 3 | Decisions → consequences | `EffectApplier` extended with 7 new effects (AddReputation, SetReputation, UnlockAbility, AddSkillLevel, AddItem, RemoveItem, UnlockArea) — all writes through `StateMutator` |
-| 4 | Consequences change the world | • **NPC behavior**: `NpcFateDriver` (Sera, Mara) re-applies material + title per state — live on bond/flag/decision/save events<br>• **Available dialogue**: Sera's encounter options are condition-gated (lookout / shard_show / keep_low)<br>• **Available interactions**: `GatedDoor` (data-driven rule door), `StoryEventInteractable` (shard) appears/disappears per state<br>• **Accessible areas**: `AreaGate` (Energy Seal) opens only with the ability from your first choice; `AreaTrigger` tracks current area; unlocks persist across restart<br>• **Future choices**: options hidden/unlocked by `FlagIs`, `ItemHeld`, `SkillAtLeast`, `ReputationAtLeast`, `AbilityOwned`, `AreaUnlocked`<br>• **Player abilities**: `UnlockAbility` grants Ember Pulse / Tide Mend / Stone Ward |
-| 5 | Complete branching example | "The First Light" → ember_reach / tide_clear / stone_still → **different ability, different gate scenario, different shard line, different Sera dialogue & options** (see §4.3) |
-| 6 | Brief indication of what changed | `EffectNotices` builds a `ChangeNotice` list ("Ember +10", "Ability unlocked: Ember Pulse", "The Choir −10") → `ToastUI` + `StateHUD` both live-update |
-| 7 | Future encounters check prior decisions + state | 6 new `ConditionType`s (ReputationAtLeast, ItemHeld, AbilityOwned, AreaUnlocked, SkillAtLeast + existing FlagIs/DecisionWas/BondAtLeast); `GateRuleEvaluator.FirstMatch(rules, state)` for gates |
-| 8 | Story/choice data separate from code | `scripts/story_content.json` (canonical) → `gen_story_content.py` → `Assets/_Project/Data/Decisions/CL_C1_StoryContent.asset`; `StoryContentBuilder.cs` mirrors it for the runtime fallback; `validate_assets.py` cross-checks all three |
-| 9 | Save/load complete game state locally | Save schema **v2**: all progression fields serialized; in-memory v1→v2 upgrade preserves legacy saves; autosave on every decision + area unlock + area change |
-| 10 | Restart keeps consequences | Test group 13: full restart — 3 decisions, ability, open area, item, reputation, skill level, current area, entity state all restored and re-applied to the scene |
+| 1 | Reusable NPC framework | `Assets/_Project/Scripts/Gameplay/NPC/`: `NpcBrain` (pure-C# state resolver), `NpcLogic` (pure-C# behaviour FSM), `NpcAgent` (Unity host + movement), `NpcInteractable` (interaction bridge). One drop-in component set on any GameObject |
+| 2 | Every NPC has | **Unique ID + Name** (`NpcDefinitionData.id/displayName`) · **Character model/prefab** (`sheetRef` → CHARACTER_REFERENCE sheet + `avatarPrefab` slot for the canonical prefab; `baseMaterial`/trim variants today) · **Personality/state data** (`NpcPersonality` + `NpcStateData` fate states) · **Relationship value** (persisted bond −100..100 + tier) · **Dialogue data** (`NpcInteractionData.encounterId` → existing graphs) · **Available interactions** (condition-gated list) · **Behavior conditions** (`states[].conditions` → title/mood/behaviour overrides) |
+| 3 | Reference-video visual style | `sheetRef` (Mara **REF-02**, Sera **REF-04**) ties each NPC to its CHARACTER_REFERENCE sheet; palette-conform materials (muted bases `M_Npc_Mara`/`M_Npc_Civilian`; affinity colours only as trim via per-state variants) — the exact "line colors in trim, never flat costume colors" rule; one canonical prefab per character will slot into `avatarPrefab` (placeholder primitives hide automatically), faces/hair never regenerated per scene (§ consistency law) |
+| 4 | Basic behaviours | `NpcLogic` FSM: **Idle** · **Walking** (routine loop) · **Talking** (freezes + faces player during dialogue) · **Routine** (waypoints + dwell) · **Reacting to the player** (approach / avoid / face). Personality presets: *Friendly* (Mara walks to you), *Wary* (Sera steps back), *Curious* (approaches politely), *Reserved* |
+| 5 | Connected to GameStateManager + DecisionManager | `NpcBrain` reads the LIVE `GameStateManager` (bond, bond tier, decisions, flags, items, abilities, reputation, areas) via the same `ConditionEvaluator` whitelist the decision system uses; `NpcAgent` re-resolves on every state event (bond/flag/decision/item/rep/skill/area/load/reset) and `NpcInteractable` runs dialogues through the existing `EncounterFlow`/`DecisionManager` |
+| 6 | Dialogue & behaviour change per previous decisions | Data-driven `states` (first match wins): Sera has one state per drive flag (**Grateful** approaches / **Watchful** backs off farther / **Intrigued** approaches slowly); Mara's state is bond-gated. Dialogue graphs already branch on decisions; new payoff conversations (below) are per-decision too; title feeds the speaker chip |
+| 7 | Two NPCs, different personalities | **Mara** — Friendly, bond-driven, approaches, patrols near the columns, confides when warm. **Sera** — Wary, distance-keeping, paces the lookout; her whole bearing flips with your first decision |
+| 8 | Relationship change from an earlier decision | **Decision A (tide) → Mara bond +10 → Warm tier → "Mara · Warm" title → she stands closer → the INTERACT button becomes "Comfort Mara" → a new per-decision conversation.** The ember/stone paths keep her at "Talk to Mara" (bond 5/3 < 8). Tests prove path A vs path B produce different later reactions |
+| 9 | Modular NPC data | NPCs are rows in `story_content.json` → `CL_C1_StoryContent.asset` (`npcs:`) — id, name, sheet ref, personality, behaviour numbers, states (conditions+overrides), interactions, routine. Adding a character = one row (mirrored in `StoryContentBuilder.cs` per repo convention), zero framework changes |
+| 10 | Mobile-performance friendly | Pure-logic tick = a couple of distance comparisons + one move per NPC/frame; no allocations per frame (event-driven re-resolve), no raycasts, no pathfinding; ≤6 on-screen NPC cap per §9.2; avatar/animator hooks for the real meshes |
 
-**New files this phase**
+**New files**
 
 ```
-Assets/_Project/Scripts/
-  Narrative/
-    GameStateManager.cs        - player-current-state façade + StatusLines player card
-    ProgressionIndex.cs        - content-driven display names (abilities/skills/items/rep groups/areas/NPCs)
-    EffectNotices.cs           - "what changed" notices from applied effects
-    GateRuleEvaluator.cs       - pure FirstMatch(rules, state) for gate/conditional logic
-  Gameplay/
-    Interaction/
-      GatedDoor.cs             - data-driven rule-based door (rules → open/locked + flavor)
-      AreaGate.cs              - energy-seal gate: per-path open/shut + persistence via UnlockArea
-      StoryEventInteractable.cs- non-NPC story beat that runs an encounter graph (the shard)
-    WorldState/
-      NpcFateDriver.cs         - state → material/title variant driver (Sera, Mara)
-      AreaTrigger.cs           - persists currentArea (hall / annex) via trigger volumes
-  UI/
-    StateHUD.cs                - live player card (affinities, standings, bonds, powers, skills, resources, area, save status) + DEV reset
-    ToastUI.cs                 - post-choice "what changed" toast + world notices (NoticeRequestEvent)
+Assets/_Project/Scripts/Gameplay/NPC/
+  NpcBrain.cs        - pure resolver: definition x live GameStateManager -> active fate state,
+                       title, mood line, behaviour profile, available interactions, bond/tier
+  NpcLogic.cs        - pure behaviour FSM: Idle/Walk/Dwell/Approach/Avoid/ReactFace/Talk
+                       (INpcWorld sink injected - fully headless-testable)
+  NpcAgent.cs        - Unity host: identity, avatar/prefab + trim materials, routine,
+                       event wiring (state x 9 + dialogue), NpcStatusChangedEvent publish,
+                       movement/animator sink (INpcWorld impl)
+  NpcInteractable.cs - Interactable bridge: label = first AVAILABLE interaction; runs it
 ```
 
-> The existing interaction system, `DecisionManager`, `EncounterFlow`, FirstLocation environment and Ari were **not rebuilt** — they were extended (interfaces/events/condition–effect whitelists grew, runners gained the new hooks only).
+Existing systems were **not rebuilt**: `PlayerInteraction`, `Interactable`, `DecisionManager`, `EncounterFlow`, `ConditionEvaluator`/`EffectApplier`, `GameStateManager`, SaveSystem all unchanged in behavior — the NPC framework is a new consumer of them. (`StoryEncounterNPC`/`NpcFateDriver` remain in the codebase and still work; the prototype scene now uses the framework.)
+
+### 1.1 The playable proof (task test sequence)
+
+```
+Decision A (tide)  ──►  Mara bond 10 (Warm), title "Mara · Warm", approaches closer
+                          INTERACT now reads "Comfort Mara" -> confide conversation
+                          ("You got the twins out. Everyone saw it…")
+                   ──►  Sera state = Grateful: guard drops, she WALKS TO you,
+                          greets you as her sisters' saviour, shard story in a warm tone
+Decision B (ember) ──►  Mara bond 5 -> stays "Talk to Mara"; confide locked
+                   ──►  Sera state = Watchful: backs off FARTHER (avoid 2.6 -> 3.4),
+                          warns you about the Choir instead ("The Choir has your scent now")
+Decision C (stone) ──►  Sera = Intrigued: approaches slowly, studies you sidelong
+Shard (any path)   ──►  Sera's interaction LIST grows ("show_shard", item-gated)
+RESTART            ──►  everything above re-applies from the save: bond, titles,
+                          behaviours, prompts, later conversations
+```
+
+Two independent save paths (tests group 20) confirm: same NPC, same room, **different reaction because of the earlier decision** — the required acceptance sequence.
 
 ---
 
-## 3. Architecture (design §13.4 service architecture, kept headless-testable)
+## 2. Phase 2b — Consequence & Progression (prior phase; still authoritative)
+
+| # | Task | Implementation |
+|---|------|----------------|
+| 1 | `GameStateManager` | `Narrative/GameStateManager.cs` — façade: reputation, bond/tier, abilities, items, skills, areas, flags, decisions, current area, `StatusLines()` |
+| 2 | Data-driven attributes | `GameState` progression fields (all persisted, schema v2) + `ProgressionIndex` display names |
+| 3 | Decisions → consequences | `EffectApplier` +7 effects (AddReputation/SetReputation/UnlockAbility/AddSkillLevel/AddItem/RemoveItem/UnlockArea), all writes via `StateMutator` |
+| 4 | Consequences change the world | Gated doors/areas (`GatedDoor`, `AreaGate`), story objects (`StoryEventInteractable`), NPC drivers, area triggers, entity replay (`StoryWorldState`), condition-gated dialogue/choices (6 new `ConditionType`s) |
+| 5 | Complete branching example | First Light → ember_reach/tide_clear/stone_still → different ability, gate text, shard line, Sera dialogue (see §4 of the phase-2b section below) |
+| 6 | Brief indication of change | `EffectNotices` → change notices → `ToastUI` + `StateHUD` live update |
+| 7 | Future encounters check prior state | Conditions + `GateRuleEvaluator.FirstMatch` |
+| 8 | Story/choice data separate from code | `scripts/story_content.json` → asset generator → `StoryContentBuilder.cs` mirror → `validate_assets.py` cross-checks |
+| 9 | Save/load complete state | schema v2 + v1→v2 in-memory upgrade; autosave on decision/area events |
+| 10 | Restart keeps consequences | test group 13 + 21 prove full restore incl. NPC reactions |
+
+Save shape (schema v2): all progression collections (`reputation`, `abilities`, `items`, `skills`, `unlockAreas`, `currentArea`) beside the legacy flags/world-states/entities/bonds/decisions/codex/affinities/echoes.
+
+---
+
+## 3. Architecture (design §13.4; everything headless-testable)
 
 ```
 Assets/_Project/Scripts/
-  Core/       Crossroads.Core        (no deps; pure C# except 2 tiny Unity adapters)
-    GameState / StateMutator         - single authoritative state; ALL writes via mutator
-      + progression fields: reputation, bonds, abilities, items, skills, unlockAreas, currentArea
-    EventBus + StoryEvents           - typed pub/sub (+ change notices, progression events)
-    SaveSystem, SaveData             - JSON slots, schema v2 + v1→v2 upgrade, atomic .tmp->replace
-    InputLock                        - global input gate while dialogue/choices are up
-    Point3, ProximitySelector        - engine-free proximity rules (unit-tested)
-    AppServices / StoryLog           - service locator + injectable logging
-  Narrative/  Crossroads.Narrative   (refs Core)
-    Content/  StoryContentLibraryAsset (ScriptableObject, authorable content)
-              StoryContentBuilder      (code-built fallback + test content; mirrors JSON)
-              ContentData              (DecisionNodeData/EffectData/ConditionData/GateRuleData/ProgressionContentData)
-    DecisionManager                   - register / present / resolve / expose
-    EncounterFlow                     - dialogue+decision state machine (runner)
-    ConditionEvaluator / EffectApplier- whitelists (+7 effects / +6 conditions)
-    GameStateManager / ProgressionIndex / EffectNotices / GateRuleEvaluator
-    GameServices                      - typed facade: State, Progress, Decisions, Encounters, Save
-  Gameplay/   Crossroads.Gameplay   (refs Core, Narrative)
-    Interaction/ Interactable, DoorInteractable (slide anim, SetOpen), GatedDoor, AreaGate,
-                 PlayerInteraction, StoryEncounterNPC, StoryEventInteractable
-    WorldState/ StoryWorldState (replays persisted entity variants), NpcFateDriver, AreaTrigger
-    StoryModeBootstrap                - boots services, loads save, autosaves on pause
-  UI/         Crossroads.UI         (refs Core, Narrative, Gameplay)
-    GameUIBootstrap (scene), RuntimeMenuFactory, DialogueUI (+ speaker title chip),
-    StateHUD, ToastUI, InteractionHUD, SafeAreaFitter
+  Core/       Crossroads.Core
+    GameState / StateMutator   - authoritative state + all writes; progression fields
+    EventBus + StoryEvents     - typed pub/sub (+ NpcStatusChangedEvent)
+    SaveSystem, SaveData       - JSON slots, schema v2 + v1->v2 upgrade, atomic writes
+    Point3, ProximitySelector  - engine-free math/proximity (tested)
+    InputLock, AppServices, StoryLog
+  Narrative/  Crossroads.Narrative
+    Content/ ContentData (StoryContentData + npcs/decisions/graphs/encounters/progression)
+             StoryContentBuilder (code mirror), ScriptableObjectAssets, IEncounterSource
+    DecisionManager / EncounterFlow / ConditionEvaluator / EffectApplier / EffectNotices
+    GameStateManager / ProgressionIndex / GateRuleEvaluator
+    GameServices (State, Progress, Decisions, Encounters, Save, Content)
+  Gameplay/   Crossroads.Gameplay
+    Interaction/ Interactable, PlayerInteraction, DoorInteractable, GatedDoor, AreaGate,
+                 StoryEncounterNPC (kept), StoryEventInteractable
+    NPC/        NpcBrain (pure) -> NpcLogic (pure) -> NpcAgent -> NpcInteractable
+    WorldState/ StoryWorldState, NpcFateDriver (kept), AreaTrigger
+  UI/         Crossroads.UI
+    GameUIBootstrap, DialogueUI (+ speaker title chip), InteractionHUD, StateHUD,
+    ToastUI, RuntimeMenuFactory, SafeAreaFitter
 ```
 
-**Event flow — the complete consequence loop**
+**NPC runtime wiring**
 
 ```
-tap INTERACT → StoryEncounterNPC.OnInteract → EncounterFlow.Run("c1_hall_first_light")
-  → 3 dialogue lines → DecisionPromptEvent (3 cards) → SelectChoice("ember_reach"…)
-      → EffectApplier → StateMutator writes: flag, affinity, bond, world state,
-        entity markers, codex, echoes + NEW: reputation, ability, skill, item, area unlock
-      → EffectNotices → NoticeRequestEvent → ToastUI ("what changed" toast)
-      → ResolvedDecisionEntry recorded → autosave (atomic JSON)
-  → aftermath line (condition-gated) → DialogueEndedEvent → input unlock
-
-Same loop for the shard (StoryEventInteractable) and Sera (StoryEncounterNPC) —
-every beat is content, every gate is a rule.
-
-After the choice the world itself re-evaluates:
-  AreaGate.Refresh():  rules(AbilityOwned ember_pulse|tide_mend|stone_ward) → seal cracks open + per-path text
-  NpcFateDriver.Refresh(Sera):  dialogue, title and look change per stored drive flag
-  NpcFateDriver.Refresh(Mara):  bond tier → title variant
-  AreaTrigger.OnTriggerEnter:  currentArea = annex/hall → autosave
-  StoryWorldState:  shard entity stays off once taken (persisted)
-
-RESTART: StoryModeBootstrap loads save → StoryWorldState replays entity/area variants,
-  AreaGate re-opens (unlock persisted), NpcFateDriver re-applies titles, StateHUD shows the
-  restored card, re-talk shows the stored-drive opener and never re-presents resolved decisions.
+NpcAgent.Start ─► resolve definition (content.npcs[id]) ─► NpcBrain + NpcLogic + world
+                ─► subscribe: bond/affinity/flag/decision/item/rep/skill/ability/area/
+                              load/reset/dialogue events
+state change   ─► Apply(): brain.Reapply() -> title + mood + profile (+ material trim)
+                ─► if changed: NpcStatusChangedEvent {npcId,title,bond,tier,moodLine}
+                               + NoticeRequestEvent(moodLine) when live (the "reacts" beat)
+Update         ─► logic.Tick(dt, playerPos, playerNear, profile, talking) -> world moves:
+                Friendly: approach -> stop at talkDistance -> face | Wary: avoid ->
+                back to routine (waypoints + dwell) | Talk: freeze + face
+Interact (button) ─► first AVAILABLE interaction (conditions) -> EncounterFlow.Run(encounter,
+                CurrentTitle) -> DialogueStarted/Ended drive the Talk state
 ```
 
 ---
 
-## 4. Content & the branching proof
+## 4. NPC data model (modular: one JSON row per character)
 
-### 4.1 Player attributes (all data-driven, all saved)
-
-| Attribute | Shape | Example |
-|---|---|---|
-| Reputation | `reputation[groupId] −100..100` | choir −10 · folk +8 · wards +8 |
-| Bonds | `bonds[npcId] −100..100` + tier | Mara +5 → **Warm** (New → Warm at 5) |
-| Abilities | `abilities` list | `ember_pulse` (Ember Pulse) |
-| Items | `items` list | `echo_shard` (Echo Shard) |
-| Skills | `skills[skillId] → level` | `echo_attunement` 1 |
-| Areas | `unlockAreas` + `currentArea` | `annex` unlocked · current `annex` |
-| Affinities/echoes | existing | ember 10 · echoBank 15 |
-| Story flags | existing | `c1_hall_drive = ember` |
-
-### 4.2 Condition / effect whitelist (extended)
-
-**Conditions** — new: `ReputationAtLeast` (9), `ItemHeld` (10), `AbilityOwned` (11), `AreaUnlocked` (12), `SkillAtLeast` (13) — plus existing `FlagIs`, `DecisionWas`, `AffinityAtLeast`, `BondAtLeast`, `EchoesAtLeast`, `WorldStateIs`, `Always`.
-
-**Effects** — new: `AddReputation` (11), `SetReputation` (12), `UnlockAbility` (13), `AddSkillLevel` (14), `AddItem` (15), `RemoveItem` (16), `UnlockArea` (17) — plus existing flag/affinity/bond/echoes/codex/world-state/entity/spawn.
-
-Adding a *new type* later = one enum entry + one switch case (by design §4.2); everything else stays data.
-
-### 4.3 The short playable proof sequence
-
-```
-Mara — "The First Light"  (3 choices)
-  ├─ ember_reach   → flag drive=ember  · Ember +10 · bond Mara +5 · choir −10
-  │                   · ABILITY: Ember Pulse · echoes +15 · hall burns red
-  ├─ tide_clear    → flag drive=tide   · Tide +10  · bond Mara +10 · folk +8
-  │                   · ABILITY: Tide Mend · echoes +20 · twins clear the east hall
-  └─ stone_still   → flag drive=stone  · Stone +10 · bond Mara +3 · wards +8
-                      · ABILITY: Stone Ward · echoes +15 · hall turns to mirror-still stone
-
-North Energy Seal (AreaGate) — same room, now openable
-  · Ember Pulse   → "The seal sings, cooling to red glass…"   → annex unlocked
-  · Tide Mend     → "The seal flows apart like a curtain…"     → annex unlocked
-  · Stone Ward    → "The seal stills… you walk through light." → annex unlocked
-  · no ability    → "A seal of the hall's own light. It does not move for you."
-
-Annex — Echo Shard (StoryEventInteractable)
-  · per-path line (drive flag) · take → item echo_shard, echoes +25, skill +1, shard stays off forever
-
-Sera at the lookout — same room, different person per your first choice
-  · drive=tide   → she hails you as kin (bond +4 option) + "lookout with me" option
-  · drive=ember  → wary: shard_show only if you *hold* the shard, otherwise keep_low
-  · drive=stone  → only the fallback: quiet, she keeps her distance
-
-RESTART: everything above is restored from save — seal already open, shard gone,
-  Sera's dialogue still matches the drive flag, HUD card matches.
-```
-
-### 4.4 Save format (schema v2)
-
-```json
+```jsonc
+// scripts/story_content.json -> "npcs": [ ... ]
 {
-  "schemaVersion": 2,
-  "meta": { "slotName": "Ari - FirstLocation", "timestamp": "…", "playtimeSec": 0 },
-  "scene": { "sceneKey": "FirstLocation", "checkpointId": "hall_spawn" },
-  "gameState": {
-    "flags": [{ "key": "c1_hall_drive", "value": "ember" }],
-    "worldStates": [{ "key": "hall", "value": "ember" }],
-    "entities": [{ "key": "echo_shard", "value": false }],
-    "bonds": [{ "key": "mara", "value": 5 }],
-    "decisions": [{ "decisionId": "…", "optionId": "…", "summary": "…", "resolvedAt": "…" }],
-    "codex": ["c1_echo_ember", "c1_echo_first_light"],
-    "reputation": [{ "key": "choir", "value": -10 }],
-    "abilities": ["ember_pulse"],
-    "items": ["echo_shard"],
-    "skills": [{ "key": "echo_attunement", "value": 1 }],
-    "unlockAreas": ["annex"],
-    "currentArea": "annex",
-    "ember": 10, "tide": 0, "stone": 0, "hollow": 0, "echoBank": 40
-  }
+  "id": "sera", "displayName": "Sera", "sheetRef": "REF-04",
+  "description": "A refugee from the lower halls. Wary of the Echo; warms only to proof of kindness.",
+  "behaviour": { "personality": 2 /*Wary*/, "facesPlayer": 1, "reactRadius": 4.5,
+                 "approachDistance": 0, "avoidDistance": 2.6, "talkDistance": 2.2,
+                 "moveSpeed": 0.9, "turnSpeed": 4, "usesRoutine": 1 },
+  "states": [   // first matching conditions win; -1 = inherit the base behaviour
+    { "conditions": [ {type:0, "key":"c1_hall_drive", "value":"tide"} ],
+      "title": "Sera · Grateful", "moodLine": "Sera's guard drops. She steps closer, unafraid.",
+      "approachDistance": 1.5, "avoidDistance": 0, "moveSpeed": 1.0, "reactRadius": -1 },
+    { "conditions": [ {type:0, "key":"c1_hall_drive", "value":"ember"} ],
+      "title": "Sera · Watchful", "moodLine": "Sera keeps her distance. Your echo burns too bright.",
+      "approachDistance": 0, "avoidDistance": 3.4, "moveSpeed": -1, "reactRadius": -1 },
+    { "conditions": [ {type:0, "key":"c1_hall_drive", "value":"stone"} ],
+      "title": "Sera · Intrigued", "moodLine": "Sera studies you sidelong, curious despite herself.",
+      "approachDistance": 1.2, "avoidDistance": 0, "moveSpeed": 0.8, "reactRadius": -1 }
+  ],
+  "interactions": [   // ordered: the first AVAILABLE one is the INTERACT button
+    { "id": "talk", "label": "Talk to Sera", "encounterId": "c1_hall_sera", "conditions": [] },
+    { "id": "show_shard", "label": "Show the shard", "encounterId": "c1_hall_sera_shard",
+      "conditions": [ {type:10, "key":"echo_shard"} ] }   // ItemHeld
+  ],
+  "routine": [ { "position": {"x":16.5,"y":0,"z":3.2}, "dwellSeconds": 2.0 },
+               { "position": {"x":18.5,"y":0,"z":2.2}, "dwellSeconds": 2.0 } ]
 }
 ```
 
-- **v1 → v2 upgrade**: in-memory migration keeps every legacy field, adds empty progression collections — old saves load and continue; new fields then accumulate normally.
-- **Atomic writes**: `.tmp` → `File.Replace`; corrupt/old-schema files refused gracefully.
-- **Autosave triggers**: every decision resolution, area unlock, area change; `OnApplicationPause(true)` / `OnApplicationFocus(false)`.
-- **DEV helpers**: `StoryModeBootstrap.devClearSaveOnStart` checkbox + ✕ RESET STATE button in `StateHUD` (editor/dev builds only).
+Mara (REF-02, `personality: 1` Friendly, approach 1.6 → 1.3 when Warm) has a bond-gated state
+(`BondAtLeast mara 8`) and two interactions: `confide` ("Comfort Mara", bond-gated, put FIRST so
+the button changes when she warms) and `talk` ("Talk to Mara" → first-light encounter).
 
 ---
 
 ## 5. Verification
 
-### ✅ Static (run: `python3 scripts/validate_assets.py`)
-- GUID cross-references: **0 unresolved**; no duplicate GUIDs in the registry.
-- `CL_C1_StoryContent.asset` parses as YAML and matches `scripts/story_content.json` field-for-field (list-based emitter; decisions/options/conditions/effects/graphs/progression indentation verified).
-- Every content string in the JSON also exists in the C# fallback builder (no drift — the validator catches drift).
-- Scene sanity: 153 GameObjects / 134 SceneRoots; seal gate + shard + Sera + Mara + 2 area triggers + `StoryWorldState` bindings all present; `AreaGate`/`NpcFateDriver`/`StoryEventInteractable` MonoBehaviour GUIDs match their `.meta` files.
+### ✅ Static (`python3 scripts/validate_assets.py`)
+- GUID cross-references 0 unresolved; registry no duplicates; **NPC/Mara/Sera scene bindings** (NpcAgent ×2, NpcInteractable ×2, npcId fields, component refs) verified; scene 153 GameObjects / 134 SceneRoots.
+- `CL_C1_StoryContent.asset` re-parses and matches `story_content.json` **field-for-field including the new `npcs` block** (states/conditions/interactions/routine/behaviour), graphs 4–5 and encounters 4–5.
+- Every content string exists in the C# builder mirror (no drift; non-ASCII-aware).
 
-### ✅ Headless flow tests — **204 passed / 0 failed** (`scripts/decision_system_tests/`, mcs+mono)
+### ✅ Headless flow tests — **277 passed / 0 failed**
+Groups 1–15 (prior phases: proximity, flows, persistence, gating, gates, notices, schema upgrade)
+plus the NPC groups:
+
 ```
-1  walk → prompt appears / priority ties / disappears            [proximity rules]
-2  First Light A/B/C: dialogue → 3 choices → state asserted
-3  autosave on resolution → disk round-trip
-4  variant consequences (markers, aftermath, re-talk)
-5  re-talk: no re-prompt, variant opener, no double record
-6  D2 gating + timeout (reserved; content intact)
-7  save resilience: atomic write, corrupt tolerance, delete
-8  content contracts: unknown encounter = clean no-op
-9  GameStateManager: attributes + StatusLines player card
-10 shard flow + re-talk variants (take / leave, entity stays off)
-11 Sera per-drive dialogue + future-choice gating
-   (lookout hidden off-tide · shard_show only with item · stone→fallback only)
-12 gate rules per ability (opens/falls back per path text)
-13 FULL RESTART: 3 decisions, ability, open area, item, rep, skill=2,
-   currentArea, entity stays off — all restored
-14 change notices: "Ember +10" / "Ability: Ember Pulse" / "The Choir −10"
-15 v1 save upgrade: schema v2, legacy preserved, new fields default
+16 NPC framework data: definitions (id/name/sheet/personality/states/interactions),
+   every interaction resolves to a registered encounter, index names from content
+17 Mara: Decision A(tide) -> bond 10 Warm -> title/approach/prompt/confide change;
+   stone path -> bond 3 -> stays locked (TWO PATHS, different NPC state)
+18 Sera: baseline Wary (avoid 2.6) -> tide Grateful (FLIPS to approach 1.5) /
+   ember Watchful (avoid 3.4) / stone Intrigued (approach 1.2); item-gated
+   interaction unlocks only after the shard, prompt keeps talk-first
+19 NpcLogic FSM: friendly approach->face, wary retreat (moves AWAY), polite -> face only,
+   routine walk->dwell->loop, talking freezes movement, out-of-radius -> idle
+20 THE SEQUENCE, path A vs path B (independent saves): A -> Mara confide opens +
+   tide lines + Sera thanks you; B -> confide locked + Sera warns you (different
+   later encounters for the same NPC); ItemHeld shard story in her ember tone
+21 RESTART: bond/title/behaviour/interactions/prompt re-applied from disk and the
+   later conversation still matches the restored decision
 ```
-Re-run: `cd scripts/decision_system_tests && mcs -langversion:latest -define:ENABLE_LEGACY_INPUT_MANAGER -out:FlowTests.exe TestJson.cs FlowTests.cs ../unity-stub/UnityStub.cs ../../Assets/_Project/Scripts/Core/*.cs ../../Assets/_Project/Scripts/Narrative/*.cs ../../Assets/_Project/Scripts/Narrative/Content/*.cs ../../Assets/_Project/Scripts/Gameplay/*.cs ../../Assets/_Project/Scripts/Gameplay/Interaction/*.cs ../../Assets/_Project/Scripts/Gameplay/WorldState/*.cs ../../Assets/_Project/Scripts/UI/*.cs ../../Assets/Game/Scripts/FirstLocationBootstrap.cs ../../Assets/Game/Scripts/ThirdPersonCameraController.cs && mono FlowTests.exe`
+Re-run: `cd scripts/decision_system_tests && mcs -langversion:latest -define:ENABLE_LEGACY_INPUT_MANAGER -out:FlowTests.exe TestJson.cs FlowTests.cs ../unity-stub/UnityStub.cs ../../Assets/_Project/Scripts/Core/*.cs ../../Assets/_Project/Scripts/Narrative/*.cs ../../Assets/_Project/Scripts/Narrative/Content/*.cs ../../Assets/_Project/Scripts/Gameplay/*.cs ../../Assets/_Project/Scripts/Gameplay/Interaction/*.cs ../../Assets/_Project/Scripts/Gameplay/WorldState/*.cs ../../Assets/_Project/Scripts/Gameplay/NPC/*.cs ../../Assets/_Project/Scripts/UI/*.cs ../../Assets/Game/Scripts/FirstLocationBootstrap.cs ../../Assets/Game/Scripts/ThirdPersonCameraController.cs && mono FlowTests.exe`
 
 ### ✅ Full C# compile check (both input modes)
-`scripts/compile_check.sh` compiles **every** project source (Core, Narrative, Narrative/Content, Gameplay, Interaction, WorldState, UI, both Game scripts) against the dev-only Unity stub with `ENABLE_LEGACY_INPUT_MANAGER` **and** `ENABLE_INPUT_SYSTEM` — both `Compilation succeeded`.
+`bash scripts/compile_check.sh` — every project source compiled against the Unity stub with
+`ENABLE_LEGACY_INPUT_MANAGER` and `ENABLE_INPUT_SYSTEM` — both `Compilation succeeded`.
 
 ### ⏳ Runtime verification — pending Unity Editor (no editor in sandbox)
-Run one Play-mode pass (menu *CROSSROADS ▸ Prototype ▸ Build Ari Prefab & Test Scene* first if needed):
-1. Log `[CROSSROADS] Game UI ready` + `[CROSSROADS] PlayerInteraction ready on Ari`; no console errors. **Also confirm `ToastUI` is attached** (`ToastUI.Attach` wiring in `GameUIBootstrap` is a known pre-existing item to verify).
-2. Reach Mara → `TALK TO MARA` → tap → 3 lines → choose **tide_clear**.
-3. Toast reads `locked in ◆ Tide +10 … saved ✓`; HUD card updates; twins appear; **check `ToastUI` visible** with the change notices.
-4. Walk north to the Energy Seal → it stays shut without an ability; tap it → flavor line. *(Optional: verify the open state with an ability by making a fresh save on each path.)*
-5. Enter the annex → `currentArea` flips to annex in HUD; take the shard → shard disappears.
-6. Sera: her title/line differs from the tide path; lookout option visible only on tide.
-7. **Stop Play → Play again** → seal already open, shard gone, Sera still tide-aware, HUD card restored — the persistence proof.
-8. Use the RESET button (dev) → first encounter re-presents cleanly.
+1. Play → no console errors; `TALK TO MARA` appears near Mara.
+2. **Watch Mara**: idle near her without interacting — she should turn toward Ari and take a
+   couple of steps closer (Friendly), then wander her short patrol loop when Ari leaves.
+3. **Watch Sera** (fresh save): approach her — she should **step back** and keep ~2.6 m
+   (Wary) instead of turning toward you.
+4. First Light → choose **tide_clear** → toast + HUD update; **Mara's prompt changes to
+   COMFORT MARA** and she stands closer (Warm, "Mara · Warm" chip on interact); the confide
+   conversation plays the tide line.
+5. Reset (RESET button) → **ember_reach** → Sera's title chip is different, she backs off
+   farther, her greeting is the warning line; Mara's prompt stays TALK TO MARA.
+6. North seal → annex → shard → Sera: talk graph gains the shard option (item-gated).
+7. **Stop Play → Play again**: Mara still Comfort Mara + Warm; Sera still grateful/approaching;
+   confide still plays the tide line — the persistence proof.
+8. (Optional, when meshes arrive) assign `avatarPrefab` on NpcAgent once per character →
+   placeholders hide automatically; keep `sheetRef` = the sheet the prefab was built from.
 
 ---
 
-## 6. Adding a future encounter (no core changes)
+## 6. Adding an NPC (no core changes)
 
-1. Edit `scripts/story_content.json` (canonical) → run `python3 scripts/gen_story_content.py` (regenerates the asset) → `python3 scripts/validate_assets.py` (cross-checks asset ↔ JSON ↔ C# builder).
-2. Or author directly in the `StoryContentLibraryAsset` inspector (decisions / graphs / encounters / progression).
-3. Drop a `StoryEncounterNPC` (or `StoryEventInteractable`) on a GameObject, set `encounterId`.
-4. Gate anything with the condition whitelist; add gate rules to `GatedDoor`/`AreaGate`; bind consequence objects in `StoryWorldState.entities`.
-5. Conditions/effects beyond the whitelist = one enum entry + one switch case; nothing else changes.
+1. Add one row to `scripts/story_content.json` `npcs` (id/name/sheet/personality/behaviour/
+   states/interactions/routine) + any new dialogue graphs/encounters it needs.
+2. `python3 scripts/gen_story_content.py && python3 scripts/gen_firstlocation_scene.py && python3 scripts/validate_assets.py`.
+3. Mirror the row in `StoryContentBuilder.cs` (convention; the validator enforces parity).
+4. Scene: one GameObject with collider + body/head visuals + `NpcInteractable` (→ agent ref)
+   + `NpcAgent` (npcId, base material, optional trim variants, optional avatar prefab).
+5. Conditions/effects beyond the whitelist = one enum entry + one switch case; everything else is data.
 
 ## 7. Notes & fixes found while "checking well"
 
-- **Phase 2a notes** (kept): fixed latent v1 scene-emitter rotation bug (`m_LocalRotation` identity → now `qy⊗qx⊗qz`, verified unit quaternions); JsonUtility can't serialize dictionaries → entry-lists with dictionary helpers; one id-keyed `StoryContentLibrary` asset instead of one asset per node; D2 timed choices implemented and reserved; `dev` branch was stale and was brought up to date.
-- **This phase**: found and fixed a real runner bug — `end:true` dialogue nodes with a final line called `EndRun()` before publishing, so the last line never rendered; now the final line is published and waits for `Advance`.
-- Two patches (ContentData enum extension, SaveSystem v1→v2 migration) were lost mid-session and re-applied after grep verification; `validate_assets.py` now also catches builder/JSON drift.
-- `GatedDoor` is the data-driven rule door (base + rules); `DoorInteractable` was rewritten as its slide-animation base (same GUID, scene doors unchanged).
-- Energy Seal moved to z=20.5 in the doorway so it doesn't z-fight the door panels.
-- `GameStateManager.AreaUnlocked()` is the canonical API (one accessor — `IsAreaUnlocked` alias removed during the compile check).
+- **Behavior FSM is pure C#** (`NpcLogic` + `INpcWorld`): the movement/physics layer is 30 lines in `NpcAgent`; the FSM is unit-tested with a fake world (moves, directions, arrivals, freezes).
+- **`NpcBrain` is event-agnostic by design**: `Reapply()` is called by the agent on relevant state events; tests call it explicitly after `Resolve()` — the pure/core split keeps headless tests honest (found by the failing title assertions).
+- **`Point3` gained `+`, scalar `*`, `normalized`, `MoveTowards`, `Dot`, `magnitude`** (pure C#; used by the FSM; no Unity types leaked into logic).
+- **Sera's graph embeds a decision** — sequence tests must `SelectChoice` before running the next encounter (runner rule: an embedded decision waits for the player).
+- Unity stub grew `Vector3.MoveTowards`, `Quaternion.Slerp`, 2-arg `LookRotation`, `Mathf.Clamp01` (compile-only; the FSM uses Point3).
+- `StoryContentBuilder.cs` needed `using Crossroads.Core;` (routines use `Point3`); NpcLogic needed the Narrative using (NpcStopData).
+- The asset YAML for `npcs` required a dedicated emitter (nested conditions under list items, inline `position: {x,y,z}`, strict 4/6/8/10 indentation) — first run produced a stray `behaviour` list and a glued `npcs:` key; both caught by re-parsing and fixed.
+- **Conventions kept**: data in JSON → asset → C# mirror, validated; GUIDs deterministic (NpcBrain 0x91 … NpcInteractable 0x94); scene generator is the only scene writer; `main` stays device-buildable, `dev` is integration.

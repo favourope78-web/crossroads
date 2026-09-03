@@ -3,30 +3,95 @@
   "libraryName": "CL_C1_StoryContent",
   "progression": {
     "abilities": [
-      { "id": "ember_pulse", "name": "Ember Pulse", "line": "ember", "description": "The first echo. Heat answers your will. (Gates: hall energy seals.)" },
-      { "id": "tide_mend", "name": "Tide Mend", "line": "tide", "description": "The first echo. The hall breathes easier around you. (Gates: hall energy seals.)" },
-      { "id": "stone_ward", "name": "Stone Ward", "line": "stone", "description": "The first echo. Stillness bends around you. (Gates: hall energy seals.)" }
+      {
+        "id": "ember_pulse",
+        "name": "Ember Pulse",
+        "line": "ember",
+        "description": "The first echo. Heat answers your will. (Gates: hall energy seals.)"
+      },
+      {
+        "id": "tide_mend",
+        "name": "Tide Mend",
+        "line": "tide",
+        "description": "The first echo. The hall breathes easier around you. (Gates: hall energy seals.)"
+      },
+      {
+        "id": "stone_ward",
+        "name": "Stone Ward",
+        "line": "stone",
+        "description": "The first echo. Stillness bends around you. (Gates: hall energy seals.)"
+      }
     ],
     "skills": [
-      { "id": "echo_attunement", "name": "Echo Attunement", "maxLevel": 3 }
+      {
+        "id": "echo_attunement",
+        "name": "Echo Attunement",
+        "maxLevel": 3
+      }
     ],
     "items": [
-      { "id": "echo_shard", "name": "Fracture Shard", "description": "A cold-warm sliver of the Fracture light. It held still for you." }
+      {
+        "id": "echo_shard",
+        "name": "Fracture Shard",
+        "description": "A cold-warm sliver of the Fracture light. It held still for you."
+      }
     ],
     "reputationGroups": [
-      { "id": "choir", "name": "The Choir" },
-      { "id": "folk", "name": "People of Vessa" },
-      { "id": "wards", "name": "The Wardens" }
+      {
+        "id": "choir",
+        "name": "The Choir"
+      },
+      {
+        "id": "folk",
+        "name": "People of Vessa"
+      },
+      {
+        "id": "wards",
+        "name": "The Wardens"
+      }
     ],
     "areas": [
-      { "id": "hall", "name": "Fracture Hall" },
-      { "id": "annex", "name": "North Annex" }
+      {
+        "id": "hall",
+        "name": "Fracture Hall"
+      },
+      {
+        "id": "annex",
+        "name": "North Annex"
+      }
     ]
   },
   "encounters": [
-    { "id": "c1_hall_first_light", "npcName": "Mara", "graphId": "g_c1_hall_first_light", "startNodeId": "start" },
-    { "id": "c1_hall_shard", "npcName": "The Shard", "graphId": "g_c1_hall_shard", "startNodeId": "start" },
-    { "id": "c1_hall_sera", "npcName": "Sera", "graphId": "g_c1_hall_sera", "startNodeId": "start" }
+    {
+      "id": "c1_hall_first_light",
+      "npcName": "Mara",
+      "graphId": "g_c1_hall_first_light",
+      "startNodeId": "start"
+    },
+    {
+      "id": "c1_hall_shard",
+      "npcName": "The Shard",
+      "graphId": "g_c1_hall_shard",
+      "startNodeId": "start"
+    },
+    {
+      "id": "c1_hall_sera",
+      "npcName": "Sera",
+      "graphId": "g_c1_hall_sera",
+      "startNodeId": "start"
+    },
+    {
+      "id": "c1_hall_mara_confide",
+      "npcName": "Mara",
+      "graphId": "g_c1_hall_mara_confide",
+      "startNodeId": "start"
+    },
+    {
+      "id": "c1_hall_sera_shard",
+      "npcName": "Sera",
+      "graphId": "g_c1_hall_sera_shard",
+      "startNodeId": "start"
+    }
   ],
   "decisions": [
     {
@@ -42,17 +107,72 @@
           "afterText": "Ari's palms open. The light pours in hot and red - and every wall in the hall suddenly looks like a door you could break.",
           "conditions": [],
           "effects": [
-            { "type": 0, "key": "c1_hall_drive", "value": "ember", "amount": 0 },
-            { "type": 2, "key": "ember", "value": "", "amount": 10 },
-            { "type": 4, "key": "mara", "value": "", "amount": 5 },
-            { "type": 11, "key": "choir", "value": "", "amount": -10 },
-            { "type": 11, "key": "folk", "value": "", "amount": 5 },
-            { "type": 7, "key": "hall", "value": "ember", "amount": 0 },
-            { "type": 8, "key": "ember_marker", "value": "1", "amount": 0 },
-            { "type": 13, "key": "ember_pulse", "value": "", "amount": 0 },
-            { "type": 14, "key": "echo_attunement", "value": "", "amount": 1 },
-            { "type": 9, "key": "c1_echo_ember", "value": "", "amount": 0 },
-            { "type": 10, "key": "", "value": "", "amount": 15 }
+            {
+              "type": 0,
+              "key": "c1_hall_drive",
+              "value": "ember",
+              "amount": 0
+            },
+            {
+              "type": 2,
+              "key": "ember",
+              "value": "",
+              "amount": 10
+            },
+            {
+              "type": 4,
+              "key": "mara",
+              "value": "",
+              "amount": 5
+            },
+            {
+              "type": 11,
+              "key": "choir",
+              "value": "",
+              "amount": -10
+            },
+            {
+              "type": 11,
+              "key": "folk",
+              "value": "",
+              "amount": 5
+            },
+            {
+              "type": 7,
+              "key": "hall",
+              "value": "ember",
+              "amount": 0
+            },
+            {
+              "type": 8,
+              "key": "ember_marker",
+              "value": "1",
+              "amount": 0
+            },
+            {
+              "type": 13,
+              "key": "ember_pulse",
+              "value": "",
+              "amount": 0
+            },
+            {
+              "type": 14,
+              "key": "echo_attunement",
+              "value": "",
+              "amount": 1
+            },
+            {
+              "type": 9,
+              "key": "c1_echo_ember",
+              "value": "",
+              "amount": 0
+            },
+            {
+              "type": 10,
+              "key": "",
+              "value": "",
+              "amount": 15
+            }
           ]
         },
         {
@@ -61,18 +181,78 @@
           "afterText": "You pull the twins clear, and the light settles where they were - soft. Like it is learning to watch you breathe.",
           "conditions": [],
           "effects": [
-            { "type": 0, "key": "c1_hall_drive", "value": "tide", "amount": 0 },
-            { "type": 2, "key": "tide", "value": "", "amount": 10 },
-            { "type": 4, "key": "mara", "value": "", "amount": 10 },
-            { "type": 11, "key": "folk", "value": "", "amount": 8 },
-            { "type": 11, "key": "choir", "value": "", "amount": -3 },
-            { "type": 7, "key": "hall", "value": "tide", "amount": 0 },
-            { "type": 8, "key": "tide_marker", "value": "1", "amount": 0 },
-            { "type": 8, "key": "tide_bystanders", "value": "1", "amount": 0 },
-            { "type": 13, "key": "tide_mend", "value": "", "amount": 0 },
-            { "type": 14, "key": "echo_attunement", "value": "", "amount": 1 },
-            { "type": 9, "key": "c1_echo_tide", "value": "", "amount": 0 },
-            { "type": 10, "key": "", "value": "", "amount": 20 }
+            {
+              "type": 0,
+              "key": "c1_hall_drive",
+              "value": "tide",
+              "amount": 0
+            },
+            {
+              "type": 2,
+              "key": "tide",
+              "value": "",
+              "amount": 10
+            },
+            {
+              "type": 4,
+              "key": "mara",
+              "value": "",
+              "amount": 10
+            },
+            {
+              "type": 11,
+              "key": "folk",
+              "value": "",
+              "amount": 8
+            },
+            {
+              "type": 11,
+              "key": "choir",
+              "value": "",
+              "amount": -3
+            },
+            {
+              "type": 7,
+              "key": "hall",
+              "value": "tide",
+              "amount": 0
+            },
+            {
+              "type": 8,
+              "key": "tide_marker",
+              "value": "1",
+              "amount": 0
+            },
+            {
+              "type": 8,
+              "key": "tide_bystanders",
+              "value": "1",
+              "amount": 0
+            },
+            {
+              "type": 13,
+              "key": "tide_mend",
+              "value": "",
+              "amount": 0
+            },
+            {
+              "type": 14,
+              "key": "echo_attunement",
+              "value": "",
+              "amount": 1
+            },
+            {
+              "type": 9,
+              "key": "c1_echo_tide",
+              "value": "",
+              "amount": 0
+            },
+            {
+              "type": 10,
+              "key": "",
+              "value": "",
+              "amount": 20
+            }
           ]
         },
         {
@@ -81,18 +261,78 @@
           "afterText": "You go quiet as the wall. The light circles once - and passes. It remembers patience.",
           "conditions": [],
           "effects": [
-            { "type": 0, "key": "c1_hall_drive", "value": "stone", "amount": 0 },
-            { "type": 2, "key": "stone", "value": "", "amount": 10 },
-            { "type": 4, "key": "mara", "value": "", "amount": 3 },
-            { "type": 11, "key": "wards", "value": "", "amount": 8 },
-            { "type": 11, "key": "folk", "value": "", "amount": 2 },
-            { "type": 11, "key": "choir", "value": "", "amount": -2 },
-            { "type": 7, "key": "hall", "value": "stone", "amount": 0 },
-            { "type": 8, "key": "stone_marker", "value": "1", "amount": 0 },
-            { "type": 13, "key": "stone_ward", "value": "", "amount": 0 },
-            { "type": 14, "key": "echo_attunement", "value": "", "amount": 1 },
-            { "type": 9, "key": "c1_echo_stone", "value": "", "amount": 0 },
-            { "type": 10, "key": "", "value": "", "amount": 15 }
+            {
+              "type": 0,
+              "key": "c1_hall_drive",
+              "value": "stone",
+              "amount": 0
+            },
+            {
+              "type": 2,
+              "key": "stone",
+              "value": "",
+              "amount": 10
+            },
+            {
+              "type": 4,
+              "key": "mara",
+              "value": "",
+              "amount": 3
+            },
+            {
+              "type": 11,
+              "key": "wards",
+              "value": "",
+              "amount": 8
+            },
+            {
+              "type": 11,
+              "key": "folk",
+              "value": "",
+              "amount": 2
+            },
+            {
+              "type": 11,
+              "key": "choir",
+              "value": "",
+              "amount": -2
+            },
+            {
+              "type": 7,
+              "key": "hall",
+              "value": "stone",
+              "amount": 0
+            },
+            {
+              "type": 8,
+              "key": "stone_marker",
+              "value": "1",
+              "amount": 0
+            },
+            {
+              "type": 13,
+              "key": "stone_ward",
+              "value": "",
+              "amount": 0
+            },
+            {
+              "type": 14,
+              "key": "echo_attunement",
+              "value": "",
+              "amount": 1
+            },
+            {
+              "type": 9,
+              "key": "c1_echo_stone",
+              "value": "",
+              "amount": 0
+            },
+            {
+              "type": 10,
+              "key": "",
+              "value": "",
+              "amount": 15
+            }
           ]
         }
       ]
@@ -110,13 +350,48 @@
           "afterText": "Cold... no, warm. The shard settles against your palm like it has been waiting for you.",
           "conditions": [],
           "effects": [
-            { "type": 15, "key": "echo_shard", "value": "", "amount": 0 },
-            { "type": 10, "key": "", "value": "", "amount": 25 },
-            { "type": 14, "key": "echo_attunement", "value": "", "amount": 1 },
-            { "type": 0, "key": "shard_taken", "value": "1", "amount": 0 },
-            { "type": 8, "key": "echo_shard", "value": "0", "amount": 0 },
-            { "type": 9, "key": "c1_shard", "value": "", "amount": 0 },
-            { "type": 4, "key": "mara", "value": "", "amount": 3 }
+            {
+              "type": 15,
+              "key": "echo_shard",
+              "value": "",
+              "amount": 0
+            },
+            {
+              "type": 10,
+              "key": "",
+              "value": "",
+              "amount": 25
+            },
+            {
+              "type": 14,
+              "key": "echo_attunement",
+              "value": "",
+              "amount": 1
+            },
+            {
+              "type": 0,
+              "key": "shard_taken",
+              "value": "1",
+              "amount": 0
+            },
+            {
+              "type": 8,
+              "key": "echo_shard",
+              "value": "0",
+              "amount": 0
+            },
+            {
+              "type": 9,
+              "key": "c1_shard",
+              "value": "",
+              "amount": 0
+            },
+            {
+              "type": 4,
+              "key": "mara",
+              "value": "",
+              "amount": 3
+            }
           ]
         },
         {
@@ -125,10 +400,30 @@
           "afterText": "You step away. The shard dims, and for a second the hall seems to breathe with relief.",
           "conditions": [],
           "effects": [
-            { "type": 0, "key": "shard_left", "value": "1", "amount": 0 },
-            { "type": 11, "key": "folk", "value": "", "amount": 2 },
-            { "type": 4, "key": "mara", "value": "", "amount": 2 },
-            { "type": 9, "key": "c1_shard_left", "value": "", "amount": 0 }
+            {
+              "type": 0,
+              "key": "shard_left",
+              "value": "1",
+              "amount": 0
+            },
+            {
+              "type": 11,
+              "key": "folk",
+              "value": "",
+              "amount": 2
+            },
+            {
+              "type": 4,
+              "key": "mara",
+              "value": "",
+              "amount": 2
+            },
+            {
+              "type": 9,
+              "key": "c1_shard_left",
+              "value": "",
+              "amount": 0
+            }
           ]
         }
       ]
@@ -144,24 +439,78 @@
           "id": "lookout",
           "text": "I'd feel better with an eye on that north seal.",
           "afterText": "Sera nods once and takes up a spot by the north wall, eyes on the seal.",
-          "conditions": [{ "type": 0, "key": "c1_hall_drive", "value": "tide", "amount": 0 }],
+          "conditions": [
+            {
+              "type": 0,
+              "key": "c1_hall_drive",
+              "value": "tide",
+              "amount": 0
+            }
+          ],
           "effects": [
-            { "type": 4, "key": "sera", "value": "", "amount": 10 },
-            { "type": 11, "key": "folk", "value": "", "amount": 3 },
-            { "type": 0, "key": "sera_watch", "value": "1", "amount": 0 },
-            { "type": 8, "key": "sera_lamp", "value": "1", "amount": 0 },
-            { "type": 9, "key": "c1_sera_lookout", "value": "", "amount": 0 }
+            {
+              "type": 4,
+              "key": "sera",
+              "value": "",
+              "amount": 10
+            },
+            {
+              "type": 11,
+              "key": "folk",
+              "value": "",
+              "amount": 3
+            },
+            {
+              "type": 0,
+              "key": "sera_watch",
+              "value": "1",
+              "amount": 0
+            },
+            {
+              "type": 8,
+              "key": "sera_lamp",
+              "value": "1",
+              "amount": 0
+            },
+            {
+              "type": 9,
+              "key": "c1_sera_lookout",
+              "value": "",
+              "amount": 0
+            }
           ]
         },
         {
           "id": "shard_show",
           "text": "Show her what you found in the annex.",
           "afterText": "Sera traces its edge. 'They'll want this. Keep it hidden, and keep moving.'",
-          "conditions": [{ "type": 10, "key": "echo_shard", "value": "", "amount": 0 }],
+          "conditions": [
+            {
+              "type": 10,
+              "key": "echo_shard",
+              "value": "",
+              "amount": 0
+            }
+          ],
           "effects": [
-            { "type": 4, "key": "sera", "value": "", "amount": 5 },
-            { "type": 11, "key": "folk", "value": "", "amount": 2 },
-            { "type": 9, "key": "c1_archivist_hint", "value": "", "amount": 0 }
+            {
+              "type": 4,
+              "key": "sera",
+              "value": "",
+              "amount": 5
+            },
+            {
+              "type": 11,
+              "key": "folk",
+              "value": "",
+              "amount": 2
+            },
+            {
+              "type": 9,
+              "key": "c1_archivist_hint",
+              "value": "",
+              "amount": 0
+            }
           ]
         },
         {
@@ -170,8 +519,18 @@
           "afterText": "Sera melts back into the shadows. You almost lose her.",
           "conditions": [],
           "effects": [
-            { "type": 4, "key": "sera", "value": "", "amount": 3 },
-            { "type": 0, "key": "sera_low", "value": "1", "amount": 0 }
+            {
+              "type": 4,
+              "key": "sera",
+              "value": "",
+              "amount": 3
+            },
+            {
+              "type": 0,
+              "key": "sera_low",
+              "value": "1",
+              "amount": 0
+            }
           ]
         }
       ]
@@ -181,47 +540,834 @@
     {
       "id": "g_c1_hall_first_light",
       "nodes": [
-        { "id": "start", "speaker": "", "text": "", "nextId": "", "branchPrefix": "opener", "decisionId": "", "end": false, "conditions": [] },
-        { "id": "opener_fresh", "speaker": "Mara", "text": "The light came through the ceiling - did you see it? Everyone's running. The Choir guards are sealing the doors.", "nextId": "opener_fresh2", "branchPrefix": "", "decisionId": "", "end": false, "conditions": [{ "type": 7, "key": "dec_c1_hall_first_light", "value": "", "amount": 0 }] },
-        { "id": "opener_fresh2", "speaker": "Mara", "text": "But it looked at you, Ari. I saw it. That's not nothing.", "nextId": "opener_fresh3", "branchPrefix": "", "decisionId": "", "end": false, "conditions": [] },
-        { "id": "opener_fresh3", "speaker": "Mara", "text": "We can't both stand here. You decide - I'll follow you.", "nextId": "decide", "branchPrefix": "", "decisionId": "", "end": false, "conditions": [] },
-        { "id": "opener_again", "speaker": "Mara", "text": "You're still standing. Still the one the light watches. What now?", "nextId": "decide", "branchPrefix": "", "decisionId": "", "end": false, "conditions": [{ "type": 6, "key": "dec_c1_hall_first_light", "value": "", "amount": 0 }] },
-        { "id": "decide", "speaker": "", "text": "", "nextId": "", "branchPrefix": "after", "decisionId": "dec_c1_hall_first_light", "end": false, "conditions": [] },
-        { "id": "after_ember", "speaker": "Mara", "text": "When you moved, the columns burned red. The Choir saw. They're coming for you now, Ari.", "nextId": "end", "branchPrefix": "", "decisionId": "", "end": false, "conditions": [{ "type": 0, "key": "c1_hall_drive", "value": "ember", "amount": 0 }] },
-        { "id": "after_tide", "speaker": "Mara", "text": "You pulled the twins clear - they'll make it. I've got your back. We move together from here.", "nextId": "end", "branchPrefix": "", "decisionId": "", "end": false, "conditions": [{ "type": 0, "key": "c1_hall_drive", "value": "tide", "amount": 0 }] },
-        { "id": "after_stone", "speaker": "Mara", "text": "The guards walked right past us. You're scaring me a little, Ari. That's the third time.", "nextId": "end", "branchPrefix": "", "decisionId": "", "end": false, "conditions": [{ "type": 0, "key": "c1_hall_drive", "value": "stone", "amount": 0 }] },
-        { "id": "after", "speaker": "Mara", "text": "...Okay. That's what we do, then.", "nextId": "end", "branchPrefix": "", "decisionId": "", "end": false, "conditions": [] },
-        { "id": "end", "speaker": "", "text": "", "nextId": "", "branchPrefix": "", "decisionId": "", "end": true, "conditions": [] }
+        {
+          "id": "start",
+          "speaker": "",
+          "text": "",
+          "nextId": "",
+          "branchPrefix": "opener",
+          "decisionId": "",
+          "end": false,
+          "conditions": []
+        },
+        {
+          "id": "opener_fresh",
+          "speaker": "Mara",
+          "text": "The light came through the ceiling - did you see it? Everyone's running. The Choir guards are sealing the doors.",
+          "nextId": "opener_fresh2",
+          "branchPrefix": "",
+          "decisionId": "",
+          "end": false,
+          "conditions": [
+            {
+              "type": 7,
+              "key": "dec_c1_hall_first_light",
+              "value": "",
+              "amount": 0
+            }
+          ]
+        },
+        {
+          "id": "opener_fresh2",
+          "speaker": "Mara",
+          "text": "But it looked at you, Ari. I saw it. That's not nothing.",
+          "nextId": "opener_fresh3",
+          "branchPrefix": "",
+          "decisionId": "",
+          "end": false,
+          "conditions": []
+        },
+        {
+          "id": "opener_fresh3",
+          "speaker": "Mara",
+          "text": "We can't both stand here. You decide - I'll follow you.",
+          "nextId": "decide",
+          "branchPrefix": "",
+          "decisionId": "",
+          "end": false,
+          "conditions": []
+        },
+        {
+          "id": "opener_again",
+          "speaker": "Mara",
+          "text": "You're still standing. Still the one the light watches. What now?",
+          "nextId": "decide",
+          "branchPrefix": "",
+          "decisionId": "",
+          "end": false,
+          "conditions": [
+            {
+              "type": 6,
+              "key": "dec_c1_hall_first_light",
+              "value": "",
+              "amount": 0
+            }
+          ]
+        },
+        {
+          "id": "decide",
+          "speaker": "",
+          "text": "",
+          "nextId": "",
+          "branchPrefix": "after",
+          "decisionId": "dec_c1_hall_first_light",
+          "end": false,
+          "conditions": []
+        },
+        {
+          "id": "after_ember",
+          "speaker": "Mara",
+          "text": "When you moved, the columns burned red. The Choir saw. They're coming for you now, Ari.",
+          "nextId": "end",
+          "branchPrefix": "",
+          "decisionId": "",
+          "end": false,
+          "conditions": [
+            {
+              "type": 0,
+              "key": "c1_hall_drive",
+              "value": "ember",
+              "amount": 0
+            }
+          ]
+        },
+        {
+          "id": "after_tide",
+          "speaker": "Mara",
+          "text": "You pulled the twins clear - they'll make it. I've got your back. We move together from here.",
+          "nextId": "end",
+          "branchPrefix": "",
+          "decisionId": "",
+          "end": false,
+          "conditions": [
+            {
+              "type": 0,
+              "key": "c1_hall_drive",
+              "value": "tide",
+              "amount": 0
+            }
+          ]
+        },
+        {
+          "id": "after_stone",
+          "speaker": "Mara",
+          "text": "The guards walked right past us. You're scaring me a little, Ari. That's the third time.",
+          "nextId": "end",
+          "branchPrefix": "",
+          "decisionId": "",
+          "end": false,
+          "conditions": [
+            {
+              "type": 0,
+              "key": "c1_hall_drive",
+              "value": "stone",
+              "amount": 0
+            }
+          ]
+        },
+        {
+          "id": "after",
+          "speaker": "Mara",
+          "text": "...Okay. That's what we do, then.",
+          "nextId": "end",
+          "branchPrefix": "",
+          "decisionId": "",
+          "end": false,
+          "conditions": []
+        },
+        {
+          "id": "end",
+          "speaker": "",
+          "text": "",
+          "nextId": "",
+          "branchPrefix": "",
+          "decisionId": "",
+          "end": true,
+          "conditions": []
+        }
       ]
     },
     {
       "id": "g_c1_hall_shard",
       "nodes": [
-        { "id": "start", "speaker": "", "text": "", "nextId": "", "branchPrefix": "shard_line", "decisionId": "", "end": false, "conditions": [] },
-        { "id": "shard_line_ember", "speaker": "The Shard", "text": "It is still warm where the light fell. It tilts toward you - like a compass stuck on your name.", "nextId": "shard_offer", "branchPrefix": "", "decisionId": "", "end": false, "conditions": [{ "type": 0, "key": "c1_hall_drive", "value": "ember", "amount": 0 }, { "type": 7, "key": "dec_east_shard", "value": "", "amount": 0 }] },
-        { "id": "shard_line_tide", "speaker": "The Shard", "text": "It hums low, like a held breath. You feel the twins' fear in it - and their relief.", "nextId": "shard_offer", "branchPrefix": "", "decisionId": "", "end": false, "conditions": [{ "type": 0, "key": "c1_hall_drive", "value": "tide", "amount": 0 }, { "type": 7, "key": "dec_east_shard", "value": "", "amount": 0 }] },
-        { "id": "shard_line_stone", "speaker": "The Shard", "text": "It does not move. It waits, the way you waited. It watches you measure it.", "nextId": "shard_offer", "branchPrefix": "", "decisionId": "", "end": false, "conditions": [{ "type": 0, "key": "c1_hall_drive", "value": "stone", "amount": 0 }, { "type": 7, "key": "dec_east_shard", "value": "", "amount": 0 }] },
-        { "id": "shard_line_left", "speaker": "The Shard", "text": "You left it before. It still hums - quieter. The choice stays yours.", "nextId": "shard_left_end", "branchPrefix": "", "decisionId": "", "end": false, "conditions": [{ "type": 6, "key": "dec_east_shard", "value": "leave", "amount": 0 }] },
-        { "id": "shard_left_end", "speaker": "The Shard", "text": "The shard pulses once - acknowledgement - and dims.", "nextId": "", "branchPrefix": "", "decisionId": "", "end": true, "conditions": [] },
-        { "id": "shard_line_done", "speaker": "The Shard", "text": "The shard is quiet now. It chose you once.", "nextId": "", "branchPrefix": "", "decisionId": "", "end": true, "conditions": [{ "type": 6, "key": "dec_east_shard", "value": "take", "amount": 0 }] },
-        { "id": "shard_offer", "speaker": "", "text": "", "nextId": "", "branchPrefix": "shard_after", "decisionId": "dec_east_shard", "end": false, "conditions": [] },
-        { "id": "shard_after_take", "speaker": "", "text": "", "nextId": "", "branchPrefix": "", "decisionId": "", "end": true, "conditions": [{ "type": 6, "key": "dec_east_shard", "value": "take", "amount": 0 }] },
-        { "id": "shard_after_leave", "speaker": "", "text": "", "nextId": "", "branchPrefix": "", "decisionId": "", "end": true, "conditions": [{ "type": 6, "key": "dec_east_shard", "value": "leave", "amount": 0 }] }
+        {
+          "id": "start",
+          "speaker": "",
+          "text": "",
+          "nextId": "",
+          "branchPrefix": "shard_line",
+          "decisionId": "",
+          "end": false,
+          "conditions": []
+        },
+        {
+          "id": "shard_line_ember",
+          "speaker": "The Shard",
+          "text": "It is still warm where the light fell. It tilts toward you - like a compass stuck on your name.",
+          "nextId": "shard_offer",
+          "branchPrefix": "",
+          "decisionId": "",
+          "end": false,
+          "conditions": [
+            {
+              "type": 0,
+              "key": "c1_hall_drive",
+              "value": "ember",
+              "amount": 0
+            },
+            {
+              "type": 7,
+              "key": "dec_east_shard",
+              "value": "",
+              "amount": 0
+            }
+          ]
+        },
+        {
+          "id": "shard_line_tide",
+          "speaker": "The Shard",
+          "text": "It hums low, like a held breath. You feel the twins' fear in it - and their relief.",
+          "nextId": "shard_offer",
+          "branchPrefix": "",
+          "decisionId": "",
+          "end": false,
+          "conditions": [
+            {
+              "type": 0,
+              "key": "c1_hall_drive",
+              "value": "tide",
+              "amount": 0
+            },
+            {
+              "type": 7,
+              "key": "dec_east_shard",
+              "value": "",
+              "amount": 0
+            }
+          ]
+        },
+        {
+          "id": "shard_line_stone",
+          "speaker": "The Shard",
+          "text": "It does not move. It waits, the way you waited. It watches you measure it.",
+          "nextId": "shard_offer",
+          "branchPrefix": "",
+          "decisionId": "",
+          "end": false,
+          "conditions": [
+            {
+              "type": 0,
+              "key": "c1_hall_drive",
+              "value": "stone",
+              "amount": 0
+            },
+            {
+              "type": 7,
+              "key": "dec_east_shard",
+              "value": "",
+              "amount": 0
+            }
+          ]
+        },
+        {
+          "id": "shard_line_left",
+          "speaker": "The Shard",
+          "text": "You left it before. It still hums - quieter. The choice stays yours.",
+          "nextId": "shard_left_end",
+          "branchPrefix": "",
+          "decisionId": "",
+          "end": false,
+          "conditions": [
+            {
+              "type": 6,
+              "key": "dec_east_shard",
+              "value": "leave",
+              "amount": 0
+            }
+          ]
+        },
+        {
+          "id": "shard_left_end",
+          "speaker": "The Shard",
+          "text": "The shard pulses once - acknowledgement - and dims.",
+          "nextId": "",
+          "branchPrefix": "",
+          "decisionId": "",
+          "end": true,
+          "conditions": []
+        },
+        {
+          "id": "shard_line_done",
+          "speaker": "The Shard",
+          "text": "The shard is quiet now. It chose you once.",
+          "nextId": "",
+          "branchPrefix": "",
+          "decisionId": "",
+          "end": true,
+          "conditions": [
+            {
+              "type": 6,
+              "key": "dec_east_shard",
+              "value": "take",
+              "amount": 0
+            }
+          ]
+        },
+        {
+          "id": "shard_offer",
+          "speaker": "",
+          "text": "",
+          "nextId": "",
+          "branchPrefix": "shard_after",
+          "decisionId": "dec_east_shard",
+          "end": false,
+          "conditions": []
+        },
+        {
+          "id": "shard_after_take",
+          "speaker": "",
+          "text": "",
+          "nextId": "",
+          "branchPrefix": "",
+          "decisionId": "",
+          "end": true,
+          "conditions": [
+            {
+              "type": 6,
+              "key": "dec_east_shard",
+              "value": "take",
+              "amount": 0
+            }
+          ]
+        },
+        {
+          "id": "shard_after_leave",
+          "speaker": "",
+          "text": "",
+          "nextId": "",
+          "branchPrefix": "",
+          "decisionId": "",
+          "end": true,
+          "conditions": [
+            {
+              "type": 6,
+              "key": "dec_east_shard",
+              "value": "leave",
+              "amount": 0
+            }
+          ]
+        }
       ]
     },
     {
       "id": "g_c1_hall_sera",
       "nodes": [
-        { "id": "start", "speaker": "", "text": "", "nextId": "", "branchPrefix": "sera_line", "decisionId": "", "end": false, "conditions": [] },
-        { "id": "sera_line_ember", "speaker": "Sera", "text": "You're the one who reached for it. The Choir has your scent now. I'd stay off the street.", "nextId": "sera_offer", "branchPrefix": "", "decisionId": "", "end": false, "conditions": [{ "type": 0, "key": "c1_hall_drive", "value": "ember", "amount": 0 }] },
-        { "id": "sera_line_tide", "speaker": "Sera", "text": "You got my sisters out. I owe you. If you need an eye on that north seal - I'm your lookout.", "nextId": "sera_offer", "branchPrefix": "", "decisionId": "", "end": false, "conditions": [{ "type": 0, "key": "c1_hall_drive", "value": "tide", "amount": 0 }] },
-        { "id": "sera_line_stone", "speaker": "Sera", "text": "You went still as the wall and the sweep passed right through. I don't know if that's luck - or something else.", "nextId": "sera_offer", "branchPrefix": "", "decisionId": "", "end": false, "conditions": [{ "type": 0, "key": "c1_hall_drive", "value": "stone", "amount": 0 }] },
-        { "id": "sera_line_default", "speaker": "Sera", "text": "Careful. The Choir just swept the hall again. Something in there is looking at you.", "nextId": "sera_offer", "branchPrefix": "", "decisionId": "", "end": false, "conditions": [] },
-        { "id": "sera_offer", "speaker": "", "text": "", "nextId": "", "branchPrefix": "sera_after", "decisionId": "dec_sera_lookout", "end": false, "conditions": [] },
-        { "id": "sera_after_lookout", "speaker": "Sera", "text": "I'll be here. Nothing crosses that seal without me knowing it.", "nextId": "end", "branchPrefix": "", "decisionId": "", "end": false, "conditions": [{ "type": 6, "key": "dec_sera_lookout", "value": "lookout", "amount": 0 }] },
-        { "id": "sera_after_shard_show", "speaker": "Sera", "text": "A shard from the light... The Archivist would pay to study that. Stay careful, Ari.", "nextId": "end", "branchPrefix": "", "decisionId": "", "end": false, "conditions": [{ "type": 6, "key": "dec_sera_lookout", "value": "shard_show", "amount": 0 }] },
-        { "id": "sera_after_keep_low", "speaker": "Sera", "text": "...Yeah. Low is good. Low is what keeps you breathing.", "nextId": "end", "branchPrefix": "", "decisionId": "", "end": false, "conditions": [{ "type": 6, "key": "dec_sera_lookout", "value": "keep_low", "amount": 0 }] },
-        { "id": "end", "speaker": "", "text": "", "nextId": "", "branchPrefix": "", "decisionId": "", "end": true, "conditions": [] }
+        {
+          "id": "start",
+          "speaker": "",
+          "text": "",
+          "nextId": "",
+          "branchPrefix": "sera_line",
+          "decisionId": "",
+          "end": false,
+          "conditions": []
+        },
+        {
+          "id": "sera_line_ember",
+          "speaker": "Sera",
+          "text": "You're the one who reached for it. The Choir has your scent now. I'd stay off the street.",
+          "nextId": "sera_offer",
+          "branchPrefix": "",
+          "decisionId": "",
+          "end": false,
+          "conditions": [
+            {
+              "type": 0,
+              "key": "c1_hall_drive",
+              "value": "ember",
+              "amount": 0
+            }
+          ]
+        },
+        {
+          "id": "sera_line_tide",
+          "speaker": "Sera",
+          "text": "You got my sisters out. I owe you. If you need an eye on that north seal - I'm your lookout.",
+          "nextId": "sera_offer",
+          "branchPrefix": "",
+          "decisionId": "",
+          "end": false,
+          "conditions": [
+            {
+              "type": 0,
+              "key": "c1_hall_drive",
+              "value": "tide",
+              "amount": 0
+            }
+          ]
+        },
+        {
+          "id": "sera_line_stone",
+          "speaker": "Sera",
+          "text": "You went still as the wall and the sweep passed right through. I don't know if that's luck - or something else.",
+          "nextId": "sera_offer",
+          "branchPrefix": "",
+          "decisionId": "",
+          "end": false,
+          "conditions": [
+            {
+              "type": 0,
+              "key": "c1_hall_drive",
+              "value": "stone",
+              "amount": 0
+            }
+          ]
+        },
+        {
+          "id": "sera_line_default",
+          "speaker": "Sera",
+          "text": "Careful. The Choir just swept the hall again. Something in there is looking at you.",
+          "nextId": "sera_offer",
+          "branchPrefix": "",
+          "decisionId": "",
+          "end": false,
+          "conditions": []
+        },
+        {
+          "id": "sera_offer",
+          "speaker": "",
+          "text": "",
+          "nextId": "",
+          "branchPrefix": "sera_after",
+          "decisionId": "dec_sera_lookout",
+          "end": false,
+          "conditions": []
+        },
+        {
+          "id": "sera_after_lookout",
+          "speaker": "Sera",
+          "text": "I'll be here. Nothing crosses that seal without me knowing it.",
+          "nextId": "end",
+          "branchPrefix": "",
+          "decisionId": "",
+          "end": false,
+          "conditions": [
+            {
+              "type": 6,
+              "key": "dec_sera_lookout",
+              "value": "lookout",
+              "amount": 0
+            }
+          ]
+        },
+        {
+          "id": "sera_after_shard_show",
+          "speaker": "Sera",
+          "text": "A shard from the light... The Archivist would pay to study that. Stay careful, Ari.",
+          "nextId": "end",
+          "branchPrefix": "",
+          "decisionId": "",
+          "end": false,
+          "conditions": [
+            {
+              "type": 6,
+              "key": "dec_sera_lookout",
+              "value": "shard_show",
+              "amount": 0
+            }
+          ]
+        },
+        {
+          "id": "sera_after_keep_low",
+          "speaker": "Sera",
+          "text": "...Yeah. Low is good. Low is what keeps you breathing.",
+          "nextId": "end",
+          "branchPrefix": "",
+          "decisionId": "",
+          "end": false,
+          "conditions": [
+            {
+              "type": 6,
+              "key": "dec_sera_lookout",
+              "value": "keep_low",
+              "amount": 0
+            }
+          ]
+        },
+        {
+          "id": "end",
+          "speaker": "",
+          "text": "",
+          "nextId": "",
+          "branchPrefix": "",
+          "decisionId": "",
+          "end": true,
+          "conditions": []
+        }
+      ]
+    },
+    {
+      "id": "g_c1_hall_mara_confide",
+      "nodes": [
+        {
+          "id": "start",
+          "speaker": "",
+          "text": "",
+          "nextId": "",
+          "branchPrefix": "confide_line",
+          "decisionId": "",
+          "conditions": [],
+          "end": false
+        },
+        {
+          "id": "confide_line_tide",
+          "speaker": "Mara",
+          "text": "You got the twins out. Everyone saw it. I used to think this hall only makes people harder - then you showed up still soft.",
+          "nextId": "confide_promise",
+          "branchPrefix": "",
+          "decisionId": "",
+          "conditions": [
+            {
+              "type": 0,
+              "key": "c1_hall_drive",
+              "value": "tide",
+              "amount": 0
+            }
+          ],
+          "end": false
+        },
+        {
+          "id": "confide_line_ember",
+          "speaker": "Mara",
+          "text": "You took the light like it owed you. The whole hall felt it. Just... remember who you were before it, alright?",
+          "nextId": "confide_promise",
+          "branchPrefix": "",
+          "decisionId": "",
+          "conditions": [
+            {
+              "type": 0,
+              "key": "c1_hall_drive",
+              "value": "ember",
+              "amount": 0
+            }
+          ],
+          "end": false
+        },
+        {
+          "id": "confide_line_stone",
+          "speaker": "Mara",
+          "text": "You walked through that light like it was nothing. Calm as ever. It's a little unnerving, honestly - in the good way.",
+          "nextId": "confide_promise",
+          "branchPrefix": "",
+          "decisionId": "",
+          "conditions": [
+            {
+              "type": 0,
+              "key": "c1_hall_drive",
+              "value": "stone",
+              "amount": 0
+            }
+          ],
+          "end": false
+        },
+        {
+          "id": "confide_line_default",
+          "speaker": "Mara",
+          "text": "It's good to hear your voice. This place gets loud in the quiet hours.",
+          "nextId": "confide_promise",
+          "branchPrefix": "",
+          "decisionId": "",
+          "conditions": [],
+          "end": false
+        },
+        {
+          "id": "confide_promise",
+          "speaker": "Mara",
+          "text": "Promise me you'll keep being the person who helps before he hesitates.",
+          "nextId": "end",
+          "branchPrefix": "",
+          "decisionId": "",
+          "conditions": [],
+          "end": false
+        },
+        {
+          "id": "end",
+          "speaker": "",
+          "text": "",
+          "nextId": "",
+          "branchPrefix": "",
+          "decisionId": "",
+          "conditions": [],
+          "end": true
+        }
+      ]
+    },
+    {
+      "id": "g_c1_hall_sera_shard",
+      "nodes": [
+        {
+          "id": "start",
+          "speaker": "",
+          "text": "",
+          "nextId": "",
+          "branchPrefix": "shard_story",
+          "decisionId": "",
+          "conditions": [],
+          "end": false
+        },
+        {
+          "id": "shard_story_tide",
+          "speaker": "Sera",
+          "text": "It hums low and easy - like the hall is glad you're carrying it. I don't know who chose you for it. I just know it wasn't a mistake.",
+          "nextId": "end",
+          "branchPrefix": "",
+          "decisionId": "",
+          "conditions": [
+            {
+              "type": 0,
+              "key": "c1_hall_drive",
+              "value": "tide",
+              "amount": 0
+            }
+          ],
+          "end": false
+        },
+        {
+          "id": "shard_story_ember",
+          "speaker": "Sera",
+          "text": "Careful with that. Bright things pick owners - and they always want more than they give. ...But it chose you, so maybe it gives back.",
+          "nextId": "end",
+          "branchPrefix": "",
+          "decisionId": "",
+          "conditions": [
+            {
+              "type": 0,
+              "key": "c1_hall_drive",
+              "value": "ember",
+              "amount": 0
+            }
+          ],
+          "end": false
+        },
+        {
+          "id": "shard_story_stone",
+          "speaker": "Sera",
+          "text": "It sits quiet in your hand. Like it already decided to stay. That settles easier than anything else in this hall.",
+          "nextId": "end",
+          "branchPrefix": "",
+          "decisionId": "",
+          "conditions": [
+            {
+              "type": 0,
+              "key": "c1_hall_drive",
+              "value": "stone",
+              "amount": 0
+            }
+          ],
+          "end": false
+        },
+        {
+          "id": "shard_story_default",
+          "speaker": "Sera",
+          "text": "A sliver of the Fracture. Most of us never touch one, ever. You just... carry it. Keep it safe, then.",
+          "nextId": "end",
+          "branchPrefix": "",
+          "decisionId": "",
+          "conditions": [],
+          "end": false
+        },
+        {
+          "id": "end",
+          "speaker": "",
+          "text": "",
+          "nextId": "",
+          "branchPrefix": "",
+          "decisionId": "",
+          "conditions": [],
+          "end": true
+        }
+      ]
+    }
+  ],
+  "npcs": [
+    {
+      "id": "mara",
+      "displayName": "Mara",
+      "sheetRef": "REF-02",
+      "description": "Childhood friend. Bond keeps her near; your choices set her mood.",
+      "behaviour": {
+        "personality": 1,
+        "facesPlayer": 1,
+        "reactRadius": 4.5,
+        "approachDistance": 1.6,
+        "avoidDistance": 0,
+        "talkDistance": 2.0,
+        "moveSpeed": 1.1,
+        "turnSpeed": 6,
+        "usesRoutine": 1
+      },
+      "states": [
+        {
+          "conditions": [
+            {
+              "type": 5,
+              "key": "mara",
+              "value": "",
+              "amount": 8
+            }
+          ],
+          "title": "Mara · Warm",
+          "moodLine": "Mara's eyes soften. She stays closer now.",
+          "approachDistance": 1.3,
+          "avoidDistance": -1,
+          "moveSpeed": -1,
+          "reactRadius": -1
+        }
+      ],
+      "interactions": [
+        {
+          "id": "confide",
+          "label": "Comfort Mara",
+          "encounterId": "c1_hall_mara_confide",
+          "conditions": [
+            {
+              "type": 5,
+              "key": "mara",
+              "value": "",
+              "amount": 8
+            }
+          ]
+        },
+        {
+          "id": "talk",
+          "label": "Talk to Mara",
+          "encounterId": "c1_hall_first_light",
+          "conditions": []
+        }
+      ],
+      "routine": [
+        {
+          "position": {
+            "x": 4.5,
+            "y": 0,
+            "z": -8
+          },
+          "dwellSeconds": 2.5
+        },
+        {
+          "position": {
+            "x": 7.2,
+            "y": 0,
+            "z": -5.8
+          },
+          "dwellSeconds": 2.5
+        }
+      ]
+    },
+    {
+      "id": "sera",
+      "displayName": "Sera",
+      "sheetRef": "REF-04",
+      "description": "A refugee from the lower halls. Wary of the Echo; warms only to proof of kindness.",
+      "behaviour": {
+        "personality": 2,
+        "facesPlayer": 1,
+        "reactRadius": 4.5,
+        "approachDistance": 0,
+        "avoidDistance": 2.6,
+        "talkDistance": 2.2,
+        "moveSpeed": 0.9,
+        "turnSpeed": 4,
+        "usesRoutine": 1
+      },
+      "states": [
+        {
+          "conditions": [
+            {
+              "type": 0,
+              "key": "c1_hall_drive",
+              "value": "tide",
+              "amount": 0
+            }
+          ],
+          "title": "Sera · Grateful",
+          "moodLine": "Sera's guard drops. She steps closer, unafraid.",
+          "approachDistance": 1.5,
+          "avoidDistance": 0,
+          "moveSpeed": 1.0,
+          "reactRadius": -1
+        },
+        {
+          "conditions": [
+            {
+              "type": 0,
+              "key": "c1_hall_drive",
+              "value": "ember",
+              "amount": 0
+            }
+          ],
+          "title": "Sera · Watchful",
+          "moodLine": "Sera keeps her distance. Your echo burns too bright.",
+          "approachDistance": 0,
+          "avoidDistance": 3.4,
+          "moveSpeed": -1,
+          "reactRadius": -1
+        },
+        {
+          "conditions": [
+            {
+              "type": 0,
+              "key": "c1_hall_drive",
+              "value": "stone",
+              "amount": 0
+            }
+          ],
+          "title": "Sera · Intrigued",
+          "moodLine": "Sera studies you sidelong, curious despite herself.",
+          "approachDistance": 1.2,
+          "avoidDistance": 0,
+          "moveSpeed": 0.8,
+          "reactRadius": -1
+        }
+      ],
+      "interactions": [
+        {
+          "id": "talk",
+          "label": "Talk to Sera",
+          "encounterId": "c1_hall_sera",
+          "conditions": []
+        },
+        {
+          "id": "show_shard",
+          "label": "Show the shard",
+          "encounterId": "c1_hall_sera_shard",
+          "conditions": [
+            {
+              "type": 10,
+              "key": "echo_shard",
+              "value": "",
+              "amount": 0
+            }
+          ]
+        }
+      ],
+      "routine": [
+        {
+          "position": {
+            "x": 16.5,
+            "y": 0,
+            "z": 3.2
+          },
+          "dwellSeconds": 2.0
+        },
+        {
+          "position": {
+            "x": 18.5,
+            "y": 0,
+            "z": 2.2
+          },
+          "dwellSeconds": 2.0
+        }
       ]
     }
   ]

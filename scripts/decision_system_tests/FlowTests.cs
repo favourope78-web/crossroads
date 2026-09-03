@@ -12,6 +12,7 @@ using System.Collections.Generic;
 using System.IO;
 using Crossroads.Core;
 using Crossroads.Narrative;
+using Crossroads.Gameplay;
 
 namespace Crossroads.Tests
 {
@@ -718,6 +719,351 @@ namespace Crossroads.Tests
             Directory.Delete(dir2, true);
         }
 
+
+        // ---------------------------------------------------------------- 16. NPC framework data
+        private static void TestNpcContent()
+        {
+            Log.Add("[16] NPC framework: data-driven definitions, encounters reference, index names");
+            string dir = Path.Combine(Path.GetTempPath(), "crossroads_test_npccontent_" + Guid.NewGuid().ToString("N"));
+            Harness.Reset();
+            IEncounterSource content;
+            NewRun(dir, out content);
+
+            StoryContentData cd = content.Content;
+            NpcDefinitionData mara = cd.FindNpc("mara");
+            NpcDefinitionData sera = cd.FindNpc("sera");
+            Check(mara != null && sera != null, "mara + sera definitions present");
+            Check(mara.displayName == "Mara" && mara.sheetRef == "REF-02", "mara identity + CHARACTER_REFERENCE sheet ref");
+            Check(mara.behaviour.personality == NpcPersonality.Friendly, "mara personality: Friendly (approaches)");
+            Check(mara.states.Count == 1 && mara.states[0].conditions.Count == 1
+                  && mara.states[0].conditions[0].type == ConditionType.BondAtLeast, "mara fate state is bond-gated (relationship)");
+            Check(sera.behaviour.personality == NpcPersonality.Wary, "sera personality: Wary (keeps distance)");
+            CheckEq(sera.states.Count, 3, "sera has one fate state per drive decision");
+            Check(sera.FindInteraction("show_shard").conditions[0].type == ConditionType.ItemHeld, "sera shard interaction is item-gated");
+
+            bool allResolve = true;
+            for (int i = 0; i < cd.npcs.Count; i++)
+                for (int j = 0; j < cd.npcs[i].interactions.Count; j++)
+                    if (cd.FindEncounter(cd.npcs[i].interactions[j].encounterId) == null) allResolve = false;
+            Check(allResolve, "every NPC interaction resolves to a registered encounter/graph");
+            Check(cd.FindGraph("g_c1_hall_mara_confide").Find("confide_promise") != null, "Mara confide graph has its payoff node");
+            Check(cd.FindGraph("g_c1_hall_sera_shard").Find("shard_story_tide") != null, "Sera shard graph present");
+            CheckEq(GameServices.Progress.Index.NpcName("mara"), "Mara", "ProgressionIndex resolves NPC names from content");
+
+            GameServices.Shutdown(silent: true);
+            Directory.Delete(dir, true);
+        }
+
+        // ---------------------------------------------------------------- 17. Mara reacts to the earlier decision
+        private static void TestNpcMaraReaction()
+        {
+            Log.Add("[17] Mara: Decision A changes bond -> title, behaviour, available interactions, prompt");
+            string dir = Path.Combine(Path.GetTempPath(), "crossroads_test_mara_" + Guid.NewGuid().ToString("N"));
+            Harness.Reset();
+            IEncounterSource content;
+            NewRun(dir, out content);
+
+            NpcBrain brain = new NpcBrain(content.Content.FindNpc("mara"), GameServices.Progress);
+            CheckEq(brain.CurrentTitle, "Mara", "base title before any decision");
+            Check(brain.Profile.approach > 1.0f, "Friendly baseline: walks toward the player");
+            Check(!brain.InteractionAvailable("confide"), "confide locked at bond 0");
+            CheckEq(brain.PromptLabel(), "Talk to Mara", "default prompt before the decision");
+
+            // ---- Decision A: tide (the relationship path) ----
+            GameServices.Decisions.Resolve(StoryContentBuilder.DecisionFirstLight, "tide_clear");
+            brain.Reapply(); // NpcAgent calls this on state events; tests drive it directly
+            CheckEq(brain.Bond, 10, "Decision A -> bond +10");
+            CheckEq(brain.BondTier, "Warm", "tier changes New -> Warm");
+            CheckEq(brain.CurrentTitle, "Mara \u00b7 Warm", "title carries the relationship");
+            Check(brain.InteractionAvailable("confide"), "confide UNLOCKS at bond >= 8");
+            CheckEq(brain.DefaultInteraction().encounterId, "c1_hall_mara_confide", "next conversation is the payoff scene");
+            CheckEq(brain.PromptLabel(), "Comfort Mara", "the INTERACT button itself changes");
+            Check(brain.Profile.approach < 1.45f, "Warm Mara stands closer (behaviour override)");
+
+            // ---- other paths stay below the gate ----
+            GameServices.ResetRun();
+            brain = new NpcBrain(content.Content.FindNpc("mara"), GameServices.Progress);
+            GameServices.Decisions.Resolve(StoryContentBuilder.DecisionFirstLight, "stone_still");
+            brain.Reapply();
+            CheckEq(brain.Bond, 3, "stone path -> bond +3");
+            Check(!brain.InteractionAvailable("confide"), "confide stays locked off the tide path");
+            CheckEq(brain.PromptLabel(), "Talk to Mara", "prompt unchanged on the stone path");
+
+            GameServices.Shutdown(silent: true);
+            Directory.Delete(dir, true);
+        }
+
+        // ---------------------------------------------------------------- 18. Sera: behaviour flips per drive
+        private static void TestNpcSeraReaction()
+        {
+            Log.Add("[18] Sera: one NPC, three behaviour/dialogue variants by the earlier decision");
+            string dir = Path.Combine(Path.GetTempPath(), "crossroads_test_sera_" + Guid.NewGuid().ToString("N"));
+            Harness.Reset();
+            IEncounterSource content;
+            NewRun(dir, out content);
+
+            NpcBrain brain = new NpcBrain(content.Content.FindNpc("sera"), GameServices.Progress);
+            Check(brain.Profile.avoid > 0f && brain.Profile.approach <= 0f, "baseline Wary: keeps distance, never approaches");
+            CheckEq(brain.PromptLabel(), "Talk to Sera", "prompt = talk");
+
+            // tide: guard drops - the SAME NPC now walks toward you
+            GameServices.Decisions.Resolve(StoryContentBuilder.DecisionFirstLight, "tide_clear");
+            brain.Reapply();
+            CheckEq(brain.CurrentTitle, "Sera \u00b7 Grateful", "tide -> Grateful title");
+            Check(brain.Profile.approach > 0f && brain.Profile.avoid <= 0f, "behaviour FLIPS: approaches instead of backing off");
+            Check(!brain.InteractionAvailable("show_shard"), "shard interaction still locked (no item yet)");
+
+            // ember: more guarded
+            GameServices.ResetRun();
+            brain = new NpcBrain(content.Content.FindNpc("sera"), GameServices.Progress);
+            GameServices.Decisions.Resolve(StoryContentBuilder.DecisionFirstLight, "ember_reach");
+            brain.Reapply();
+            CheckEq(brain.CurrentTitle, "Sera \u00b7 Watchful", "ember -> Watchful title");
+            Check(brain.Profile.avoid > 3.0f, "comfort distance grows on the ember path");
+
+            // stone: curious
+            GameServices.ResetRun();
+            brain = new NpcBrain(content.Content.FindNpc("sera"), GameServices.Progress);
+            GameServices.Decisions.Resolve(StoryContentBuilder.DecisionFirstLight, "stone_still");
+            brain.Reapply();
+            CheckEq(brain.CurrentTitle, "Sera \u00b7 Intrigued", "stone -> Intrigued title");
+            Check(brain.Profile.approach > 0f && brain.Profile.approach < 1.4f, "curious: approaches slowly, respectfully");
+
+            // item-gated interaction: only after the shard is taken
+            GameServices.State.SetFlag(StoryContentBuilder.DriveFlag, "tide");
+            GameServices.State.UnlockArea("annex");
+            var flow = GameServices.Encounters;
+            flow.Run(StoryContentBuilder.EncounterShard);
+            flow.Advance();
+            flow.SelectChoice("take");
+            flow.Advance(); flow.Advance();
+            Check(GameServices.Progress.HasItem(StoryContentBuilder.ItemShard), "shard taken");
+            brain.Reapply();
+            Check(brain.InteractionAvailable("show_shard"), "show_shard unlocks with the item held");
+            CheckEq(brain.PromptLabel(), "Talk to Sera", "talk stays first: the interaction LIST grew, prompt kept");
+
+            GameServices.Shutdown(silent: true);
+            Directory.Delete(dir, true);
+        }
+
+        // ---------------------------------------------------------------- 19. NpcLogic behaviour FSM
+        private class FakeWorld : INpcWorld
+        {
+            public Point3 Pos;
+            public Point3 LastMoveTarget;
+            public Point3 LastFaceTarget;
+            public int MoveCalls;
+            public int FaceCalls;
+            public Point3 NpcPosition { get { return Pos; } }
+            public void NpcMoveTowards(Point3 target, float speed, float dt)
+            {
+                MoveCalls++;
+                LastMoveTarget = target;
+                Pos = Point3.MoveTowards(Pos, target, speed * dt);
+            }
+            public void NpcFaceTowards(Point3 target, float turnSpeed, float dt)
+            {
+                FaceCalls++;
+                LastFaceTarget = target;
+            }
+        }
+
+        private static void TestNpcLogic()
+        {
+            Log.Add("[19] NpcLogic: idle / walking / talking / routine / reacting (pure FSM)");
+            var friendly = new NpcProfile { facesPlayer = true, reactRadius = 4.5f, approach = 1.6f, avoid = 0f, talkDistance = 2.0f, moveSpeed = 1.0f, turnSpeed = 6f };
+            var wary = new NpcProfile { facesPlayer = true, reactRadius = 4.5f, approach = 0f, avoid = 2.6f, talkDistance = 2.2f, moveSpeed = 0.9f, turnSpeed = 4f };
+            var idleProfile = new NpcProfile { facesPlayer = true, reactRadius = 4.5f, approach = 1.6f, avoid = 0f, talkDistance = 2.0f, moveSpeed = 1.0f, turnSpeed = 6f };
+            Point3 player = new Point3(4f, 0f, 0f);
+            Point3 far = new Point3(30f, 0f, 0f);
+
+            // Friendly: approaches, stops at talking distance, then faces
+            var world = new FakeWorld { Pos = new Point3(0, 0, 0) };
+            var logic = new NpcLogic(null);
+            logic.Tick(world, 0.05f, player, true, friendly, false);
+            CheckEq(logic.State, NpcMoodState.Approach, "friendly + player near -> Approach");
+            Check(world.MoveCalls > 0 && world.LastMoveTarget.x == 4f, "walks toward the player");
+            int guard = 0;
+            while (logic.State == NpcMoodState.Approach && guard++ < 500) logic.Tick(world, 0.05f, player, true, friendly, false);
+            Check(Point3.Distance(world.Pos, player) <= 2.2f, "stops at the talk distance");
+            CheckEq(logic.State, NpcMoodState.ReactFace, "then stands and faces the player");
+
+            // Wary: steps back, growing the distance
+            var world2 = new FakeWorld { Pos = new Point3(0, 0, 0) };
+            var logic2 = new NpcLogic(null);
+            Point3 close = new Point3(1.2f, 0f, 0f);
+            logic2.Tick(world2, 0.05f, close, true, wary, false);
+            CheckEq(logic2.State, NpcMoodState.Avoid, "wary + player too close -> Avoid");
+            Check(world2.Pos.x < -0.001f, "moves AWAY from the player");
+            Check(world2.LastMoveTarget.x < -1f, "retreat target keeps the comfort distance");
+
+            // Wary: player at a polite distance -> no backing off, just faces
+            var world3 = new FakeWorld { Pos = new Point3(0, 0, 0) };
+            var logic3 = new NpcLogic(null);
+            Point3 polite = new Point3(3.5f, 0f, 0f);
+            logic3.Tick(world3, 0.05f, polite, true, wary, false);
+            CheckEq(logic3.State, NpcMoodState.ReactFace, "respectful distance -> ReactFace, no retreat");
+            Check(world3.MoveCalls == 0, "no movement when distance is acceptable");
+
+            // Routine: walk -> dwell -> next stop -> loop
+            var stops = new List<NpcStopData>
+            {
+                new NpcStopData { position = new Point3(3f, 0f, 0f), dwellSeconds = 0.5f },
+                new NpcStopData { position = new Point3(0f, 0f, 0f), dwellSeconds = 0.5f }
+            };
+            var world4 = new FakeWorld { Pos = new Point3(0, 0, 0) };
+            var logic4 = new NpcLogic(stops);
+            logic4.Tick(world4, 0.05f, far, false, idleProfile, false);
+            CheckEq(logic4.State, NpcMoodState.RoutineWalk, "routine: walks to stop 1");
+            guard = 0;
+            while (logic4.Arrivals == 0 && guard++ < 500) logic4.Tick(world4, 0.05f, far, false, idleProfile, false);
+            Check(logic4.Arrivals == 1, "routine: reached stop 1");
+            CheckEq(logic4.State, NpcMoodState.Dwell, "routine: dwells");
+            logic4.Tick(world4, 0.5f, far, false, idleProfile, false);
+            CheckEq(logic4.State, NpcMoodState.RoutineWalk, "routine: resumes the loop");
+            guard = 0;
+            while (logic4.Arrivals < 2 && guard++ < 500) logic4.Tick(world4, 0.05f, far, false, idleProfile, false);
+            Check(logic4.Arrivals == 2, "routine: full loop completed");
+
+            // Talking freezes movement (dialogue lock)
+            var world5 = new FakeWorld { Pos = new Point3(0, 0, 0) };
+            var logic5 = new NpcLogic(null);
+            logic5.Tick(world5, 0.05f, player, true, friendly, true);
+            CheckEq(logic5.State, NpcMoodState.Talk, "talking -> Talk state");
+            Check(world5.MoveCalls == 0, "no walking during conversation");
+            Check(world5.FaceCalls > 0, "still turns to face the player");
+
+            // Player far away -> no reaction at all
+            var world6 = new FakeWorld { Pos = new Point3(0, 0, 0) };
+            var logic6 = new NpcLogic(null);
+            logic6.Tick(world6, 0.05f, far, true, friendly, false);
+            CheckEq(logic6.State, NpcMoodState.Idle, "player out of react radius -> Idle");
+            Check(world6.MoveCalls == 0 && world6.FaceCalls == 0, "no reaction outside the react radius");
+        }
+
+        // ---------------------------------------------------------------- 20. the required sequence (two paths)
+        private static void TestNpcConsequenceSequence()
+        {
+            Log.Add("[20] Sequence A/B: Decision A -> NPC reacts later; path B reacts differently");
+            // ---- PATH A: tide ----
+            string dirA = Path.Combine(Path.GetTempPath(), "crossroads_test_seqA_" + Guid.NewGuid().ToString("N"));
+            Harness.Reset();
+            IEncounterSource contentA;
+            NewRun(dirA, out contentA);
+            var flowA = GameServices.Encounters;
+            flowA.Run(StoryContentBuilder.EncounterFirstLight);
+            flowA.Advance(); flowA.Advance(); flowA.Advance();
+            flowA.SelectChoice("tide_clear");
+            flowA.Advance(); flowA.Advance();
+
+            var maraA = new NpcBrain(contentA.Content.FindNpc("mara"), GameServices.Progress);
+            maraA.Reapply();
+            Check(maraA.InteractionAvailable("confide"), "A: the relationship gate opened");
+
+            Harness.Reset();
+            flowA.Run(maraA.DefaultInteraction().encounterId); // the later encounter
+            int guard = 0;
+            while (Harness.Ended.Count == 0 && guard++ < 20) flowA.Advance();
+            string maraLines = string.Join("|", Harness.Lines.ConvertAll(l => l.text));
+            Check(Harness.Ended.Count > 0, "A: confide conversation ran to the end");
+            Check(maraLines.Contains("You got the twins out"), "A: Mara's later conversation REMEMBERS the tide choice");
+            Check(!maraLines.Contains("You took the light like it owed you"), "A: not the ember variant");
+
+            Harness.Reset();
+            flowA.Run(StoryContentBuilder.EncounterSera);
+            guard = 0;
+            while (Harness.Ended.Count == 0 && guard++ < 20) flowA.Advance();
+            string seraLinesA = string.Join("|", Harness.Lines.ConvertAll(l => l.text));
+            Check(seraLinesA.Contains("You got my sisters out"), "A: Sera greets you as the one who saved her sisters");
+            flowA.SelectChoice("keep_low"); // close Sera's embedded decision cleanly
+            flowA.Advance(); flowA.Advance();
+
+            // ---- PATH B: ember (independent save path) ----
+            string dirB = Path.Combine(Path.GetTempPath(), "crossroads_test_seqB_" + Guid.NewGuid().ToString("N"));
+            Harness.Reset();
+            IEncounterSource contentB;
+            NewRun(dirB, out contentB);
+            var flowB = GameServices.Encounters;
+            flowB.Run(StoryContentBuilder.EncounterFirstLight);
+            flowB.Advance(); flowB.Advance(); flowB.Advance();
+            flowB.SelectChoice("ember_reach");
+            flowB.Advance(); flowB.Advance();
+
+            var maraB = new NpcBrain(contentB.Content.FindNpc("mara"), GameServices.Progress);
+            maraB.Reapply();
+            Check(!maraB.InteractionAvailable("confide"), "B: confide stays locked (bond 5 < 8)");
+            CheckEq(maraB.PromptLabel(), "Talk to Mara", "B: prompt unchanged");
+
+            Harness.Reset();
+            flowB.Run(StoryContentBuilder.EncounterSera);
+            guard = 0;
+            while (Harness.Ended.Count == 0 && guard++ < 20) flowB.Advance();
+            string seraLinesB = string.Join("|", Harness.Lines.ConvertAll(l => l.text));
+            Check(seraLinesB.Contains("The Choir has your scent now"), "B: Sera warns you instead - DIFFERENT reaction to Decision A/B");
+            Check(!seraLinesB.Contains("You got my sisters out"), "B: no gratitude on the ember path");
+            flowB.SelectChoice("keep_low"); // close Sera's embedded decision cleanly
+            flowB.Advance(); flowB.Advance();
+
+            // B + item -> ember shard story
+            Harness.Reset();
+            flowB.Run(StoryContentBuilder.EncounterSeraShard);
+            guard = 0;
+            while (Harness.Ended.Count == 0 && guard++ < 20) flowB.Advance();
+            string shardLinesB = string.Join("|", Harness.Lines.ConvertAll(l => l.text));
+            Check(shardLinesB.Contains("Bright things pick owners"), "B: shard story stays in her ember tone");
+
+            GameServices.Shutdown(silent: true);
+            Directory.Delete(dirA, true);
+            Directory.Delete(dirB, true);
+        }
+
+        // ---------------------------------------------------------------- 21. restart keeps NPC reactions
+        private static void TestNpcRestart()
+        {
+            Log.Add("[21] Restart: NPC reactions survive (bond/title/behaviour/interactions re-applied)");
+            string dir = Path.Combine(Path.GetTempPath(), "crossroads_test_npcrestart_" + Guid.NewGuid().ToString("N"));
+            Harness.Reset();
+            IEncounterSource content;
+            NewRun(dir, out content);
+
+            var flow = GameServices.Encounters;
+            flow.Run(StoryContentBuilder.EncounterFirstLight);
+            flow.Advance(); flow.Advance(); flow.Advance();
+            flow.SelectChoice("tide_clear");
+            flow.Advance(); flow.Advance();
+            GameServices.State.UnlockArea("annex");
+            flow.Run(StoryContentBuilder.EncounterShard);
+            flow.Advance();
+            flow.SelectChoice("take");
+            flow.Advance(); flow.Advance();
+
+            Harness.Unsubscribe();
+            GameServices.Shutdown(silent: true);
+            Harness.Reset();
+            NewRun(dir, out content);
+
+            var mara = new NpcBrain(content.Content.FindNpc("mara"), GameServices.Progress);
+            var sera = new NpcBrain(content.Content.FindNpc("sera"), GameServices.Progress);
+            CheckEq(mara.CurrentTitle, "Mara \u00b7 Warm", "restart: Mara's relationship title restored");
+            Check(mara.InteractionAvailable("confide"), "restart: confide available again");
+            CheckEq(mara.PromptLabel(), "Comfort Mara", "restart: prompt restored");
+            Check(sera.Profile.approach > 0f, "restart: Sera still approaches (tide behaviour restored)");
+            CheckEq(sera.CurrentTitle, "Sera \u00b7 Grateful", "restart: Sera's state restored");
+            Check(sera.InteractionAvailable("show_shard"), "restart: item-gated interaction restored");
+
+            // and the later conversation still plays right after restart
+            Harness.Reset();
+            flow = GameServices.Encounters;
+            flow.Run(mara.DefaultInteraction().encounterId);
+            int guard = 0;
+            while (Harness.Ended.Count == 0 && guard++ < 20) flow.Advance();
+            string lines = string.Join("|", Harness.Lines.ConvertAll(l => l.text));
+            Check(lines.Contains("You got the twins out"), "restart: the payoff conversation is still the tide one");
+
+            GameServices.Shutdown(silent: true);
+            Directory.Delete(dir, true);
+        }
+
         public static int Main(string[] args)
         {
             Console.WriteLine("CROSSROADS decision-system flow tests");
@@ -737,6 +1083,12 @@ namespace Crossroads.Tests
             TestGateRules();
             TestRestartProgression();
             TestNoticesAndUpgrade();
+            TestNpcContent();
+            TestNpcMaraReaction();
+            TestNpcSeraReaction();
+            TestNpcLogic();
+            TestNpcConsequenceSequence();
+            TestNpcRestart();
 
             Console.WriteLine("======================================");
             foreach (var line in Log) Console.WriteLine(line);

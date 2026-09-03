@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Crossroads.Core;
 
 namespace Crossroads.Narrative
 {
@@ -39,6 +40,13 @@ namespace Crossroads.Narrative
         public const string AbilityStone = "stone_ward";
         public const string SkillAttunement = "echo_attunement";
         public const string ItemShard = "echo_shard";
+
+        public const string NpcMara = "mara";
+        public const string NpcSera = "sera";
+        public const string EncounterMaraConfide = "c1_hall_mara_confide";
+        public const string GraphMaraConfide = "g_c1_hall_mara_confide";
+        public const string EncounterSeraShard = "c1_hall_sera_shard";
+        public const string GraphSeraShard = "g_c1_hall_sera_shard";
 
         public static StoryContentData CreateFirstLightContent()
         {
@@ -365,12 +373,152 @@ namespace Crossroads.Narrative
                 }
             });
 
+            // ---------------------------------------------------------------- graph 4 (Mara confide - bond-gated interaction)
+            content.graphs.Add(new DialogueGraphData
+            {
+                id = GraphMaraConfide,
+                nodes = new List<DialogueNodeData>
+                {
+                    new DialogueNodeData { id = "start", branchPrefix = "confide_line" },
+                    new DialogueNodeData { id = "confide_line_tide", speaker = "Mara",
+                        text = "You got the twins out. Everyone saw it. I used to think this hall only makes people harder - then you showed up still soft.",
+                        nextId = "confide_promise",
+                        conditions = new List<DecisionConditionData> { new DecisionConditionData { type = ConditionType.FlagIs, key = DriveFlag, value = "tide" } } },
+                    new DialogueNodeData { id = "confide_line_ember", speaker = "Mara",
+                        text = "You took the light like it owed you. The whole hall felt it. Just... remember who you were before it, alright?",
+                        nextId = "confide_promise",
+                        conditions = new List<DecisionConditionData> { new DecisionConditionData { type = ConditionType.FlagIs, key = DriveFlag, value = "ember" } } },
+                    new DialogueNodeData { id = "confide_line_stone", speaker = "Mara",
+                        text = "You walked through that light like it was nothing. Calm as ever. It's a little unnerving, honestly - in the good way.",
+                        nextId = "confide_promise",
+                        conditions = new List<DecisionConditionData> { new DecisionConditionData { type = ConditionType.FlagIs, key = DriveFlag, value = "stone" } } },
+                    new DialogueNodeData { id = "confide_line_default", speaker = "Mara",
+                        text = "It's good to hear your voice. This place gets loud in the quiet hours.",
+                        nextId = "confide_promise" },
+                    new DialogueNodeData { id = "confide_promise", speaker = "Mara",
+                        text = "Promise me you'll keep being the person who helps before he hesitates.",
+                        nextId = "end" },
+                    new DialogueNodeData { id = "end", speaker = "", text = "", end = true }
+                }
+            });
+
+            // ---------------------------------------------------------------- graph 5 (Sera shard story - item-gated interaction)
+            content.graphs.Add(new DialogueGraphData
+            {
+                id = GraphSeraShard,
+                nodes = new List<DialogueNodeData>
+                {
+                    new DialogueNodeData { id = "start", branchPrefix = "shard_story" },
+                    new DialogueNodeData { id = "shard_story_tide", speaker = "Sera",
+                        text = "It hums low and easy - like the hall is glad you're carrying it. I don't know who chose you for it. I just know it wasn't a mistake.",
+                        nextId = "end",
+                        conditions = new List<DecisionConditionData> { new DecisionConditionData { type = ConditionType.FlagIs, key = DriveFlag, value = "tide" } } },
+                    new DialogueNodeData { id = "shard_story_ember", speaker = "Sera",
+                        text = "Careful with that. Bright things pick owners - and they always want more than they give. ...But it chose you, so maybe it gives back.",
+                        nextId = "end",
+                        conditions = new List<DecisionConditionData> { new DecisionConditionData { type = ConditionType.FlagIs, key = DriveFlag, value = "ember" } } },
+                    new DialogueNodeData { id = "shard_story_stone", speaker = "Sera",
+                        text = "It sits quiet in your hand. Like it already decided to stay. That settles easier than anything else in this hall.",
+                        nextId = "end",
+                        conditions = new List<DecisionConditionData> { new DecisionConditionData { type = ConditionType.FlagIs, key = DriveFlag, value = "stone" } } },
+                    new DialogueNodeData { id = "shard_story_default", speaker = "Sera",
+                        text = "A sliver of the Fracture. Most of us never touch one, ever. You just... carry it. Keep it safe, then.",
+                        nextId = "end" },
+                    new DialogueNodeData { id = "end", speaker = "", text = "", end = true }
+                }
+            });
+
             // ---------------------------------------------------------------- encounters
             content.encounters.AddRange(new List<EncounterDefinitionData>
             {
                 new EncounterDefinitionData { id = EncounterFirstLight, npcName = "Mara", graphId = GraphFirstLight, startNodeId = "start" },
                 new EncounterDefinitionData { id = EncounterShard, npcName = "The Shard", graphId = GraphShard, startNodeId = "start" },
-                new EncounterDefinitionData { id = EncounterSera, npcName = "Sera", graphId = GraphSera, startNodeId = "start" }
+                new EncounterDefinitionData { id = EncounterSera, npcName = "Sera", graphId = GraphSera, startNodeId = "start" },
+                new EncounterDefinitionData { id = EncounterMaraConfide, npcName = "Mara", graphId = GraphMaraConfide, startNodeId = "start" },
+                new EncounterDefinitionData { id = EncounterSeraShard, npcName = "Sera", graphId = GraphSeraShard, startNodeId = "start" }
+            });
+
+            // ---------------------------------------------------------------- NPC definitions (§9: one character = one data row)
+            content.npcs.AddRange(new List<NpcDefinitionData>
+            {
+                new NpcDefinitionData
+                {
+                    id = NpcMara, displayName = "Mara", sheetRef = "REF-02",
+                    description = "Childhood friend. Bond keeps her near; your choices set her mood.",
+                    behaviour = new NpcBehaviourData
+                    {
+                        personality = NpcPersonality.Friendly, facesPlayer = true,
+                        reactRadius = 4.5f, approachDistance = 1.6f, avoidDistance = 0f,
+                        talkDistance = 2.0f, moveSpeed = 1.1f, turnSpeed = 6f, usesRoutine = true
+                    },
+                    states = new List<NpcStateData>
+                    {
+                        new NpcStateData
+                        {
+                            conditions = new List<DecisionConditionData> { new DecisionConditionData { type = ConditionType.BondAtLeast, key = NpcMara, amount = 8 } },
+                            title = "Mara · Warm",
+                            moodLine = "Mara's eyes soften. She stays closer now.",
+                            approachDistance = 1.3f, avoidDistance = -1f, moveSpeed = -1f, reactRadius = -1f
+                        }
+                    },
+                    interactions = new List<NpcInteractionData>
+                    {
+                        new NpcInteractionData { id = "confide", label = "Comfort Mara", encounterId = EncounterMaraConfide,
+                            conditions = new List<DecisionConditionData> { new DecisionConditionData { type = ConditionType.BondAtLeast, key = NpcMara, amount = 8 } } },
+                        new NpcInteractionData { id = "talk", label = "Talk to Mara", encounterId = EncounterFirstLight }
+                    },
+                    routine = new List<NpcStopData>
+                    {
+                        new NpcStopData { position = new Point3(4.5f, 0f, -8f), dwellSeconds = 2.5f },
+                        new NpcStopData { position = new Point3(7.2f, 0f, -5.8f), dwellSeconds = 2.5f }
+                    }
+                },
+                new NpcDefinitionData
+                {
+                    id = NpcSera, displayName = "Sera", sheetRef = "REF-04",
+                    description = "A refugee from the lower halls. Wary of the Echo; warms only to proof of kindness.",
+                    behaviour = new NpcBehaviourData
+                    {
+                        personality = NpcPersonality.Wary, facesPlayer = true,
+                        reactRadius = 4.5f, approachDistance = 0f, avoidDistance = 2.6f,
+                        talkDistance = 2.2f, moveSpeed = 0.9f, turnSpeed = 4f, usesRoutine = true
+                    },
+                    states = new List<NpcStateData>
+                    {
+                        new NpcStateData
+                        {
+                            conditions = new List<DecisionConditionData> { new DecisionConditionData { type = ConditionType.FlagIs, key = DriveFlag, value = "tide" } },
+                            title = "Sera · Grateful",
+                            moodLine = "Sera's guard drops. She steps closer, unafraid.",
+                            approachDistance = 1.5f, avoidDistance = 0f, moveSpeed = 1.0f, reactRadius = -1f
+                        },
+                        new NpcStateData
+                        {
+                            conditions = new List<DecisionConditionData> { new DecisionConditionData { type = ConditionType.FlagIs, key = DriveFlag, value = "ember" } },
+                            title = "Sera · Watchful",
+                            moodLine = "Sera keeps her distance. Your echo burns too bright.",
+                            approachDistance = 0f, avoidDistance = 3.4f, moveSpeed = -1f, reactRadius = -1f
+                        },
+                        new NpcStateData
+                        {
+                            conditions = new List<DecisionConditionData> { new DecisionConditionData { type = ConditionType.FlagIs, key = DriveFlag, value = "stone" } },
+                            title = "Sera · Intrigued",
+                            moodLine = "Sera studies you sidelong, curious despite herself.",
+                            approachDistance = 1.2f, avoidDistance = 0f, moveSpeed = 0.8f, reactRadius = -1f
+                        }
+                    },
+                    interactions = new List<NpcInteractionData>
+                    {
+                        new NpcInteractionData { id = "talk", label = "Talk to Sera", encounterId = EncounterSera },
+                        new NpcInteractionData { id = "show_shard", label = "Show the shard", encounterId = EncounterSeraShard,
+                            conditions = new List<DecisionConditionData> { new DecisionConditionData { type = ConditionType.ItemHeld, key = ItemShard } } }
+                    },
+                    routine = new List<NpcStopData>
+                    {
+                        new NpcStopData { position = new Point3(16.5f, 0f, 3.2f), dwellSeconds = 2.0f },
+                        new NpcStopData { position = new Point3(18.5f, 0f, 2.2f), dwellSeconds = 2.0f }
+                    }
+                }
             });
 
             return content;

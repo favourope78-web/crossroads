@@ -21,6 +21,15 @@ namespace Crossroads.Narrative
         public ProgressionIndex(StoryContentData content)
         {
             if (content == null) return;
+
+            // NPC display names are data-driven (§9 definitions) - the hardcoded pair above
+            // is only a legacy fallback and is fully overridden by content entries.
+            if (content.npcs != null)
+                for (int i = 0; i < content.npcs.Count; i++)
+                    if (content.npcs[i] != null && !string.IsNullOrEmpty(content.npcs[i].id))
+                        _npcNames[content.npcs[i].id] =
+                            string.IsNullOrEmpty(content.npcs[i].displayName) ? content.npcs[i].id : content.npcs[i].displayName;
+
             ProgressionContentData p = content.progression;
             if (p == null) return;
 

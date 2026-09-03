@@ -150,6 +150,55 @@ else:
                     if str(ra[k]) != str(rb[k]):
                         errors.append("progression %s.%s: asset=%r json=%r" % (group, k, ra[k], rb[k]))
 
+        # npcs (data-driven NPC definitions)
+        def _n(v):
+            if isinstance(v, bool): return str(int(v))
+            return str(v)
+        if len(data["npcs"]) != len(content["npcs"]):
+            errors.append("npc count mismatch")
+        for na, nb in zip(data["npcs"], content["npcs"]):
+            for k in ("id", "displayName", "sheetRef", "description"):
+                if na[k] != nb[k]:
+                    errors.append("npc %s: %s asset=%r json=%r" % (na.get("id"), k, na[k], nb[k]))
+            ba, bb = na["behaviour"], nb["behaviour"]
+            for k in ("personality", "facesPlayer", "reactRadius", "approachDistance", "avoidDistance",
+                      "talkDistance", "moveSpeed", "turnSpeed", "usesRoutine"):
+                if _n(ba[k]) != _n(bb[k]):
+                    errors.append("npc %s.behaviour.%s: asset=%r json=%r" % (nb["id"], k, ba[k], bb[k]))
+            if len(na["states"]) != len(nb["states"]):
+                errors.append("npc %s state count mismatch" % nb["id"])
+            for sa, sb in zip(na["states"], nb["states"]):
+                for k in ("title", "moodLine", "approachDistance", "avoidDistance", "moveSpeed", "reactRadius"):
+                    if _n(sa[k]) != _n(sb[k]):
+                        errors.append("npc %s state %s: asset=%r json=%r" % (nb["id"], k, sa[k], sb[k]))
+                if len(sa["conditions"]) != len(sb["conditions"]):
+                    errors.append("npc %s state conditions count mismatch" % nb["id"])
+                    continue
+                for x, y in zip(sa["conditions"], sb["conditions"]):
+                    for k in ("type", "key", "value", "amount"):
+                        if _n(x[k]) != _n(y[k]):
+                            errors.append("npc %s state cond.%s: asset=%r json=%r" % (nb["id"], k, x[k], y[k]))
+            if len(na["interactions"]) != len(nb["interactions"]):
+                errors.append("npc %s interaction count mismatch" % nb["id"])
+            for ia, ib in zip(na["interactions"], nb["interactions"]):
+                for k in ("id", "label", "encounterId"):
+                    if ia[k] != ib[k]:
+                        errors.append("npc %s interaction %s: asset=%r json=%r" % (nb["id"], k, ia[k], ib[k]))
+                if len(ia["conditions"]) != len(ib["conditions"]):
+                    errors.append("npc %s interaction %s conditions count mismatch" % (nb["id"], ib["id"]))
+                    continue
+                for x, y in zip(ia["conditions"], ib["conditions"]):
+                    for k in ("type", "key", "value", "amount"):
+                        if _n(x[k]) != _n(y[k]):
+                            errors.append("npc %s interaction %s cond.%s: asset=%r json=%r" % (nb["id"], ib["id"], k, x[k], y[k]))
+            if len(na["routine"]) != len(nb["routine"]):
+                errors.append("npc %s routine count mismatch" % nb["id"])
+            for ra, rb in zip(na["routine"], nb["routine"]):
+                if json.dumps(ra["position"], sort_keys=True) != json.dumps(rb["position"], sort_keys=True):
+                    errors.append("npc %s routine position: asset=%r json=%r" % (nb["id"], ra["position"], rb["position"]))
+                if _n(ra["dwellSeconds"]) != _n(rb["dwellSeconds"]):
+                    errors.append("npc %s routine dwell: asset=%r json=%r" % (nb["id"], ra["dwellSeconds"], rb["dwellSeconds"]))
+
 # ---------------------------------------------------------------- 3. JSON <-> C# builder
 builder = open(os.path.join(ROOT, "Assets/_Project/Scripts/Narrative/Content/StoryContentBuilder.cs")).read()
 def walk_strings(o, out):
@@ -164,7 +213,7 @@ def walk_strings(o, out):
 strings = []
 walk_strings({k: v for k, v in content.items() if k != "_comment"}, strings)
 for s in strings:
-    if s not in builder:
+    if s not in builder and s.encode("ascii", "backslashreplace").decode() not in builder:
         errors.append("C# builder missing content string: " + s[:64])
 
 # ---------------------------------------------------------------- 4. scene sanity
@@ -173,13 +222,14 @@ print("Scene roots:", root_count)
 for needle in ["Mara_NPC", "Sera_NPC", "EchoShard", "EnergySeal",
                "Seq_Ember_Marker", "Seq_Tide_Marker", "Seq_Stone_Marker", "Seq_Tide_Bystanders",
                "AreaTrigger_Annex", "AreaTrigger_Hall", "SM_WallPanel_flank", "m_IsActive: 0",
-               "encounterId: c1_hall_first_light", "encounterId: c1_hall_shard", "encounterId: c1_hall_sera",
+               "npcId: mara", "npcId: sera",
+               "encounterId: c1_hall_shard",
                "areaId: annex", "defaultActive: 1", "m_IsTrigger: 1"]:
     if needle not in scene_txt:
         errors.append("scene missing: " + needle)
 
-for script_key in ["StoryEncounterNPC.cs", "StoryWorldState.cs", "StoryModeBootstrap.cs", "GameUIBootstrap.cs",
-                   "NpcFateDriver.cs", "AreaGate.cs", "StoryEventInteractable.cs", "AreaTrigger.cs"]:
+for script_key in ["NpcAgent.cs", "NpcInteractable.cs", "StoryWorldState.cs", "StoryModeBootstrap.cs",
+                   "GameUIBootstrap.cs", "AreaGate.cs", "StoryEventInteractable.cs", "AreaTrigger.cs"]:
     if scene_txt.count(registry[script_key]) == 0:
         errors.append("scene does not reference %s" % script_key)
 

@@ -26,6 +26,14 @@ MonoBehaviour:
       npcName: "Sera"
       graphId: "g_c1_hall_sera"
       startNodeId: "start"
+    - id: "c1_hall_mara_confide"
+      npcName: "Mara"
+      graphId: "g_c1_hall_mara_confide"
+      startNodeId: "start"
+    - id: "c1_hall_sera_shard"
+      npcName: "Sera"
+      graphId: "g_c1_hall_sera_shard"
+      startNodeId: "start"
     decisions:
     - id: "dec_c1_hall_first_light"
       promptText: "The Fracture light hovers over the hall. It is waiting. How do you answer it?"
@@ -656,6 +664,138 @@ MonoBehaviour:
         decisionId: ""
         conditions: []
         end: 1
+    - id: "g_c1_hall_mara_confide"
+      nodes:
+      - id: "start"
+        speaker: ""
+        text: ""
+        nextId: ""
+        branchPrefix: "confide_line"
+        decisionId: ""
+        conditions: []
+        end: 0
+      - id: "confide_line_tide"
+        speaker: "Mara"
+        text: "You got the twins out. Everyone saw it. I used to think this hall only makes people harder - then you showed up still soft."
+        nextId: "confide_promise"
+        branchPrefix: ""
+        decisionId: ""
+        conditions:
+        - type: 0
+          key: "c1_hall_drive"
+          value: "tide"
+          amount: 0
+        end: 0
+      - id: "confide_line_ember"
+        speaker: "Mara"
+        text: "You took the light like it owed you. The whole hall felt it. Just... remember who you were before it, alright?"
+        nextId: "confide_promise"
+        branchPrefix: ""
+        decisionId: ""
+        conditions:
+        - type: 0
+          key: "c1_hall_drive"
+          value: "ember"
+          amount: 0
+        end: 0
+      - id: "confide_line_stone"
+        speaker: "Mara"
+        text: "You walked through that light like it was nothing. Calm as ever. It's a little unnerving, honestly - in the good way."
+        nextId: "confide_promise"
+        branchPrefix: ""
+        decisionId: ""
+        conditions:
+        - type: 0
+          key: "c1_hall_drive"
+          value: "stone"
+          amount: 0
+        end: 0
+      - id: "confide_line_default"
+        speaker: "Mara"
+        text: "It's good to hear your voice. This place gets loud in the quiet hours."
+        nextId: "confide_promise"
+        branchPrefix: ""
+        decisionId: ""
+        conditions: []
+        end: 0
+      - id: "confide_promise"
+        speaker: "Mara"
+        text: "Promise me you'll keep being the person who helps before he hesitates."
+        nextId: "end"
+        branchPrefix: ""
+        decisionId: ""
+        conditions: []
+        end: 0
+      - id: "end"
+        speaker: ""
+        text: ""
+        nextId: ""
+        branchPrefix: ""
+        decisionId: ""
+        conditions: []
+        end: 1
+    - id: "g_c1_hall_sera_shard"
+      nodes:
+      - id: "start"
+        speaker: ""
+        text: ""
+        nextId: ""
+        branchPrefix: "shard_story"
+        decisionId: ""
+        conditions: []
+        end: 0
+      - id: "shard_story_tide"
+        speaker: "Sera"
+        text: "It hums low and easy - like the hall is glad you're carrying it. I don't know who chose you for it. I just know it wasn't a mistake."
+        nextId: "end"
+        branchPrefix: ""
+        decisionId: ""
+        conditions:
+        - type: 0
+          key: "c1_hall_drive"
+          value: "tide"
+          amount: 0
+        end: 0
+      - id: "shard_story_ember"
+        speaker: "Sera"
+        text: "Careful with that. Bright things pick owners - and they always want more than they give. ...But it chose you, so maybe it gives back."
+        nextId: "end"
+        branchPrefix: ""
+        decisionId: ""
+        conditions:
+        - type: 0
+          key: "c1_hall_drive"
+          value: "ember"
+          amount: 0
+        end: 0
+      - id: "shard_story_stone"
+        speaker: "Sera"
+        text: "It sits quiet in your hand. Like it already decided to stay. That settles easier than anything else in this hall."
+        nextId: "end"
+        branchPrefix: ""
+        decisionId: ""
+        conditions:
+        - type: 0
+          key: "c1_hall_drive"
+          value: "stone"
+          amount: 0
+        end: 0
+      - id: "shard_story_default"
+        speaker: "Sera"
+        text: "A sliver of the Fracture. Most of us never touch one, ever. You just... carry it. Keep it safe, then."
+        nextId: "end"
+        branchPrefix: ""
+        decisionId: ""
+        conditions: []
+        end: 0
+      - id: "end"
+        speaker: ""
+        text: ""
+        nextId: ""
+        branchPrefix: ""
+        decisionId: ""
+        conditions: []
+        end: 1
     progression:
       abilities:
         - id: "ember_pulse"
@@ -690,3 +830,114 @@ MonoBehaviour:
           name: "Fracture Hall"
         - id: "annex"
           name: "North Annex"
+    npcs:
+    - id: "mara"
+      displayName: "Mara"
+      sheetRef: "REF-02"
+      description: "Childhood friend. Bond keeps her near; your choices set her mood."
+      behaviour:
+        personality: 1
+        facesPlayer: 1
+        reactRadius: 4.5
+        approachDistance: 1.6
+        avoidDistance: 0
+        talkDistance: 2.0
+        moveSpeed: 1.1
+        turnSpeed: 6
+        usesRoutine: 1
+      states:
+      - conditions:
+        - type: 5
+          key: "mara"
+          value: ""
+          amount: 8
+        title: "Mara · Warm"
+        moodLine: "Mara's eyes soften. She stays closer now."
+        approachDistance: 1.3
+        avoidDistance: -1
+        moveSpeed: -1
+        reactRadius: -1
+      interactions:
+      - id: "confide"
+        label: "Comfort Mara"
+        encounterId: "c1_hall_mara_confide"
+        conditions:
+        - type: 5
+          key: "mara"
+          value: ""
+          amount: 8
+      - id: "talk"
+        label: "Talk to Mara"
+        encounterId: "c1_hall_first_light"
+        conditions: []
+      routine:
+      - position: {x: 4.5, y: 0, z: -8}
+        dwellSeconds: 2.5
+      - position: {x: 7.2, y: 0, z: -5.8}
+        dwellSeconds: 2.5
+    - id: "sera"
+      displayName: "Sera"
+      sheetRef: "REF-04"
+      description: "A refugee from the lower halls. Wary of the Echo; warms only to proof of kindness."
+      behaviour:
+        personality: 2
+        facesPlayer: 1
+        reactRadius: 4.5
+        approachDistance: 0
+        avoidDistance: 2.6
+        talkDistance: 2.2
+        moveSpeed: 0.9
+        turnSpeed: 4
+        usesRoutine: 1
+      states:
+      - conditions:
+        - type: 0
+          key: "c1_hall_drive"
+          value: "tide"
+          amount: 0
+        title: "Sera · Grateful"
+        moodLine: "Sera's guard drops. She steps closer, unafraid."
+        approachDistance: 1.5
+        avoidDistance: 0
+        moveSpeed: 1.0
+        reactRadius: -1
+      - conditions:
+        - type: 0
+          key: "c1_hall_drive"
+          value: "ember"
+          amount: 0
+        title: "Sera · Watchful"
+        moodLine: "Sera keeps her distance. Your echo burns too bright."
+        approachDistance: 0
+        avoidDistance: 3.4
+        moveSpeed: -1
+        reactRadius: -1
+      - conditions:
+        - type: 0
+          key: "c1_hall_drive"
+          value: "stone"
+          amount: 0
+        title: "Sera · Intrigued"
+        moodLine: "Sera studies you sidelong, curious despite herself."
+        approachDistance: 1.2
+        avoidDistance: 0
+        moveSpeed: 0.8
+        reactRadius: -1
+      interactions:
+      - id: "talk"
+        label: "Talk to Sera"
+        encounterId: "c1_hall_sera"
+        conditions: []
+      - id: "show_shard"
+        label: "Show the shard"
+        encounterId: "c1_hall_sera_shard"
+        conditions:
+        - type: 10
+          key: "echo_shard"
+          value: ""
+          amount: 0
+      routine:
+      - position: {x: 16.5, y: 0, z: 3.2}
+        dwellSeconds: 2.0
+      - position: {x: 18.5, y: 0, z: 2.2}
+        dwellSeconds: 2.0

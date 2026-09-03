@@ -130,6 +130,14 @@ namespace UnityEngine
         public static Vector3 operator *(Vector3 a, float d) { return new Vector3(a.x * d, a.y * d, a.z * d); }
         public static float Distance(Vector3 a, Vector3 b) { return (a - b).magnitude; }
         public static Vector3 Lerp(Vector3 a, Vector3 b, float t) { return a + (b - a) * t; }
+        public static Vector3 MoveTowards(Vector3 current, Vector3 target, float maxDelta)
+        {
+            Vector3 d = target - current;
+            float dist = d.magnitude;
+            if (dist <= maxDelta || dist < 1e-6f) return target;
+            return current + d * (maxDelta / dist);
+        }
+        public static float Dot(Vector3 a, Vector3 b) { return a.x * b.x + a.y * b.y + a.z * b.z; }
         public static Vector3 SmoothDamp(Vector3 current, Vector3 target, ref Vector3 vel, float smoothTime) { return target; }
         public override string ToString() { return "(" + x + ", " + y + ", " + z + ")"; }
     }
@@ -140,6 +148,8 @@ namespace UnityEngine
         public static Quaternion identity { get { return new Quaternion { w = 1 }; } }
         public static Quaternion Euler(float x, float y, float z) { return identity; }
         public static Quaternion LookRotation(Vector3 dir) { return identity; }
+        public static Quaternion LookRotation(Vector3 dir, Vector3 up) { return identity; }
+        public static Quaternion Slerp(Quaternion a, Quaternion b, float t) { return b; }
         public static Vector3 operator *(Quaternion q, Vector3 v) { return v; }
     }
 
@@ -212,6 +222,7 @@ namespace UnityEngine
         public static int Min(int a, int b) { return a < b ? a : b; }
         public static int RoundToInt(float a) { return (int)Math.Round(a); }
         public static float Rad2Deg { get { return 57.29578f; } }
+        public static float Clamp01(float v) { return v < 0f ? 0f : (v > 1f ? 1f : v); }
     }
 
     public enum KeyCode { E = 101, Space = 32 }

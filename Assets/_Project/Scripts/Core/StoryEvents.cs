@@ -145,6 +145,20 @@ namespace Crossroads.Core
         public string text;
     }
 
+    /// <summary>
+    /// Fired when an NPC's state-driven look/behaviour/interactions change
+    /// (bond, flag, decision, item, reputation...). UI uses it for nameplates,
+    /// the report uses it as the live "NPC reacts to you" signal.
+    /// </summary>
+    public struct NpcStatusChangedEvent
+    {
+        public string npcId;
+        public string title;      // resolved display title (may include tier/mood)
+        public int bond;
+        public string bondTier;   // Hostile | Wary | New | Warm | Bonded | Kin
+        public string moodLine;   // authored one-liner describing the reaction ("" = none)
+    }
+
     public struct EntityStateChangedEvent
     {
         public string entityKey;

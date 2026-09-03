@@ -20,7 +20,41 @@ namespace Crossroads.Core
             return new Point3(a.x - b.x, a.y - b.y, a.z - b.z);
         }
 
+        public static Point3 operator +(Point3 a, Point3 b)
+        {
+            return new Point3(a.x + b.x, a.y + b.y, a.z + b.z);
+        }
+
+        public static Point3 operator *(Point3 a, float d)
+        {
+            return new Point3(a.x * d, a.y * d, a.z * d);
+        }
+
         public float sqrMagnitude { get { return x * x + y * y + z * z; } }
+        public float magnitude { get { return (float)Math.Sqrt(sqrMagnitude); } }
+
+        /// <summary>Unit-length copy; zero vector stays zero (no NaN).</summary>
+        public Point3 normalized
+        {
+            get
+            {
+                float m = magnitude;
+                return m > 1e-6f ? new Point3(x / m, y / m, z / m) : new Point3(0f, 0f, 0f);
+            }
+        }
+
+        public static Point3 MoveTowards(Point3 current, Point3 target, float maxDelta)
+        {
+            Point3 delta = target - current;
+            float dist = delta.magnitude;
+            if (dist <= maxDelta || dist < 1e-6f) return target;
+            return current + delta * (maxDelta / dist);
+        }
+
+        public static float Dot(Point3 a, Point3 b)
+        {
+            return a.x * b.x + a.y * b.y + a.z * b.z;
+        }
 
         public static float Distance(Point3 a, Point3 b)
         {
@@ -33,5 +67,7 @@ namespace Crossroads.Core
             Point3 d = a - b;
             return d.sqrMagnitude;
         }
+
+        public override string ToString() { return "(" + x + ", " + y + ", " + z + ")"; }
     }
 }

@@ -27,6 +27,10 @@ NEW_GUIDS = {
     "StoryEventInteractable.cs": g32(0x62),
     "NpcFateDriver.cs":    g32(0x5b),
     "AreaTrigger.cs":      g32(0x5c),
+    "NpcBrain.cs":         g32(0x91),
+    "NpcLogic.cs":         g32(0x92),
+    "NpcAgent.cs":         g32(0x93),
+    "NpcInteractable.cs":  g32(0x94),
 }
 
 REGISTRY = {}
@@ -79,7 +83,18 @@ SCRIPT_META_PATHS = {
     "StoryEventInteractable.cs": "Assets/_Project/Scripts/Gameplay/Interaction",
     "NpcFateDriver.cs": "Assets/_Project/Scripts/Gameplay/WorldState",
     "AreaTrigger.cs": "Assets/_Project/Scripts/Gameplay/WorldState",
+    "NpcBrain.cs": "Assets/_Project/Scripts/Gameplay/NPC",
+    "NpcLogic.cs": "Assets/_Project/Scripts/Gameplay/NPC",
+    "NpcAgent.cs": "Assets/_Project/Scripts/Gameplay/NPC",
+    "NpcInteractable.cs": "Assets/_Project/Scripts/Gameplay/NPC",
 }
+NPC_DIR = os.path.join(ROOT, "Assets/_Project/Scripts/Gameplay/NPC")
+os.makedirs(NPC_DIR, exist_ok=True)
+npc_folder_meta = os.path.join(NPC_DIR + ".meta")
+if not os.path.exists(npc_folder_meta):
+    open(npc_folder_meta, "w").write(FOLDER.format(g=hashlib.md5(("folder:" + NPC_DIR.replace(ROOT, "Assets")).encode()).hexdigest()))
+    print("meta +", os.path.relpath(npc_folder_meta, ROOT))
+
 for fname, sub in SCRIPT_META_PATHS.items():
     path = os.path.join(ROOT, sub, fname)
     if not os.path.exists(path):
@@ -143,6 +158,52 @@ graphs_block = "\n".join(graph_blocks)
 # ---- encounters ----
 enc_block = ind_list(CONTENT["encounters"], 4, 6, ["id", "npcName", "graphId", "startNodeId"])
 
+# ---- npcs (data-driven NPC definitions, GAME_DESIGN §9) ----
+def num(v):
+    if isinstance(v, bool): return "1" if v else "0"
+    if isinstance(v, int): return str(v)
+    if isinstance(v, float): return repr(v)
+    return yaml_str(v)
+
+def obj_fields(obj, indent, keys):
+    lines = []
+    for k in keys:
+        v = obj[k]
+        tok = num(v) if isinstance(v, (int, float, bool)) else yaml_str(v)
+        lines.append(" " * indent + k + ": " + tok)
+    return "\n".join(lines)
+
+def npc_state_block(state):
+    lines = ["      - conditions:" + ("\n" + cond_lines(state["conditions"], 8, 10) if state["conditions"] else " []")]
+    for k in ["title", "moodLine", "approachDistance", "avoidDistance", "moveSpeed", "reactRadius"]:
+        v = state[k]
+        tok = num(v) if isinstance(v, (int, float, bool)) else yaml_str(v)
+        lines.append("        " + k + ": " + tok)
+    return "\n".join(lines)
+
+def npc_interaction_block(it):
+    return "      - id: " + yaml_str(it["id"]) + "\n" + \
+           "        label: " + yaml_str(it["label"]) + "\n" + \
+           "        encounterId: " + yaml_str(it["encounterId"]) + "\n" + \
+           "        conditions:" + ("\n" + cond_lines(it["conditions"], 8, 10) if it["conditions"] else " []")
+
+npc_parts = []
+for n in CONTENT["npcs"]:
+    part = ind_list([n], 4, 6, ["id", "displayName", "sheetRef", "description"])
+    b = n["behaviour"]
+    part += "\n      behaviour:\n" + obj_fields(b, 8,
+        ["personality", "facesPlayer", "reactRadius", "approachDistance", "avoidDistance",
+         "talkDistance", "moveSpeed", "turnSpeed", "usesRoutine"])
+    part += ("\n      states:\n" + "\n".join(npc_state_block(st) for st in n["states"])) if n["states"] else "\n      states: []"
+    part += ("\n      interactions:\n" + "\n".join(npc_interaction_block(it) for it in n["interactions"])) if n["interactions"] else "\n      interactions: []"
+    rp = []
+    for stop in n["routine"]:
+        pos = stop["position"]
+        rp.append("      - position: {x: %s, y: %s, z: %s}\n        dwellSeconds: %s" % (num(pos["x"]), num(pos["y"]), num(pos["z"]), num(stop["dwellSeconds"])))
+    part += ("\n      routine:\n" + "\n".join(rp)) if rp else "\n      routine: []"
+    npc_parts.append(part)
+npcs_block = "\n".join(npc_parts)
+
 # ---- progression ----
 p = CONTENT["progression"]
 def prog_block(name, items, keys):
@@ -179,12 +240,15 @@ MonoBehaviour:
     graphs:
 @GRAPHS@
 @PROGRESSION@
+    npcs:
+@NPCS@
 """.replace("@SCRIPT@", REGISTRY["ScriptableObjectAssets.cs"])
 ASSET = ASSET.replace("@NAME@", yaml_str(CONTENT["libraryName"]))
 ASSET = ASSET.replace("@ENCOUNTERS@", enc_block)
 ASSET = ASSET.replace("@DECISIONS@", decisions_block)
 ASSET = ASSET.replace("@GRAPHS@", graphs_block)
 ASSET = ASSET.replace("@PROGRESSION@", progression_block)
+ASSET = ASSET.replace("@NPCS@", npcs_block)
 
 DATA_DIR = os.path.join(ROOT, "Assets/_Project/Data/Decisions")
 os.makedirs(DATA_DIR, exist_ok=True)
