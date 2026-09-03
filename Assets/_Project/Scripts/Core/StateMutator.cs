@@ -186,9 +186,46 @@ namespace Crossroads.Core
         public void UnlockAbility(string abilityId)
         {
             if (string.IsNullOrEmpty(abilityId) || State.HasAbility(abilityId)) return;
+            // a re-unlock may come from a later decision: last write wins over blocking
+            var blocked = GameState.FindEntry(State.blockedAbilities, abilityId);
+            if (blocked != null) State.blockedAbilities.Remove(blocked);
             State.abilities.Add(new StringEntry(abilityId, "1"));
             EventBus.Publish(new AbilityUnlockedEvent { abilityId = abilityId });
             StoryLog.Log("[STATE] ability unlocked: " + abilityId);
+        }
+
+        /// <summary>Excludes an ability by the player's choices (persisted; wins over unlocked).</summary>
+        public void BlockAbility(string abilityId)
+        {
+            if (string.IsNullOrEmpty(abilityId) || State.HasBlockedAbility(abilityId)) return;
+            var unlocked = GameState.FindEntry(State.abilities, abilityId);
+            if (unlocked != null) State.abilities.Remove(unlocked);
+            var levelEntry = GameState.FindEntry(State.abilityLevels, abilityId);
+            if (levelEntry != null) State.abilityLevels.Remove(levelEntry);
+            State.blockedAbilities.Add(new StringEntry(abilityId, "1"));
+            EventBus.Publish(new AbilityBlockedEvent { abilityId = abilityId });
+            StoryLog.Log("[STATE] ability blocked: " + abilityId);
+        }
+
+        /// <summary>Raises an ability's level (first call levels an unlocked ability to 1+k).</summary>
+        public void UpgradeAbility(string abilityId, int levels)
+        {
+            if (string.IsNullOrEmpty(abilityId) || levels == 0) return;
+            if (!State.HasAbility(abilityId)) State.abilities.Add(new StringEntry(abilityId, "1"));
+            int current = State.GetAbilityLevel(abilityId, 1);
+            SetAbilityLevel(abilityId, current + levels);
+        }
+
+        public void SetAbilityLevel(string abilityId, int level)
+        {
+            if (level < 1) level = 1;
+            var e = GameState.FindEntry(State.abilityLevels, abilityId);
+            if (e == null) State.abilityLevels.Add(new StringIntEntry(abilityId, level));
+            else if (e.value == level) return;
+            else e.value = level;
+            if (!State.HasAbility(abilityId)) State.abilities.Add(new StringEntry(abilityId, "1"));
+            EventBus.Publish(new AbilityLevelChangedEvent { abilityId = abilityId, level = level });
+            StoryLog.Log("[STATE] ability level " + abilityId + " -> " + level);
         }
 
         // ------------------------------------------------ skills (levels)
@@ -271,6 +308,8 @@ namespace Crossroads.Core
             State.bonds = saved.bonds;
             State.reputation = saved.reputation;
             State.abilities = saved.abilities;
+            State.blockedAbilities = saved.blockedAbilities != null ? saved.blockedAbilities : new System.Collections.Generic.List<StringEntry>();
+            State.abilityLevels = saved.abilityLevels != null ? saved.abilityLevels : new System.Collections.Generic.List<StringIntEntry>();
             State.items = saved.items;
             State.skills = saved.skills;
             State.unlockAreas = saved.unlockAreas;

@@ -74,6 +74,10 @@ namespace Crossroads.Narrative
         // ------------------------------------------------ unlocks (abilities) + skills
         public bool HasAbility(string abilityId) { return State.HasAbility(abilityId); }
         public void GrantAbility(string abilityId) { State.UnlockAbility(abilityId); }
+        public void BlockAbility(string abilityId) { State.BlockAbility(abilityId); }
+        public bool IsAbilityBlocked(string abilityId) { return State.State.HasBlockedAbility(abilityId); }
+        public int AbilityLevel(string abilityId) { return State.State.GetAbilityLevel(abilityId, State.HasAbility(abilityId) ? 1 : 0); }
+        public void UpgradeAbility(string abilityId, int levels) { State.UpgradeAbility(abilityId, levels); }
         public List<string> Abilities() { return State.State.abilities.ConvertAll(a => a.key); }
 
         public int Skill(string skillId) { return State.GetSkill(skillId); }

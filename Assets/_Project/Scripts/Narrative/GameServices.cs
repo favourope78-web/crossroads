@@ -25,6 +25,9 @@ namespace Crossroads.Narrative
         /// <summary>Player-current-state façade (reputation, bonds, skills, unlocks, areas, attributes).</summary>
         public static GameStateManager Progress { get; private set; }
 
+        /// <summary>Power/ability runtime: access states, activation, cooldowns (data-driven).</summary>
+        public static Crossroads.Narrative.AbilityManager Abilities { get; private set; }
+
         public static string SceneKey { get; private set; }
         public static string CheckpointId { get; private set; }
 
@@ -46,6 +49,8 @@ namespace Crossroads.Narrative
             Decisions.RegisterAll(Content.Content != null ? Content.Content.decisions : null);
             Progress = new GameStateManager(State, Content);
             Decisions.Index = Progress.Index;
+            Abilities = new Crossroads.Narrative.AbilityManager(
+                Content.Content != null ? Content.Content.progression.abilities : null, Progress);
             Encounters = new EncounterFlow(Content, Decisions, State);
 
             SceneKey = sceneKey;
@@ -108,6 +113,7 @@ namespace Crossroads.Narrative
             if (Decisions != null) Decisions.Resolved -= OnDecisionResolved;
             EventBus.Unsubscribe<AreaUnlockedEvent>(OnAreaUnlocked);
             EventBus.Unsubscribe<AreaChangedEvent>(OnAreaChanged);
+            Abilities = null;
             AppServices.Clear();
             InputLock.Clear();
             IsInitialized = false;

@@ -49,6 +49,14 @@ namespace Crossroads.Narrative
                         category = "ability";
                         text = "Ability: " + (index != null ? index.AbilityName(e.key) : e.key);
                         break;
+                    case EffectType.UpgradeAbility:
+                        category = "ability";
+                        text = (index != null ? index.AbilityName(e.key) : e.key) + " -> Level " + state.State.GetAbilityLevel(e.key, 1);
+                        break;
+                    case EffectType.BlockAbility:
+                        category = "ability";
+                        text = (index != null ? index.AbilityName(e.key) : e.key) + " sealed by your choice";
+                        break;
                     case EffectType.AddSkillLevel:
                         category = "skill";
                         text = "Skill: " + (index != null ? index.SkillName(e.key) : e.key) + " " + (e.amount > 0 ? "+" + e.amount : e.amount.ToString()) + " (" + state.GetSkill(e.key) + ")";

@@ -89,6 +89,12 @@ namespace Crossroads.Narrative
                 case EffectType.UnlockArea:
                     state.UnlockArea(e.key);
                     break;
+                case EffectType.UpgradeAbility:
+                    state.UpgradeAbility(e.key, e.amount > 0 ? e.amount : 1);
+                    break;
+                case EffectType.BlockAbility:
+                    state.BlockAbility(e.key);
+                    break;
             }
         }
 
@@ -124,6 +130,8 @@ namespace Crossroads.Narrative
                     case EffectType.AddItem: sb.Append("item +").Append(e.key); break;
                     case EffectType.RemoveItem: sb.Append("item -").Append(e.key); break;
                     case EffectType.UnlockArea: sb.Append("area +").Append(e.key); break;
+                    case EffectType.UpgradeAbility: sb.Append("ability ").Append(e.key).Append(" -> Lv+").Append(e.amount); break;
+                    case EffectType.BlockAbility: sb.Append("ability -").Append(e.key).Append(" (sealed)"); break;
                 }
             }
             return sb.ToString();

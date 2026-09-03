@@ -28,7 +28,9 @@ namespace Crossroads.Narrative
         ItemHeld,          // items contains key
         AbilityOwned,      // abilities contains key
         AreaUnlocked,      // unlockAreas contains key
-        SkillAtLeast       // skills[key] >= amount
+        SkillAtLeast,      // skills[key] >= amount
+        EchoesAtLeast,     // echoBank >= amount
+        AbilityLevelBelow  // ability level < amount (upgrade gates)
     }
 
     /// <summary>Effect whitelist (§4.2) - applied by EffectApplier on selection.</summary>
@@ -51,7 +53,9 @@ namespace Crossroads.Narrative
         AddSkillLevel,     // key = skill id
         AddItem,           // key = item id
         RemoveItem,        // key = item id
-        UnlockArea         // key = area id
+        UnlockArea,        // key = area id
+        UpgradeAbility,    // key = ability id, amount = +levels (sets level 1 on first unlock)
+        BlockAbility       // key = ability id (excluded by your choices; wins over unlocked)
     }
 
     [Serializable]
@@ -153,13 +157,61 @@ namespace Crossroads.Narrative
     // ids + the names from here - new rows never require code changes.
     // =====================================================================================
 
+    /// <summary>Ability families (UI grouping / future rules). Active = player-activated.</summary>
+    public enum AbilityCategory
+    {
+        Active = 0,
+        Passive = 1,
+        Utility = 2
+    }
+
+    /// <summary>
+    /// One behaviour row of an ability at a given level. Upgrade rows change the numbers,
+    /// so "upgrading" genuinely changes how the ability behaves (cooldown/radius/power).
+    /// </summary>
+    [Serializable]
+    public class AbilityLevelData
+    {
+        public int level = 1;          // 1-based
+        public float cooldown;         // seconds between activations
+        public float power;            // gameplay magnitude (effect-specific meaning)
+        public float radius;           // effect radius (metres)
+        public float duration;         // effect duration (seconds)
+        public int energyCost;         // echoes consumed per activation (0 = free)
+        public string description = "";// UI text of what this level does
+    }
+
+    /// <summary>
+    /// Pure data definition of a power (task: ID, name, description, category, unlock
+    /// conditions, required decisions/flags, energy/cost, cooldown, visual/audio refs,
+    /// upgrade information). Unlocks happen through decisions via the UnlockAbility effect;
+    /// the data declares the intended path (unlockConditions + hint) for UI and checks.
+    /// </summary>
     [Serializable]
     public class AbilityDefinitionData
     {
         public string id = "";
         public string name = "";
-        public string line = "";      // ember | tide | stone | hollow
+        public string line = "";              // ember | tide | stone | hollow
         public string description = "";
+        public AbilityCategory category = AbilityCategory.Active;
+        public string unlockHint = "";        // UI "how to unlock" line
+        public List<DecisionConditionData> unlockConditions = new List<DecisionConditionData>();
+        public string vfxRef = "";            // visual reference (addressable/path key)
+        public string sfxRef = "";            // audio reference
+        public int echoCostPerLevel = 10;     // shrine upgrade cost rule (data-driven)
+        public List<AbilityLevelData> levels = new List<AbilityLevelData>();
+
+        public int MaxLevel { get { return levels != null && levels.Count > 0 ? levels.Count : 1; } }
+
+        /// <summary>Row for a level (clamped to [1..MaxLevel]); fallback to level 1 row.</summary>
+        public AbilityLevelData LevelRow(int level)
+        {
+            if (levels == null || levels.Count == 0) return null;
+            for (int i = 0; i < levels.Count; i++)
+                if (levels[i] != null && levels[i].level == level) return levels[i];
+            return levels[0];
+        }
     }
 
     [Serializable]

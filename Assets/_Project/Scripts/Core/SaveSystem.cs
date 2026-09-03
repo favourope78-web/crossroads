@@ -86,11 +86,14 @@ namespace Crossroads.Core
                 }
                 if (data.schemaVersion < SaveData.CurrentSchemaVersion)
                 {
-                    // In-memory migration: v1 -> v2 (progression fields come up defaulted by the
-                    // deserializer's field initializers). The upgraded version is stamped on next persist.
+                    // In-memory migration table: v1 -> v2 -> v3. Every migration step:
+                    //   - keeps all legacy fields untouched
+                    //   - normalizes any collection the file may lack to an empty list
+                    // The upgraded version is stamped on the next persist.
                     StoryLog.Log("[CROSSROADS] Save upgraded v" + data.schemaVersion + " -> v" + SaveData.CurrentSchemaVersion);
                     data.schemaVersion = SaveData.CurrentSchemaVersion;
                 }
+                Normalize(data);
                 _fileName = Path.GetFileName(path);
                 Current = data;
                 return data;
@@ -100,6 +103,31 @@ namespace Crossroads.Core
                 StoryLog.LogError("[CROSSROADS] Failed to load save " + path + ": " + e.Message);
                 return null;
             }
+        }
+
+        /// <summary>
+        /// Makes a loaded save structurally safe: any collection missing from the JSON
+        /// becomes an empty list (schema v1/v2 files predate newer fields, and some
+        /// serializers may not run field initializers). Never drops existing data.
+        /// </summary>
+        private static void Normalize(SaveData data)
+        {
+            if (data == null || data.gameState == null) return;
+            GameState g = data.gameState;
+            if (g.flags == null) g.flags = new System.Collections.Generic.List<StringEntry>();
+            if (g.worldStates == null) g.worldStates = new System.Collections.Generic.List<StringEntry>();
+            if (g.entities == null) g.entities = new System.Collections.Generic.List<StringBoolEntry>();
+            if (g.vars == null) g.vars = new System.Collections.Generic.List<StringIntEntry>();
+            if (g.bonds == null) g.bonds = new System.Collections.Generic.List<StringIntEntry>();
+            if (g.reputation == null) g.reputation = new System.Collections.Generic.List<StringIntEntry>();
+            if (g.abilities == null) g.abilities = new System.Collections.Generic.List<StringEntry>();
+            if (g.blockedAbilities == null) g.blockedAbilities = new System.Collections.Generic.List<StringEntry>();
+            if (g.abilityLevels == null) g.abilityLevels = new System.Collections.Generic.List<StringIntEntry>();
+            if (g.items == null) g.items = new System.Collections.Generic.List<StringEntry>();
+            if (g.skills == null) g.skills = new System.Collections.Generic.List<StringIntEntry>();
+            if (g.unlockAreas == null) g.unlockAreas = new System.Collections.Generic.List<StringEntry>();
+            if (g.decisions == null) g.decisions = new System.Collections.Generic.List<ResolvedDecisionEntry>();
+            if (g.codex == null) g.codex = new System.Collections.Generic.List<string>();
         }
 
         /// <summary>Writes Current atomically (.tmp -> replace) and mirrors an autosave copy.</summary>

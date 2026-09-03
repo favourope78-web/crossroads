@@ -34,6 +34,10 @@ MonoBehaviour:
       npcName: "Sera"
       graphId: "g_c1_hall_sera_shard"
       startNodeId: "start"
+    - id: "c1_east_shrine"
+      npcName: "Echo Shrine"
+      graphId: "g_c1_east_shrine"
+      startNodeId: "start"
     decisions:
     - id: "dec_c1_hall_first_light"
       promptText: "The Fracture light hovers over the hall. It is waiting. How do you answer it?"
@@ -325,6 +329,191 @@ MonoBehaviour:
           key: "sera_low"
           value: "1"
           amount: 0
+    - id: "dec_east_shrine"
+      promptText: "The plinth of light waits. It knows the echo you carry - and it is hungry for more."
+      timeLimitSeconds: 0
+      timeoutOptionIndex: 0
+      codexEntryId: "c1_shrine"
+      options:
+      - id: "deep_ember"
+        text: "Pour echoes in. Deepen the Ember bind."
+        afterText: "The plinth drinks the red light and gives it back, doubled."
+        conditions:
+        - type: 11
+          key: "ember_pulse"
+          value: ""
+          amount: 0
+        - type: 14
+          key: "echo"
+          value: ""
+          amount: 10
+        - type: 15
+          key: "ember_pulse"
+          value: ""
+          amount: 3
+        effects:
+        - type: 18
+          key: "ember_pulse"
+          value: ""
+          amount: 1
+        - type: 10
+          key: ""
+          value: ""
+          amount: -10
+        - type: 14
+          key: "echo_attunement"
+          value: ""
+          amount: 1
+        - type: 9
+          key: "c1_shrine_deep"
+          value: ""
+          amount: 0
+      - id: "deep_tide"
+        text: "Pour echoes in. Deepen the Tide bind."
+        afterText: "The plinth drinks the cool light and gives it back, deeper."
+        conditions:
+        - type: 11
+          key: "tide_mend"
+          value: ""
+          amount: 0
+        - type: 14
+          key: "echo"
+          value: ""
+          amount: 10
+        - type: 15
+          key: "tide_mend"
+          value: ""
+          amount: 3
+        effects:
+        - type: 18
+          key: "tide_mend"
+          value: ""
+          amount: 1
+        - type: 10
+          key: ""
+          value: ""
+          amount: -10
+        - type: 14
+          key: "echo_attunement"
+          value: ""
+          amount: 1
+        - type: 9
+          key: "c1_shrine_deep"
+          value: ""
+          amount: 0
+      - id: "deep_stone"
+        text: "Pour echoes in. Deepen the Stone bind."
+        afterText: "The plinth drinks the pale light and gives it back, heavier."
+        conditions:
+        - type: 11
+          key: "stone_ward"
+          value: ""
+          amount: 0
+        - type: 14
+          key: "echo"
+          value: ""
+          amount: 10
+        - type: 15
+          key: "stone_ward"
+          value: ""
+          amount: 3
+        effects:
+        - type: 18
+          key: "stone_ward"
+          value: ""
+          amount: 1
+        - type: 10
+          key: ""
+          value: ""
+          amount: -10
+        - type: 14
+          key: "echo_attunement"
+          value: ""
+          amount: 1
+        - type: 9
+          key: "c1_shrine_deep"
+          value: ""
+          amount: 0
+      - id: "seal_ember"
+        text: "Offer the Ember echo. Let the hall take it back."
+        afterText: "You lay the red echo on the stone. It sinks without a sound - and the hall exhales."
+        conditions:
+        - type: 11
+          key: "ember_pulse"
+          value: ""
+          amount: 0
+        effects:
+        - type: 19
+          key: "ember_pulse"
+          value: ""
+          amount: 0
+        - type: 10
+          key: ""
+          value: ""
+          amount: 20
+        - type: 0
+          key: "c1_echo_sealed"
+          value: "1"
+          amount: 0
+        - type: 9
+          key: "c1_shrine_seal"
+          value: ""
+          amount: 0
+      - id: "seal_tide"
+        text: "Offer the Tide echo. Let the hall take it back."
+        afterText: "You lay the cool echo on the stone. It sinks without a sound - and the hall exhales."
+        conditions:
+        - type: 11
+          key: "tide_mend"
+          value: ""
+          amount: 0
+        effects:
+        - type: 19
+          key: "tide_mend"
+          value: ""
+          amount: 0
+        - type: 10
+          key: ""
+          value: ""
+          amount: 20
+        - type: 0
+          key: "c1_echo_sealed"
+          value: "1"
+          amount: 0
+        - type: 9
+          key: "c1_shrine_seal"
+          value: ""
+          amount: 0
+      - id: "seal_stone"
+        text: "Offer the Stone echo. Let the hall take it back."
+        afterText: "You lay the pale echo on the stone. It sinks without a sound - and the hall exhales."
+        conditions:
+        - type: 11
+          key: "stone_ward"
+          value: ""
+          amount: 0
+        effects:
+        - type: 19
+          key: "stone_ward"
+          value: ""
+          amount: 0
+        - type: 10
+          key: ""
+          value: ""
+          amount: 20
+        - type: 0
+          key: "c1_echo_sealed"
+          value: "1"
+          amount: 0
+        - type: 9
+          key: "c1_shrine_seal"
+          value: ""
+          amount: 0
+      - id: "leave"
+        text: "Step back. The shrine can wait."
+        afterText: "You step back. The plinth dims, patient as stone."
+        conditions: []
+        effects: []
     graphs:
     - id: "g_c1_hall_first_light"
       nodes:
@@ -796,20 +985,258 @@ MonoBehaviour:
         decisionId: ""
         conditions: []
         end: 1
+    - id: "g_c1_east_shrine"
+      nodes:
+      - id: "start"
+        speaker: ""
+        text: ""
+        nextId: ""
+        branchPrefix: "shrine_line"
+        decisionId: ""
+        conditions: []
+        end: 0
+      - id: "shrine_line_fresh"
+        speaker: "Echo Shrine"
+        text: "A small plinth of fractured light rises from the annex floor. It hums at the frequency of what you carry."
+        nextId: "shrine_offer"
+        branchPrefix: ""
+        decisionId: ""
+        conditions:
+        - type: 7
+          key: "dec_east_shrine"
+          value: ""
+          amount: 0
+        end: 0
+      - id: "shrine_line_again"
+        speaker: "Echo Shrine"
+        text: "The plinth's light settles, then lifts again. It remembers your footprint in the echo."
+        nextId: "shrine_offer"
+        branchPrefix: ""
+        decisionId: ""
+        conditions:
+        - type: 6
+          key: "dec_east_shrine"
+          value: ""
+          amount: 0
+        end: 0
+      - id: "shrine_line_default"
+        speaker: "Echo Shrine"
+        text: "The plinth hums, patient."
+        nextId: "shrine_offer"
+        branchPrefix: ""
+        decisionId: ""
+        conditions: []
+        end: 0
+      - id: "shrine_offer"
+        speaker: ""
+        text: ""
+        nextId: ""
+        branchPrefix: "shrine_after"
+        decisionId: "dec_east_shrine"
+        conditions: []
+        end: 0
+      - id: "after_deep_ember"
+        speaker: "Echo Shrine"
+        text: "The red light folds into you. The echo answers deeper now."
+        nextId: "end"
+        branchPrefix: ""
+        decisionId: ""
+        conditions:
+        - type: 6
+          key: "dec_east_shrine"
+          value: "deep_ember"
+          amount: 0
+        end: 0
+      - id: "after_deep_tide"
+        speaker: "Echo Shrine"
+        text: "The cool light folds into you. The echo answers deeper now."
+        nextId: "end"
+        branchPrefix: ""
+        decisionId: ""
+        conditions:
+        - type: 6
+          key: "dec_east_shrine"
+          value: "deep_tide"
+          amount: 0
+        end: 0
+      - id: "after_deep_stone"
+        speaker: "Echo Shrine"
+        text: "The pale light folds into you, heavy and unhurried. The echo answers deeper now."
+        nextId: "end"
+        branchPrefix: ""
+        decisionId: ""
+        conditions:
+        - type: 6
+          key: "dec_east_shrine"
+          value: "deep_stone"
+          amount: 0
+        end: 0
+      - id: "after_seal_ember"
+        speaker: "Echo Shrine"
+        text: "The red echo sinks into the stone. You walk lighter - and the hall no longer rings for you."
+        nextId: "end"
+        branchPrefix: ""
+        decisionId: ""
+        conditions:
+        - type: 6
+          key: "dec_east_shrine"
+          value: "seal_ember"
+          amount: 0
+        end: 0
+      - id: "after_seal_tide"
+        speaker: "Echo Shrine"
+        text: "The cool echo sinks into the stone. You walk lighter - and the hall no longer rings for you."
+        nextId: "end"
+        branchPrefix: ""
+        decisionId: ""
+        conditions:
+        - type: 6
+          key: "dec_east_shrine"
+          value: "seal_tide"
+          amount: 0
+        end: 0
+      - id: "after_seal_stone"
+        speaker: "Echo Shrine"
+        text: "The pale echo sinks into the stone. You walk lighter - and the hall no longer rings for you."
+        nextId: "end"
+        branchPrefix: ""
+        decisionId: ""
+        conditions:
+        - type: 6
+          key: "dec_east_shrine"
+          value: "seal_stone"
+          amount: 0
+        end: 0
+      - id: "after_leave"
+        speaker: "Echo Shrine"
+        text: "You step back. The plinth dims, patient as stone, still humming your name."
+        nextId: "end"
+        branchPrefix: ""
+        decisionId: ""
+        conditions:
+        - type: 6
+          key: "dec_east_shrine"
+          value: "leave"
+          amount: 0
+        end: 0
+      - id: "end"
+        speaker: ""
+        text: ""
+        nextId: ""
+        branchPrefix: ""
+        decisionId: ""
+        conditions: []
+        end: 1
     progression:
       abilities:
-        - id: "ember_pulse"
-          name: "Ember Pulse"
-          line: "ember"
-          description: "The first echo. Heat answers your will. (Gates: hall energy seals.)"
-        - id: "tide_mend"
-          name: "Tide Mend"
-          line: "tide"
-          description: "The first echo. The hall breathes easier around you. (Gates: hall energy seals.)"
-        - id: "stone_ward"
-          name: "Stone Ward"
-          line: "stone"
-          description: "The first echo. Stillness bends around you. (Gates: hall energy seals.)"
+      - id: "ember_pulse"
+        name: "Ember Pulse"
+        line: "ember"
+        description: "The first echo. Heat answers your will in a red pulse that rolls through water and air alike. (Gates: hall energy seals.)"
+        category: 0
+        unlockHint: "Claim the Fracture light in the First Hall."
+        unlockConditions:
+          - type: 6
+            key: "dec_c1_hall_first_light"
+            value: "ember_reach"
+            amount: 0
+        vfxRef: "fx/pulse/ember"
+        sfxRef: "sfx/pulse/ember"
+        echoCostPerLevel: 10
+        levels:
+        - level: 1
+          cooldown: 12.0
+          power: 1.0
+          radius: 3.5
+          duration: 1.0
+          energyCost: 0
+          description: "A restrained burst. The echo answers once, then waits."
+        - level: 2
+          cooldown: 9.0
+          power: 1.5
+          radius: 4.5
+          duration: 1.4
+          energyCost: 0
+          description: "The pulse runs deeper and returns sooner. The hall's heat bends around you."
+        - level: 3
+          cooldown: 6.0
+          power: 2.25
+          radius: 6.0
+          duration: 1.8
+          energyCost: 0
+          description: "Full bind. The echo answers as fast as your heart and burns twice as wide."
+      - id: "tide_mend"
+        name: "Tide Mend"
+        line: "tide"
+        description: "The first echo. A cool washing swell that soothes what the Fracture has bruised - and settles those who stand too close. (Gates: hall energy seals.)"
+        category: 0
+        unlockHint: "Put others first when the light falls in the First Hall."
+        unlockConditions:
+          - type: 6
+            key: "dec_c1_hall_first_light"
+            value: "tide_clear"
+            amount: 0
+        vfxRef: "fx/pulse/tide"
+        sfxRef: "sfx/pulse/tide"
+        echoCostPerLevel: 10
+        levels:
+        - level: 1
+          cooldown: 12.0
+          power: 1.0
+          radius: 3.5
+          duration: 1.0
+          energyCost: 0
+          description: "A soft wash. Frayed edges pull themselves straight."
+        - level: 2
+          cooldown: 9.0
+          power: 1.5
+          radius: 4.5
+          duration: 1.4
+          energyCost: 0
+          description: "The wash carries further and comes sooner. The hall breathes easier around you."
+        - level: 3
+          cooldown: 6.0
+          power: 2.25
+          radius: 6.0
+          duration: 1.8
+          energyCost: 0
+          description: "Full bind. The tide moves through you like it has always known the way."
+      - id: "stone_ward"
+        name: "Stone Ward"
+        line: "stone"
+        description: "The first echo. A ring of stillness that slows what moves too fast and holds what moves too close. (Gates: hall energy seals.)"
+        category: 0
+        unlockHint: "Refuse to move when the light hunts in the First Hall."
+        unlockConditions:
+          - type: 6
+            key: "dec_c1_hall_first_light"
+            value: "stone_still"
+            amount: 0
+        vfxRef: "fx/pulse/stone"
+        sfxRef: "sfx/pulse/stone"
+        echoCostPerLevel: 10
+        levels:
+        - level: 1
+          cooldown: 12.0
+          power: 1.0
+          radius: 3.5
+          duration: 1.0
+          energyCost: 0
+          description: "A quiet ring. The hurry around you remembers how to wait."
+        - level: 2
+          cooldown: 9.0
+          power: 1.5
+          radius: 4.5
+          duration: 1.4
+          energyCost: 0
+          description: "The ring holds wider and re-forms sooner. Stillness bends around you."
+        - level: 3
+          cooldown: 6.0
+          power: 2.25
+          radius: 6.0
+          duration: 1.8
+          energyCost: 0
+          description: "Full bind. You are where you stand - and the hall knows it."
       skills:
         - id: "echo_attunement"
           name: "Echo Attunement"
@@ -890,6 +1317,28 @@ MonoBehaviour:
         turnSpeed: 4
         usesRoutine: 1
       states:
+      - conditions:
+        - type: 0
+          key: "c1_echo_sealed"
+          value: "1"
+          amount: 0
+        title: "Sera · Warded"
+        moodLine: "Sera's eyes rest on your empty hands. 'The hall says you gave it back. I can hear it in the silence you leave.'"
+        approachDistance: 1.8
+        avoidDistance: 0.0
+        moveSpeed: 1.0
+        reactRadius: -1
+      - conditions:
+        - type: 13
+          key: "echo_attunement"
+          value: ""
+          amount: 2
+        title: "Sera · Attuned"
+        moodLine: "'Your echo rings twice as deep as it did.' She nods, almost approving."
+        approachDistance: 1.5
+        avoidDistance: 0.0
+        moveSpeed: 1.0
+        reactRadius: -1
       - conditions:
         - type: 0
           key: "c1_hall_drive"

@@ -115,6 +115,30 @@ namespace Crossroads.Core
         public string abilityId;
     }
 
+    public struct AbilityLevelChangedEvent
+    {
+        public string abilityId;
+        public int level;
+    }
+
+    public struct AbilityBlockedEvent
+    {
+        public string abilityId;
+    }
+
+    /// <summary>Fired by the AbilityManager when an ability is actually used (payload = the
+    /// level row's numbers so effects/VFX/NPCs react to the CURRENT behaviour).</summary>
+    public struct AbilityUsedEvent
+    {
+        public string abilityId;
+        public int level;
+        public float cooldown;
+        public float power;
+        public float radius;
+        public float duration;
+        public int energyCost;
+    }
+
     public struct SkillChangedEvent
     {
         public string skillId;

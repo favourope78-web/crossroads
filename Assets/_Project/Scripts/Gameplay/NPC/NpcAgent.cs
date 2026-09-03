@@ -83,6 +83,8 @@ namespace Crossroads.Gameplay
                 EventBus.Subscribe<ReputationChangedEvent>(OnLiveStateEvent);
                 EventBus.Subscribe<SkillChangedEvent>(OnLiveStateEvent);
                 EventBus.Subscribe<AbilityUnlockedEvent>(OnLiveStateEvent);
+                EventBus.Subscribe<AbilityLevelChangedEvent>(OnLiveStateEvent);
+                EventBus.Subscribe<AbilityBlockedEvent>(OnLiveStateEvent);
                 EventBus.Subscribe<AreaUnlockedEvent>(OnLiveStateEvent);
                 EventBus.Subscribe<StateLoadedEvent>(OnLoadOrReset);
                 EventBus.Subscribe<StateResetEvent>(OnLoadOrReset);
@@ -99,6 +101,8 @@ namespace Crossroads.Gameplay
                 EventBus.Unsubscribe<ReputationChangedEvent>(OnLiveStateEvent);
                 EventBus.Unsubscribe<SkillChangedEvent>(OnLiveStateEvent);
                 EventBus.Unsubscribe<AbilityUnlockedEvent>(OnLiveStateEvent);
+                EventBus.Unsubscribe<AbilityLevelChangedEvent>(OnLiveStateEvent);
+                EventBus.Unsubscribe<AbilityBlockedEvent>(OnLiveStateEvent);
                 EventBus.Unsubscribe<AreaUnlockedEvent>(OnLiveStateEvent);
                 EventBus.Unsubscribe<StateLoadedEvent>(OnLoadOrReset);
                 EventBus.Unsubscribe<StateResetEvent>(OnLoadOrReset);
@@ -115,6 +119,8 @@ namespace Crossroads.Gameplay
         private void OnLiveStateEvent(ReputationChangedEvent e) { Apply(silent: false, live: true); }
         private void OnLiveStateEvent(SkillChangedEvent e) { Apply(silent: false, live: true); }
         private void OnLiveStateEvent(AbilityUnlockedEvent e) { Apply(silent: false, live: true); }
+        private void OnLiveStateEvent(AbilityLevelChangedEvent e) { Apply(silent: false, live: true); }
+        private void OnLiveStateEvent(AbilityBlockedEvent e) { Apply(silent: false, live: true); }
         private void OnLiveStateEvent(AreaUnlockedEvent e) { Apply(silent: false, live: true); }
         private void OnLoadOrReset(StateLoadedEvent e) { Apply(silent: false, live: false); }
         private void OnLoadOrReset(StateResetEvent e) { Apply(silent: false, live: false); }

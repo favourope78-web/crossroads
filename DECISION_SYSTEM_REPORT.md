@@ -1,4 +1,4 @@
-# DECISION_SYSTEM_REPORT.md — Interaction, Decision, Consequence, Progression & NPC Systems
+# DECISION_SYSTEM_REPORT.md — Interaction, Decision, Consequence, Progression, NPC & Power/Ability Systems
 ### CROSSROADS Foundation (Phase 2-native systems, built on the Phase 0–1 prototypes)
 
 | | |
@@ -236,3 +236,83 @@ Re-run: `cd scripts/decision_system_tests && mcs -langversion:latest -define:ENA
 - `StoryContentBuilder.cs` needed `using Crossroads.Core;` (routines use `Point3`); NpcLogic needed the Narrative using (NpcStopData).
 - The asset YAML for `npcs` required a dedicated emitter (nested conditions under list items, inline `position: {x,y,z}`, strict 4/6/8/10 indentation) — first run produced a stray `behaviour` list and a glued `npcs:` key; both caught by re-parsing and fixed.
 - **Conventions kept**: data in JSON → asset → C# mirror, validated; GUIDs deterministic (NpcBrain 0x91 … NpcInteractable 0x94); scene generator is the only scene writer; `main` stays device-buildable, `dev` is integration.
+
+
+---
+
+## 8. Phase 2d — Core Power & Ability System (this phase)
+
+Scope per the task: a reusable, data-driven ability foundation with **three initial decision→power paths**
+(the complete catalogue is out of scope). Decision A/B/C in `dec_c1_hall_first_light` already granted one
+of three powers; this phase promotes those placeholders into a full system: definitions, manager, state
+machine, upgrades, blocking, NPC reactions, mobile UI, one in-world playable effect, and tests.
+
+### 8.1 Data model (pure data — everything is `AbilityDefinitionData`)
+`id, name, line (ember/tide/stone), description, category (Active), unlockHint, unlockConditions[],
+vfxRef, sfxRef, echoCostPerLevel, levels[]` — one `AbilityLevelData` row per rank carrying
+`level, cooldown, power, radius, duration, energyCost, description`. **Power→story fit:** the three
+powers are the three answers to the Fracture light already established in Ch.1 (`ember_pulse` heat pulse,
+`tide_mend` soothing swell, `stone_ward` stillness ring) — no out-of-genre supers.
+
+### 8.2 Runtime — `Narrative/Abilities/AbilityManager.cs` (pure C#, no Unity types)
+- Reads `GameServices.Progress` (persisted unlocks), ignores Unity; injected clock (`Now`) drives cooldowns
+  (Unity binds `Time.time` in `StoryModeBootstrap`; tests drive a manual clock).
+- State machine per power: **Locked → (Unlocked Lv1 → Lv2 → Lv3) | Blocked**. `Blocked` (sealed at the
+  Echo Shrine) is persisted and beats `Unlocked`; a later `UnlockAbility` (e.g. re-claiming the light)
+  clears the seal — "future decisions can unlock, block, upgrade or change behaviour" with zero core edits.
+- `Activate(id)` → validates access → cost → cooldown → publishes `AbilityUsedEvent` carrying the
+  **current level row** (upgrades genuinely change behaviour: 12/9/6 s cooldown, 3.5/4.5/6 m radius,
+  ×1/×1.5/×2.25 power) → starts cooldown. No per-frame processing anywhere; cooldown state is session-only
+  (never persisted — reloading a save leaves powers ready, by design).
+
+### 8.3 Core extensions (single write path preserved)
+- `StateMutator`: `BlockAbility`, `UpgradeAbility`, `SetAbilityLevel` (+ `LoadFrom` copies the new lists).
+- `GameState`: `blockedAbilities`, `abilityLevels` (+ helpers `HasBlockedAbility`, `GetAbilityLevel`).
+- `StoryEvents`: `AbilityLevelChangedEvent`, `AbilityBlockedEvent`, `AbilityUsedEvent` (payload = level row).
+- `ContentData`: `AbilityCategory`, `AbilityLevelData`, extended `AbilityDefinitionData`,
+  `ConditionType.EchoesAtLeast` / `AbilityLevelBelow`, `EffectType.UpgradeAbility` / `BlockAbility`
+  (evaluator + applier + notices wired).
+- `SaveData` **schema v3**: in-memory migration (v1→v2→v3) + `SaveSystem.Normalize` guarantees no null
+  collections; old files load and upgrade, never rewritten in place.
+
+### 8.4 Authored content (three initial paths + consequences)
+- **Unlock** — `dec_c1_hall_first_light`: `ember_reach`/`tide_clear`/`stone_still` → exactly one power each.
+- **Upgrade + Block** — new **Echo Shrine** encounter `c1_east_shrine` (East Annex, new interactable):
+  `deep_*` options (gated `AbilityOwned` + `EchoesAtLeast 10` + `AbilityLevelBelow 3`) raise a rank
+  (+1 attunement skill each); `seal_*` options block the power, pay 20 Echoes, set `c1_echo_sealed`;
+  `leave` is always available. Options are condition-filtered, so the same data works repeatably.
+- **NPC reactions** — Sera gained two data-driven states: `Sera · Attuned` (skill/level ≥ 2 → she notices
+  the deepened bind) and `Sera · Warded` (sealed → she notices the silence). `NpcAgent` now re-applies on
+  `AbilityLevelChangedEvent`/`AbilityBlockedEvent`; visual variants stay per the state pipeline.
+- **Playable effect** — `Gameplay/Abilities/AbilityPulseVFX.cs`: on `AbilityUsedEvent` a radial pulse ring
+  (one pooled cylinder, line-coloured, fade+expand) bursts at Ari — attached by `StoryModeBootstrap` to
+  whichever player object is active. One object, no particles, idle = no work.
+
+### 8.5 UI — mobile power sheet (`UI/AbilityHUD.cs` + `UI/AbilitySheetModel.cs`)
+- `[POWERS]` toggle bottom-right (≥88 dp) opens a sheet listing every known power with live state:
+  **LOCKED + unlock hint / SEALED / Lv N · READY (MAX) / recharging countdown**; tap a row to activate.
+  Cooldown labels tick only while the sheet is open (0.25 s cadence, nothing runs while closed).
+- `AbilitySheetModel` is a pure snapshot builder (display rows from manager + data) — headless-tested.
+
+### 8.6 Verification
+- **Headless flow tests: 432 passed / 0 failed** (was 277). New groups:
+  [22] ability content contracts (defs, 3 ranks, cooldown/radius/power deltas, path↔ability map),
+  [23] three decision paths → three different powers (owner unlocked, others locked, sheet rows match),
+  [24] activation event payload, cooldown state machine (12 s), unknown/locked/cost gates,
+  [25] shrine upgrades (level 2→3, echo cost, gates on echoes + max level, behaviour rows change),
+  [26] seal → Blocked + refused activation + persisted block + NPC states (Attuned/Warded) + re-unlock wins,
+  [27] restart persistence (unlock + level + seal restored; cooldown session-only) + v2→v3 migration.
+  Two pre-existing expectations updated: Sera now has 5 states (3 drive + 2 ability-reaction) and the
+  restart test asserts the ability-derived title (the tide+shard flow reaches attunement 2 by design).
+- **Static validation** (`validate_assets.py`): 0 warnings — progression abilities now compare field-for-field
+  including `levels`/`unlockConditions` (numeric-tolerant), scene GUIDs incl. the new shrine interactable.
+- **Compile check**: clean under both `ENABLE_LEGACY_INPUT_MANAGER` and `ENABLE_INPUT_SYSTEM`
+  (new folders `Narrative/Abilities`, `Gameplay/Abilities` in the harness).
+- **Generators idempotent**: content + scene regenerate to identical shapes (117 scene objects / 135 roots).
+
+### 8.7 Adding an ability (no core changes)
+1. Add one `AbilityDefinitionData` entry (with `levels` rows) to `scripts/story_content.json`,
+   mirror it in `StoryContentBuilder.cs`, regenerate (`gen_story_content.py` → `validate_assets.py`).
+2. Grant it from any decision via `UnlockAbility`/`UpgradeAbility` effects (option conditions gate when).
+3. If it needs a world effect, subscribe a new listener to `AbilityUsedEvent` (or extend `AbilityPulseVFX.abilityIds`).
+4. NPC reactions: add a state row gated on `AbilityOwned`/`SkillAtLeast`/`AbilityLevelBelow`/flag — no code.

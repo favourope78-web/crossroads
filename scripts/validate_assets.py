@@ -138,6 +138,12 @@ else:
                             errors.append("node %s condition.%s: asset=%r json=%r" % (na["id"], k, x[k], y[k]))
 
         # progression
+        def _same(a, b):
+            # numeric-tolerant compare: 12 == 12.0 (YAML keeps ints, JSON may carry floats)
+            if isinstance(a, bool) or isinstance(b, bool): return str(a) == str(b)
+            try: return float(a) == float(b)
+            except (TypeError, ValueError): return str(a) == str(b)
+
         p_asset, p_json = data["progression"], content["progression"]
         for group in ("abilities", "skills", "items", "reputationGroups", "areas"):
             ka = {"abilities": ["id", "name", "line", "description"], "skills": ["id", "name", "maxLevel"],
@@ -149,6 +155,27 @@ else:
                 for k in ka:
                     if str(ra[k]) != str(rb[k]):
                         errors.append("progression %s.%s: asset=%r json=%r" % (group, k, ra[k], rb[k]))
+                if group == "abilities":
+                    # full power-system parity: category, hint, refs, cost, conditions, level rows
+                    for k in ("category", "unlockHint", "vfxRef", "sfxRef", "echoCostPerLevel"):
+                        if str(ra.get(k)) != str(rb.get(k)):
+                            errors.append("ability %s.%s: asset=%r json=%r" % (rb.get("id"), k, ra.get(k), rb.get(k)))
+                    if len(ra.get("unlockConditions", [])) != len(rb.get("unlockConditions", [])):
+                        errors.append("ability %s unlockConditions count mismatch" % rb.get("id"))
+                    else:
+                        for x, y in zip(ra["unlockConditions"], rb["unlockConditions"]):
+                            for k in ("type", "key", "value", "amount"):
+                                if not _same(x.get(k), y.get(k)):
+                                    errors.append("ability %s unlockCond.%s: asset=%r json=%r" % (rb.get("id"), k, x.get(k), y.get(k)))
+                    if len(ra.get("levels", [])) != len(rb.get("levels", [])):
+                        errors.append("ability %s level count mismatch" % rb.get("id"))
+                    else:
+                        for la, lb in zip(ra["levels"], rb["levels"]):
+                            for k in ("level", "cooldown", "power", "radius", "duration", "energyCost"):
+                                if not _same(la.get(k), lb.get(k)):
+                                    errors.append("ability %s Lv%s.%s: asset=%r json=%r" % (rb.get("id"), lb.get("level"), k, la.get(k), lb.get(k)))
+                            if (la.get("description") or "") != (lb.get("description") or ""):
+                                errors.append("ability %s Lv%s description mismatch" % (rb.get("id"), lb.get("level")))
 
         # npcs (data-driven NPC definitions)
         def _n(v):

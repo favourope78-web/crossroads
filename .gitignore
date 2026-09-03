@@ -89,3 +89,6 @@ Desktop.ini
 /scripts/decision_system_tests/*.exe
 /scripts/decision_system_tests/*.dll
 /scripts/decision_system_tests/*.mdb
+
+# headless test save output (tests use temp dirs; this is a stray-stub byproduct)
+scripts/decision_system_tests/crossroads/

@@ -41,6 +41,10 @@ namespace Crossroads.Narrative
         public const string SkillAttunement = "echo_attunement";
         public const string ItemShard = "echo_shard";
 
+        public const string EncounterShrine = "c1_east_shrine";
+        public const string DecisionShrine = "dec_east_shrine";
+        public const string GraphShrine = "g_c1_east_shrine";
+
         public const string NpcMara = "mara";
         public const string NpcSera = "sera";
         public const string EncounterMaraConfide = "c1_hall_mara_confide";
@@ -55,12 +59,57 @@ namespace Crossroads.Narrative
             // ---------------------------------------------------------------- progression data
             content.progression.abilities.AddRange(new List<AbilityDefinitionData>
             {
-                new AbilityDefinitionData { id = AbilityEmber, name = "Ember Pulse", line = "ember",
-                    description = "The first echo. Heat answers your will. (Gates: hall energy seals.)" },
-                new AbilityDefinitionData { id = AbilityTide, name = "Tide Mend", line = "tide",
-                    description = "The first echo. The hall breathes easier around you. (Gates: hall energy seals.)" },
-                new AbilityDefinitionData { id = AbilityStone, name = "Stone Ward", line = "stone",
-                    description = "The first echo. Stillness bends around you. (Gates: hall energy seals.)" }
+                new AbilityDefinitionData
+                {
+                    id = AbilityEmber, name = "Ember Pulse", line = "ember", category = AbilityCategory.Active,
+                    description = "The first echo. Heat answers your will in a red pulse that rolls through water and air alike. (Gates: hall energy seals.)",
+                    unlockHint = "Claim the Fracture light in the First Hall.",
+                    unlockConditions = new List<DecisionConditionData> { new DecisionConditionData { type = ConditionType.DecisionWas, key = DecisionFirstLight, value = "ember_reach" } },
+                    vfxRef = "fx/pulse/ember", sfxRef = "sfx/pulse/ember", echoCostPerLevel = 10,
+                    levels = new List<AbilityLevelData>
+                    {
+                        new AbilityLevelData { level = 1, cooldown = 12f, power = 1f, radius = 3.5f, duration = 1f, energyCost = 0,
+                            description = "A restrained burst. The echo answers once, then waits." },
+                        new AbilityLevelData { level = 2, cooldown = 9f, power = 1.5f, radius = 4.5f, duration = 1.4f, energyCost = 0,
+                            description = "The pulse runs deeper and returns sooner. The hall's heat bends around you." },
+                        new AbilityLevelData { level = 3, cooldown = 6f, power = 2.25f, radius = 6f, duration = 1.8f, energyCost = 0,
+                            description = "Full bind. The echo answers as fast as your heart and burns twice as wide." }
+                    }
+                },
+                new AbilityDefinitionData
+                {
+                    id = AbilityTide, name = "Tide Mend", line = "tide", category = AbilityCategory.Active,
+                    description = "The first echo. A cool washing swell that soothes what the Fracture has bruised - and settles those who stand too close. (Gates: hall energy seals.)",
+                    unlockHint = "Put others first when the light falls in the First Hall.",
+                    unlockConditions = new List<DecisionConditionData> { new DecisionConditionData { type = ConditionType.DecisionWas, key = DecisionFirstLight, value = "tide_clear" } },
+                    vfxRef = "fx/pulse/tide", sfxRef = "sfx/pulse/tide", echoCostPerLevel = 10,
+                    levels = new List<AbilityLevelData>
+                    {
+                        new AbilityLevelData { level = 1, cooldown = 12f, power = 1f, radius = 3.5f, duration = 1f, energyCost = 0,
+                            description = "A soft wash. Frayed edges pull themselves straight." },
+                        new AbilityLevelData { level = 2, cooldown = 9f, power = 1.5f, radius = 4.5f, duration = 1.4f, energyCost = 0,
+                            description = "The wash carries further and comes sooner. The hall breathes easier around you." },
+                        new AbilityLevelData { level = 3, cooldown = 6f, power = 2.25f, radius = 6f, duration = 1.8f, energyCost = 0,
+                            description = "Full bind. The tide moves through you like it has always known the way." }
+                    }
+                },
+                new AbilityDefinitionData
+                {
+                    id = AbilityStone, name = "Stone Ward", line = "stone", category = AbilityCategory.Active,
+                    description = "The first echo. A ring of stillness that slows what moves too fast and holds what moves too close. (Gates: hall energy seals.)",
+                    unlockHint = "Refuse to move when the light hunts in the First Hall.",
+                    unlockConditions = new List<DecisionConditionData> { new DecisionConditionData { type = ConditionType.DecisionWas, key = DecisionFirstLight, value = "stone_still" } },
+                    vfxRef = "fx/pulse/stone", sfxRef = "sfx/pulse/stone", echoCostPerLevel = 10,
+                    levels = new List<AbilityLevelData>
+                    {
+                        new AbilityLevelData { level = 1, cooldown = 12f, power = 1f, radius = 3.5f, duration = 1f, energyCost = 0,
+                            description = "A quiet ring. The hurry around you remembers how to wait." },
+                        new AbilityLevelData { level = 2, cooldown = 9f, power = 1.5f, radius = 4.5f, duration = 1.4f, energyCost = 0,
+                            description = "The ring holds wider and re-forms sooner. Stillness bends around you." },
+                        new AbilityLevelData { level = 3, cooldown = 6f, power = 2.25f, radius = 6f, duration = 1.8f, energyCost = 0,
+                            description = "Full bind. You are where you stand - and the hall knows it." }
+                    }
+                }
             });
             content.progression.skills.Add(new SkillDefinitionData { id = SkillAttunement, name = "Echo Attunement", maxLevel = 3 });
             content.progression.items.Add(new ItemDefinitionData { id = ItemShard, name = "Fracture Shard",
@@ -332,6 +381,133 @@ namespace Crossroads.Narrative
                 }
             });
 
+            // ---------------------------------------------------------------- decision 4 (Echo Shrine: upgrade / seal)
+            content.decisions.Add(new DecisionNodeData
+            {
+                id = DecisionShrine,
+                promptText = "The plinth of light waits. It knows the echo you carry - and it is hungry for more.",
+                codexEntryId = "c1_shrine",
+                options = new List<DecisionOptionData>
+                {
+                    new DecisionOptionData
+                    {
+                        id = "deep_ember",
+                        text = "Pour echoes in. Deepen the Ember bind.",
+                        afterText = "The plinth drinks the red light and gives it back, doubled.",
+                        conditions = new List<DecisionConditionData>
+                        {
+                            new DecisionConditionData { type = ConditionType.AbilityOwned, key = AbilityEmber },
+                            new DecisionConditionData { type = ConditionType.EchoesAtLeast, amount = 10 },
+                            new DecisionConditionData { type = ConditionType.AbilityLevelBelow, key = AbilityEmber, amount = 3 }
+                        },
+                        effects = new List<DecisionEffectData>
+                        {
+                            new DecisionEffectData { type = EffectType.UpgradeAbility, key = AbilityEmber, amount = 1 },
+                            new DecisionEffectData { type = EffectType.GrantEchoes, amount = -10 },
+                            new DecisionEffectData { type = EffectType.AddSkillLevel, key = SkillAttunement, amount = 1 },
+                            new DecisionEffectData { type = EffectType.AddCodex, key = "c1_shrine_deep" }
+                        }
+                    },
+                    new DecisionOptionData
+                    {
+                        id = "deep_tide",
+                        text = "Pour echoes in. Deepen the Tide bind.",
+                        afterText = "The plinth drinks the cool light and gives it back, deeper.",
+                        conditions = new List<DecisionConditionData>
+                        {
+                            new DecisionConditionData { type = ConditionType.AbilityOwned, key = AbilityTide },
+                            new DecisionConditionData { type = ConditionType.EchoesAtLeast, amount = 10 },
+                            new DecisionConditionData { type = ConditionType.AbilityLevelBelow, key = AbilityTide, amount = 3 }
+                        },
+                        effects = new List<DecisionEffectData>
+                        {
+                            new DecisionEffectData { type = EffectType.UpgradeAbility, key = AbilityTide, amount = 1 },
+                            new DecisionEffectData { type = EffectType.GrantEchoes, amount = -10 },
+                            new DecisionEffectData { type = EffectType.AddSkillLevel, key = SkillAttunement, amount = 1 },
+                            new DecisionEffectData { type = EffectType.AddCodex, key = "c1_shrine_deep" }
+                        }
+                    },
+                    new DecisionOptionData
+                    {
+                        id = "deep_stone",
+                        text = "Pour echoes in. Deepen the Stone bind.",
+                        afterText = "The plinth drinks the pale light and gives it back, heavier.",
+                        conditions = new List<DecisionConditionData>
+                        {
+                            new DecisionConditionData { type = ConditionType.AbilityOwned, key = AbilityStone },
+                            new DecisionConditionData { type = ConditionType.EchoesAtLeast, amount = 10 },
+                            new DecisionConditionData { type = ConditionType.AbilityLevelBelow, key = AbilityStone, amount = 3 }
+                        },
+                        effects = new List<DecisionEffectData>
+                        {
+                            new DecisionEffectData { type = EffectType.UpgradeAbility, key = AbilityStone, amount = 1 },
+                            new DecisionEffectData { type = EffectType.GrantEchoes, amount = -10 },
+                            new DecisionEffectData { type = EffectType.AddSkillLevel, key = SkillAttunement, amount = 1 },
+                            new DecisionEffectData { type = EffectType.AddCodex, key = "c1_shrine_deep" }
+                        }
+                    },
+                    new DecisionOptionData
+                    {
+                        id = "seal_ember",
+                        text = "Offer the Ember echo. Let the hall take it back.",
+                        afterText = "You lay the red echo on the stone. It sinks without a sound - and the hall exhales.",
+                        conditions = new List<DecisionConditionData>
+                        {
+                            new DecisionConditionData { type = ConditionType.AbilityOwned, key = AbilityEmber }
+                        },
+                        effects = new List<DecisionEffectData>
+                        {
+                            new DecisionEffectData { type = EffectType.BlockAbility, key = AbilityEmber },
+                            new DecisionEffectData { type = EffectType.GrantEchoes, amount = 20 },
+                            new DecisionEffectData { type = EffectType.SetFlag, key = "c1_echo_sealed", value = "1" },
+                            new DecisionEffectData { type = EffectType.AddCodex, key = "c1_shrine_seal" }
+                        }
+                    },
+                    new DecisionOptionData
+                    {
+                        id = "seal_tide",
+                        text = "Offer the Tide echo. Let the hall take it back.",
+                        afterText = "You lay the cool echo on the stone. It sinks without a sound - and the hall exhales.",
+                        conditions = new List<DecisionConditionData>
+                        {
+                            new DecisionConditionData { type = ConditionType.AbilityOwned, key = AbilityTide }
+                        },
+                        effects = new List<DecisionEffectData>
+                        {
+                            new DecisionEffectData { type = EffectType.BlockAbility, key = AbilityTide },
+                            new DecisionEffectData { type = EffectType.GrantEchoes, amount = 20 },
+                            new DecisionEffectData { type = EffectType.SetFlag, key = "c1_echo_sealed", value = "1" },
+                            new DecisionEffectData { type = EffectType.AddCodex, key = "c1_shrine_seal" }
+                        }
+                    },
+                    new DecisionOptionData
+                    {
+                        id = "seal_stone",
+                        text = "Offer the Stone echo. Let the hall take it back.",
+                        afterText = "You lay the pale echo on the stone. It sinks without a sound - and the hall exhales.",
+                        conditions = new List<DecisionConditionData>
+                        {
+                            new DecisionConditionData { type = ConditionType.AbilityOwned, key = AbilityStone }
+                        },
+                        effects = new List<DecisionEffectData>
+                        {
+                            new DecisionEffectData { type = EffectType.BlockAbility, key = AbilityStone },
+                            new DecisionEffectData { type = EffectType.GrantEchoes, amount = 20 },
+                            new DecisionEffectData { type = EffectType.SetFlag, key = "c1_echo_sealed", value = "1" },
+                            new DecisionEffectData { type = EffectType.AddCodex, key = "c1_shrine_seal" }
+                        }
+                    },
+                    new DecisionOptionData
+                    {
+                        id = "leave",
+                        text = "Step back. The shrine can wait.",
+                        afterText = "You step back. The plinth dims, patient as stone.",
+                        conditions = new List<DecisionConditionData>(),
+                        effects = new List<DecisionEffectData>()
+                    }
+                }
+            });
+
             // ---------------------------------------------------------------- graph 3 (Sera)
             content.graphs.Add(new DialogueGraphData
             {
@@ -428,6 +604,57 @@ namespace Crossroads.Narrative
                 }
             });
 
+            // ---------------------------------------------------------------- graph 6 (Echo Shrine)
+            content.graphs.Add(new DialogueGraphData
+            {
+                id = GraphShrine,
+                nodes = new List<DialogueNodeData>
+                {
+                    new DialogueNodeData { id = "start", speaker = "", text = "", branchPrefix = "shrine_line" },
+                    new DialogueNodeData { id = "shrine_line_fresh", speaker = "Echo Shrine",
+                        text = "A small plinth of fractured light rises from the annex floor. It hums at the frequency of what you carry.",
+                        nextId = "shrine_offer",
+                        conditions = new List<DecisionConditionData> { new DecisionConditionData { type = ConditionType.DecisionNotMade, key = DecisionShrine } } },
+                    new DialogueNodeData { id = "shrine_line_again", speaker = "Echo Shrine",
+                        text = "The plinth's light settles, then lifts again. It remembers your footprint in the echo.",
+                        nextId = "shrine_offer",
+                        conditions = new List<DecisionConditionData> { new DecisionConditionData { type = ConditionType.DecisionWas, key = DecisionShrine, value = "" } } },
+                    new DialogueNodeData { id = "shrine_line_default", speaker = "Echo Shrine",
+                        text = "The plinth hums, patient.",
+                        nextId = "shrine_offer" },
+                    new DialogueNodeData { id = "shrine_offer", speaker = "", text = "", decisionId = DecisionShrine, branchPrefix = "shrine_after" },
+                    new DialogueNodeData { id = "after_deep_ember", speaker = "Echo Shrine",
+                        text = "The red light folds into you. The echo answers deeper now.",
+                        nextId = "end",
+                        conditions = new List<DecisionConditionData> { new DecisionConditionData { type = ConditionType.DecisionWas, key = DecisionShrine, value = "deep_ember" } } },
+                    new DialogueNodeData { id = "after_deep_tide", speaker = "Echo Shrine",
+                        text = "The cool light folds into you. The echo answers deeper now.",
+                        nextId = "end",
+                        conditions = new List<DecisionConditionData> { new DecisionConditionData { type = ConditionType.DecisionWas, key = DecisionShrine, value = "deep_tide" } } },
+                    new DialogueNodeData { id = "after_deep_stone", speaker = "Echo Shrine",
+                        text = "The pale light folds into you, heavy and unhurried. The echo answers deeper now.",
+                        nextId = "end",
+                        conditions = new List<DecisionConditionData> { new DecisionConditionData { type = ConditionType.DecisionWas, key = DecisionShrine, value = "deep_stone" } } },
+                    new DialogueNodeData { id = "after_seal_ember", speaker = "Echo Shrine",
+                        text = "The red echo sinks into the stone. You walk lighter - and the hall no longer rings for you.",
+                        nextId = "end",
+                        conditions = new List<DecisionConditionData> { new DecisionConditionData { type = ConditionType.DecisionWas, key = DecisionShrine, value = "seal_ember" } } },
+                    new DialogueNodeData { id = "after_seal_tide", speaker = "Echo Shrine",
+                        text = "The cool echo sinks into the stone. You walk lighter - and the hall no longer rings for you.",
+                        nextId = "end",
+                        conditions = new List<DecisionConditionData> { new DecisionConditionData { type = ConditionType.DecisionWas, key = DecisionShrine, value = "seal_tide" } } },
+                    new DialogueNodeData { id = "after_seal_stone", speaker = "Echo Shrine",
+                        text = "The pale echo sinks into the stone. You walk lighter - and the hall no longer rings for you.",
+                        nextId = "end",
+                        conditions = new List<DecisionConditionData> { new DecisionConditionData { type = ConditionType.DecisionWas, key = DecisionShrine, value = "seal_stone" } } },
+                    new DialogueNodeData { id = "after_leave", speaker = "Echo Shrine",
+                        text = "You step back. The plinth dims, patient as stone, still humming your name.",
+                        nextId = "end",
+                        conditions = new List<DecisionConditionData> { new DecisionConditionData { type = ConditionType.DecisionWas, key = DecisionShrine, value = "leave" } } },
+                    new DialogueNodeData { id = "end", speaker = "", text = "", end = true }
+                }
+            });
+
             // ---------------------------------------------------------------- encounters
             content.encounters.AddRange(new List<EncounterDefinitionData>
             {
@@ -435,7 +662,8 @@ namespace Crossroads.Narrative
                 new EncounterDefinitionData { id = EncounterShard, npcName = "The Shard", graphId = GraphShard, startNodeId = "start" },
                 new EncounterDefinitionData { id = EncounterSera, npcName = "Sera", graphId = GraphSera, startNodeId = "start" },
                 new EncounterDefinitionData { id = EncounterMaraConfide, npcName = "Mara", graphId = GraphMaraConfide, startNodeId = "start" },
-                new EncounterDefinitionData { id = EncounterSeraShard, npcName = "Sera", graphId = GraphSeraShard, startNodeId = "start" }
+                new EncounterDefinitionData { id = EncounterSeraShard, npcName = "Sera", graphId = GraphSeraShard, startNodeId = "start" },
+                new EncounterDefinitionData { id = EncounterShrine, npcName = "Echo Shrine", graphId = GraphShrine, startNodeId = "start" }
             });
 
             // ---------------------------------------------------------------- NPC definitions (§9: one character = one data row)
@@ -485,6 +713,20 @@ namespace Crossroads.Narrative
                     },
                     states = new List<NpcStateData>
                     {
+                        new NpcStateData
+                        {
+                            conditions = new List<DecisionConditionData> { new DecisionConditionData { type = ConditionType.FlagIs, key = "c1_echo_sealed", value = "1" } },
+                            title = "Sera · Warded",
+                            moodLine = "Sera's eyes rest on your empty hands. 'The hall says you gave it back. I can hear it in the silence you leave.'",
+                            approachDistance = 1.8f, avoidDistance = 0f, moveSpeed = 1.0f, reactRadius = -1f
+                        },
+                        new NpcStateData
+                        {
+                            conditions = new List<DecisionConditionData> { new DecisionConditionData { type = ConditionType.SkillAtLeast, key = SkillAttunement, amount = 2 } },
+                            title = "Sera · Attuned",
+                            moodLine = "'Your echo rings twice as deep as it did.' She nods, almost approving.",
+                            approachDistance = 1.5f, avoidDistance = 0f, moveSpeed = 1.0f, reactRadius = -1f
+                        },
                         new NpcStateData
                         {
                             conditions = new List<DecisionConditionData> { new DecisionConditionData { type = ConditionType.FlagIs, key = DriveFlag, value = "tide" } },

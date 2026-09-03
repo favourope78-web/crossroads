@@ -740,6 +740,15 @@ shard_gid, shard_ids, _ = emit_char_root("EchoShard", ["shard"], (0, 0, 26.5), (
 emit_monobehaviour(shard_ids["shard"], shard_gid, REG["StoryEventInteractable.cs"],
     "  encounterId: c1_hall_shard\n  promptLabel: The Fracture Shard\n  interactRadius: 3.2\n  priority: 25")
 
+# ---- the Echo Shrine (annex power upgrade / seal: ability progression interactable) ----
+shrine_gid, shrine_ids, _ = emit_char_root("EchoShrine", ["shrine"], (-4.6, 0, 27.4), (0, 24, 0), 1, [
+    ("Pedestal", "M_Hall_Metal", CUBE, (0, 0.10, 0), (1.20, 0.20, 1.20)),
+    ("Pillar", "M_Hall_Metal", CUBE, (0, 0.55, 0), (0.30, 1.10, 0.30)),
+    ("Crystal", "M_Hall_OrbGold", CUBE, (0, 1.28, 0), (0.46, 0.80, 0.46)),
+])
+emit_monobehaviour(shrine_ids["shrine"], shrine_gid, REG["StoryEventInteractable.cs"],
+    "  encounterId: c1_east_shrine\n  promptLabel: Echo Shrine\n  interactRadius: 3.2\n  priority: 24")
+
 # ---- Sera (second NPC: behaviour/dialogue/choices depend on the first decision) ----
 sera_gid, sera_ids, sera_children = emit_char_root("Sera_NPC", ["collider", "npc", "fate"],
     (17.5, 0, 2.5), (0, -90, 0), 1, [

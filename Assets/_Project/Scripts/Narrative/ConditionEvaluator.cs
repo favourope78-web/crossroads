@@ -71,6 +71,12 @@ namespace Crossroads.Narrative
                 case ConditionType.SkillAtLeast:
                     return state.GetSkill(c.key) >= c.amount;
 
+                case ConditionType.EchoesAtLeast:
+                    return state.State.echoBank >= c.amount;
+
+                case ConditionType.AbilityLevelBelow:
+                    return state.State.GetAbilityLevel(c.key, 1) < c.amount;
+
                 default:
                     return true;
             }

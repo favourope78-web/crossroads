@@ -31,6 +31,10 @@ NEW_GUIDS = {
     "NpcLogic.cs":         g32(0x92),
     "NpcAgent.cs":         g32(0x93),
     "NpcInteractable.cs":  g32(0x94),
+    "AbilityManager.cs":   g32(0x95),
+    "AbilityPulseVFX.cs":  g32(0x96),
+    "AbilityHUD.cs":       g32(0x97),
+    "AbilitySheetModel.cs": g32(0x98),
 }
 
 REGISTRY = {}
@@ -87,6 +91,10 @@ SCRIPT_META_PATHS = {
     "NpcLogic.cs": "Assets/_Project/Scripts/Gameplay/NPC",
     "NpcAgent.cs": "Assets/_Project/Scripts/Gameplay/NPC",
     "NpcInteractable.cs": "Assets/_Project/Scripts/Gameplay/NPC",
+    "AbilityManager.cs":   "Assets/_Project/Scripts/Narrative/Abilities",
+    "AbilityPulseVFX.cs":  "Assets/_Project/Scripts/Gameplay/Abilities",
+    "AbilityHUD.cs":       "Assets/_Project/Scripts/UI",
+    "AbilitySheetModel.cs": "Assets/_Project/Scripts/UI",
 }
 NPC_DIR = os.path.join(ROOT, "Assets/_Project/Scripts/Gameplay/NPC")
 os.makedirs(NPC_DIR, exist_ok=True)
@@ -94,6 +102,17 @@ npc_folder_meta = os.path.join(NPC_DIR + ".meta")
 if not os.path.exists(npc_folder_meta):
     open(npc_folder_meta, "w").write(FOLDER.format(g=hashlib.md5(("folder:" + NPC_DIR.replace(ROOT, "Assets")).encode()).hexdigest()))
     print("meta +", os.path.relpath(npc_folder_meta, ROOT))
+
+FOLDER_META_PATHS = [
+    os.path.join(ROOT, "Assets/_Project/Scripts/Gameplay/Abilities"),
+    os.path.join(ROOT, "Assets/_Project/Scripts/Narrative/Abilities"),
+]
+for fd in FOLDER_META_PATHS:
+    os.makedirs(fd, exist_ok=True)
+    fm = fd + ".meta"
+    if not os.path.exists(fm):
+        open(fm, "w").write(FOLDER.format(g=hashlib.md5(("folder:" + fd.replace(ROOT, "Assets")).encode()).hexdigest()))
+        print("meta +", os.path.relpath(fm, ROOT))
 
 for fname, sub in SCRIPT_META_PATHS.items():
     path = os.path.join(ROOT, sub, fname)
@@ -208,9 +227,36 @@ npcs_block = "\n".join(npc_parts)
 p = CONTENT["progression"]
 def prog_block(name, items, keys):
     return "      " + name + ":\n" + ind_list(items, 8, 10, keys) if items else "      " + name + ": []"
+
+def ability_block(items):
+    """Full AbilityDefinitionData serialization: fields + unlockConditions + level rows."""
+    lines = []
+    for ab in items:
+        lines.append("      - id: " + yaml_str(ab["id"]))
+        lines.append("        name: " + yaml_str(ab["name"]))
+        lines.append("        line: " + yaml_str(ab["line"]))
+        lines.append("        description: " + yaml_str(ab["description"]))
+        lines.append("        category: " + str(ab["category"]))
+        lines.append("        unlockHint: " + yaml_str(ab["unlockHint"]))
+        uc = ab["unlockConditions"]
+        lines.append("        unlockConditions:" + ("\n" + cond_lines(uc, 10, 12) if uc else " []"))
+        lines.append("        vfxRef: " + yaml_str(ab["vfxRef"]))
+        lines.append("        sfxRef: " + yaml_str(ab["sfxRef"]))
+        lines.append("        echoCostPerLevel: " + str(ab["echoCostPerLevel"]))
+        lines.append("        levels:")
+        for lv in ab["levels"]:
+            lines.append("        - level: " + str(lv["level"]))
+            lines.append("          cooldown: " + str(lv["cooldown"]))
+            lines.append("          power: " + str(lv["power"]))
+            lines.append("          radius: " + str(lv["radius"]))
+            lines.append("          duration: " + str(lv["duration"]))
+            lines.append("          energyCost: " + str(lv["energyCost"]))
+            lines.append("          description: " + yaml_str(lv["description"]))
+    return "\n".join(lines)
+
 prog_parts = [
     "    progression:",
-    prog_block("abilities", p["abilities"], ["id", "name", "line", "description"]),
+    ("      abilities:\n" + ability_block(p["abilities"])) if p["abilities"] else "      abilities: []",
     prog_block("skills", p["skills"], ["id", "name", "maxLevel"]),
     prog_block("items", p["items"], ["id", "name", "description"]),
     prog_block("reputationGroups", p["reputationGroups"], ["id", "name"]),

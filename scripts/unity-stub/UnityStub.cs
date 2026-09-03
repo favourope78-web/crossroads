@@ -58,16 +58,20 @@ namespace UnityEngine
     public class WaitForSeconds : YieldInstruction { public WaitForSeconds(float s) { } }
     public class WaitForSecondsRealtime : YieldInstruction { public WaitForSecondsRealtime(float s) { } }
 
+    public enum PrimitiveType { Sphere, Capsule, Cylinder, Cube, Plane, Quad }
+
     public class GameObject : Object
     {
         public Transform transform { get { return null; } }
         public int layer;
+        public static GameObject CreatePrimitive(PrimitiveType type) { return new GameObject(type.ToString()); }
         public string tag = "Untagged";
         public bool activeSelf { get; private set; }
         public GameObject() { }
         public GameObject(string name) { this.name = name; }
         public GameObject(string name, params Type[] components) { this.name = name; }
         public T GetComponent<T>() { return default(T); }
+        public T GetComponentInChildren<T>() { return default(T); }
         public T AddComponent<T>() where T : Component, new() { return new T(); }
         public void SetActive(bool v) { activeSelf = v; }
         public static GameObject FindGameObjectWithTag(string t) { return null; }
@@ -159,6 +163,7 @@ namespace UnityEngine
         public static Color white { get { return new Color(1, 1, 1, 1); } }
         public static Color black { get { return new Color(0, 0, 0, 1); } }
         public Color(float r, float g, float b, float a = 1f) { this.r = r; this.g = g; this.b = b; this.a = a; }
+        public static Color operator *(Color c, float f) { return new Color(c.r * f, c.g * f, c.b * f, c.a * f); }
     }
 
     public struct Rect
@@ -223,6 +228,7 @@ namespace UnityEngine
         public static int RoundToInt(float a) { return (int)Math.Round(a); }
         public static float Rad2Deg { get { return 57.29578f; } }
         public static float Clamp01(float v) { return v < 0f ? 0f : (v > 1f ? 1f : v); }
+        public static float Lerp(float a, float b, float t) { return a + (b - a) * t; }
     }
 
     public enum KeyCode { E = 101, Space = 32 }
@@ -339,19 +345,22 @@ namespace UnityEngine
 
     public class Renderer : Component
     {
-        public Material sharedMaterial;
-        public Material material { get { return sharedMaterial; } set { sharedMaterial = value; } }
+        public Material material { get; set; }
+        public Material sharedMaterial { get; set; }
         public bool enabled = true;
     }
 
     public class Material : Object
     {
-        public Material() { }
-        public Material(Shader s) { }
         public Color color { get; set; }
+        public Color mainColor { get { return color; } }
+        public void SetColor(string name, Color value) { }
+        public Material(Shader shader) { }
     }
-
-    public class Shader : Object { }
+    public class Shader : Object
+    {
+        public static Shader Find(string name) { return null; }
+    }
 
     public class CharacterController : Collider
     {

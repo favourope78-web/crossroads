@@ -47,6 +47,9 @@ namespace Crossroads.Gameplay
 
             GameServices.Init(new UnityJsonSerializer(), new PersistentDataPathProvider("crossroads"),
                 content, sceneKey, checkpointId, saveSlot, loadExisting: !devClearSaveOnStart);
+
+            // Power system clock: cooldowns run on real time (test rigs inject their own clock).
+            if (GameServices.Abilities != null) GameServices.Abilities.Now = () => Time.time;
         }
 
         private void Start()
@@ -69,6 +72,9 @@ namespace Crossroads.Gameplay
             }
             if (player.GetComponent<PlayerInteraction>() == null)
                 player.AddComponent<PlayerInteraction>();
+            // Power feedback: world-side effect (pulse burst) listens to AbilityUsedEvent.
+            if (player.GetComponent<AbilityPulseVFX>() == null)
+                player.AddComponent<AbilityPulseVFX>();
             Debug.Log("[CROSSROADS] PlayerInteraction ready on " + player.name);
         }
 

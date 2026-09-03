@@ -105,6 +105,13 @@ Three visible meters + one hidden:
 - **Resonance Shrines** (one per interlude, run by the Archivist NPC): spend Echoes to unlock ability-tree nodes and upgrade owned abilities (2 ranks each: +damage/effect, +cooldown reduction or added effect).
 - **Respec is free** at any shrine — encourages experimentation, zero grind anxiety on a 2-hour game.
 
+**Implemented in the Chapter-1 prototype (foundation, three initial powers — no catalogue yet):**
+- Acquisition: the D1 decision `dec_c1_hall_first_light` grants exactly one power (Ember Pulse / Tide Mend / Stone Ward) — different choices produce different powers, persisted.
+- Progression states: `Locked → Unlocked (Lv1) → Lv2 → Lv3` (two upgrade ranks per power, per §3.3).
+- **Echo Shrine** (`c1_east_shrine`, East Annex): spend 10 Echoes per rank (cost in data, `echoCostPerLevel`); ranks genuinely change behaviour (cooldown 12/9/6 s, radius 3.5/4.5/6 m, power ×1/×1.5/×2.25). A second shrine option **seals** your power (you are paid 20 Echoes, the hall stops ringing for you) — the block is persisted, wins over any later unlock, and NPCs react to it. Later decisions can therefore unlock, upgrade, block, or restore a power without touching the core system.
+- Runtime: `AbilityManager` (pure C#, data-driven definitions, injected clock) → `AbilityUsedEvent` → world VFX pulse + mobile ability sheet UI. Cooldowns are session-only; unlock/level/block persist in the save.
+- UI: `AbilityHUD` power sheet (≥88 dp targets) shows all known powers with live state — locked + unlock hint, sealed, Lv N + cooldown countdown; tap to activate.
+
 ### 3.4 Progression curve
 
 | Point | Actives owned | Ult | Passives | Echoes spent (approx) | Power feel |
@@ -147,8 +154,17 @@ DecisionNode (ScriptableObject)
 └── codexEntryId                    // logged to journal on resolution
 ```
 
-- **Condition types** (whitelist, expandable): `FlagIs`, `AffinityAtLeast(line, n)`, `BondTier(npc, tier)`, `AbilityOwned(id)`, `ItemHeld`, `ChapterIs`, `Chance(p)`.
-- **Effect types** (whitelist): `SetFlag`, `AddAffinity(line, n)`, `AddBond(npc, n)`, `UnlockAbility(id)`, `GrantEchoes(n)`, `SpawnSceneEntity(key, active)`, `SetWorldState(district, variant)`, `RouteScene(sceneKey)`, `PlayCinematic(id)`, `AddCodex(id)`, `KillNPC(id)/ReviveNPC(id)` (fate states).
+- **Condition types** (whitelist, expandable): `FlagIs`, `AffinityAtLeast(line, n)`, `BondTier(npc, tier)`, `AbilityOwned(id)`, `ItemHeld`, `ChapterIs`, `Chance(p)`, `EchoesAtLeast(n)`, `AbilityLevelBelow(id, n)` (upgrade gates).
+- **Effect types** (whitelist): `SetFlag`, `AddAffinity(line, n)`, `AddBond(npc, n)`, `UnlockAbility(id)`, `GrantEchoes(n)`, `SpawnSceneEntity(key, active)`, `SetWorldState(district, variant)`, `RouteScene(sceneKey)`, `PlayCinematic(id)`, `AddCodex(id)`, `KillNPC(id)/ReviveNPC(id)` (fate states), `UpgradeAbility(id, +levels)` (first use sets Lv1), `BlockAbility(id)` (seals a power; a later `UnlockAbility` overrides it).
+- **Ability data** (`AbilityDefinitionData`, pure data — mirrored in `story_content.json` → generated SO asset → `StoryContentBuilder` code fallback → validation):
+```
+AbilityDefinitionData {
+  id, name, line(ember|tide|stone|hollow), description, category(Active/Passive/Utility)
+  unlockHint, unlockConditions: Condition[]   // UI + checks (the intended path)
+  vfxRef, sfxRef, echoCostPerLevel
+  levels: [ { level, cooldown, power, radius, duration, energyCost, description } ]  // one row per rank
+}
+```
 - **Dialogue graphs:** `DialogueGraph` SO = ordered list of `DialogueNode` (speaker, text, optional embedded `DecisionNode`, next). Runner = coroutine-based `DialogueRunner`; UI = typewriter text + choice list (touch-friendly, ≥88 px targets).
 
 ### 4.3 Game state container
@@ -162,7 +178,9 @@ GameState {
   Dictionary<string,int> vars;            // generic ints
   int ember, tide, stone, hollow;         // affinities 0..100 (hollow hidden)
   Dictionary<string,int> bonds;           // npcId -> -100..100
-  List<string> abilitiesUnlocked, abilityRanks, traits;
+  List<string> abilitiesUnlocked;              // JsonUtility-safe: List<key/value> entries at runtime
+  List<StringIntEntry> abilityLevels;          // powerId -> level (1..max; 0 = not unlocked)
+  List<StringEntry> blockedAbilities;          // sealed by a choice (wins over unlocked)
   int echoes;
   List<string> codexDiscovered;
   string dominantLine;                    // recomputed at milestones
@@ -469,13 +487,13 @@ Districts: **Old Market** (dense stalls, close arenas), **Docks/Reaches** (open 
 ### 12.2 Save data (payload)
 ```json
 {
-  "schemaVersion": 1,
+  "schemaVersion": 3,
   "meta": { "slotName": "Ari — Ch.2", "timestamp": "...", "playtimeSec": 5123 },
   "scene": { "sceneKey": "C2B_Sanctuary", "checkpointId": "arena_03_entry" },
-  "gameState": { /* full GameState from 4.3 */ },
-  "abilityLoadout": { "actives": ["Flamestep","Bulwark","Riptide"], "ultimate": "PhoenixReckoning", "traits": ["CinderSkin","SureFooting"] }
+  "gameState": { /* full GameState from 4.3 - includes abilityLevels + blockedAbilities */ }
 }
 ```
+- **Implemented versioning:** schema v1 → v2 added the progression attributes; **v3** added the power system (`abilityLevels`, `blockedAbilities`). Loading migrates in memory (missing collections normalize to empty, `SaveSystem.Normalize`) and stamps the current version on the next persist — old files are never rewritten in place.
 
 ### 12.3 Checkpoint & autosave rules
 - Autosave triggers: level entry, after every decision node resolution, after every boss phase, on shrine exit.

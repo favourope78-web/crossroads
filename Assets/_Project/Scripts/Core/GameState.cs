@@ -25,6 +25,8 @@ namespace Crossroads.Core
         // ---- progression attributes (all decision-driven, all persisted) ----
         public List<StringIntEntry> reputation = new List<StringIntEntry>(); // groupId -> -100..100
         public List<StringEntry> abilities = new List<StringEntry>();        // unlocked ability ids
+        public List<StringEntry> blockedAbilities = new List<StringEntry>(); // excluded by player choices
+        public List<StringIntEntry> abilityLevels = new List<StringIntEntry>(); // abilityId -> level (1..max)
         public List<StringEntry> items = new List<StringEntry>();            // carried item ids (stacking)
         public List<StringIntEntry> skills = new List<StringIntEntry>();     // skillId -> level
         public List<StringEntry> unlockAreas = new List<StringEntry>();      // accessible area ids
@@ -53,6 +55,8 @@ namespace Crossroads.Core
         public int GetReputation(string groupId, int fallback = 0) { return GetEntry(reputation, groupId, fallback); }
         public bool HasAbility(string abilityId) { return ContainsKey(abilities, abilityId); }
         public int AbilityCount(string abilityId) { return CountKeys(abilities, abilityId); }
+        public bool HasBlockedAbility(string abilityId) { return ContainsKey(blockedAbilities, abilityId); }
+        public int GetAbilityLevel(string abilityId, int fallback = 0) { return GetEntry(abilityLevels, abilityId, fallback); }
         public bool HasItem(string itemId) { return ContainsKey(items, itemId); }
         public int ItemCount(string itemId) { return CountKeys(items, itemId); }
         public int GetSkill(string skillId, int fallback = 0) { return GetEntry(skills, skillId, fallback); }

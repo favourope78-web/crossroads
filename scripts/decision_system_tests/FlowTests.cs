@@ -13,6 +13,7 @@ using System.IO;
 using Crossroads.Core;
 using Crossroads.Narrative;
 using Crossroads.Gameplay;
+using Crossroads.UI;
 
 namespace Crossroads.Tests
 {
@@ -50,6 +51,7 @@ namespace Crossroads.Tests
             public static readonly List<DecisionResolvedEvent> Resolved = new List<DecisionResolvedEvent>();
             public static readonly List<DialogueEndedEvent> Ended = new List<DialogueEndedEvent>();
             public static readonly List<SaveCompletedEvent> Saves = new List<SaveCompletedEvent>();
+            public static readonly List<AbilityUsedEvent> AbilityUses = new List<AbilityUsedEvent>();
 
             private static bool _subscribed;
             public static void Subscribe()
@@ -61,6 +63,7 @@ namespace Crossroads.Tests
                 EventBus.Subscribe<DecisionResolvedEvent>(OnResolved);
                 EventBus.Subscribe<DialogueEndedEvent>(OnEnded);
                 EventBus.Subscribe<SaveCompletedEvent>(OnSave);
+                EventBus.Subscribe<AbilityUsedEvent>(OnAbilityUsed);
             }
             public static void Unsubscribe()
             {
@@ -71,15 +74,17 @@ namespace Crossroads.Tests
                 EventBus.Unsubscribe<DecisionResolvedEvent>(OnResolved);
                 EventBus.Unsubscribe<DialogueEndedEvent>(OnEnded);
                 EventBus.Unsubscribe<SaveCompletedEvent>(OnSave);
+                EventBus.Unsubscribe<AbilityUsedEvent>(OnAbilityUsed);
             }
             private static void OnLine(DialogueLineEvent e) { Lines.Add(e); }
             private static void OnPrompt(DecisionPromptEvent e) { Prompts.Add(e); }
             private static void OnResolved(DecisionResolvedEvent e) { Resolved.Add(e); }
             private static void OnEnded(DialogueEndedEvent e) { Ended.Add(e); }
             private static void OnSave(SaveCompletedEvent e) { Saves.Add(e); }
+            private static void OnAbilityUsed(AbilityUsedEvent e) { AbilityUses.Add(e); }
             public static void Reset()
             {
-                Lines.Clear(); Prompts.Clear(); Resolved.Clear(); Ended.Clear(); Saves.Clear();
+                Lines.Clear(); Prompts.Clear(); Resolved.Clear(); Ended.Clear(); Saves.Clear(); AbilityUses.Clear();
             }
         }
 
@@ -392,6 +397,344 @@ namespace Crossroads.Tests
             GameServices.Shutdown(silent: true);
         }
 
+
+        // ---------------------------------------------------------------- 22. ability content contracts
+        private static void TestAbilityContent()
+        {
+            Log.Add("[22] Abilities: pure-data definitions satisfy the manager contracts");
+            var content = StoryContentBuilder.CreateFirstLightContent();
+            var defs = content.progression.abilities;
+            CheckEq(defs.Count, 3, "three initial ability definitions");
+
+            string[] ids = { "ember_pulse", "tide_mend", "stone_ward" };
+            string[] lines = { "ember", "tide", "stone" };
+            float[] cds = { 12f, 9f, 6f };
+            for (int i = 0; i < ids.Length; i++)
+            {
+                AbilityDefinitionData def = defs[i];
+                CheckEq(def.id, ids[i], "ability id " + i);
+                CheckEq(def.category, AbilityCategory.Active, def.id + " is an active power");
+                CheckEq(def.line, lines[i], def.id + " line family");
+                Check(!string.IsNullOrEmpty(def.name) && !string.IsNullOrEmpty(def.description) && !string.IsNullOrEmpty(def.unlockHint),
+                      def.id + " name/description/unlockHint populated");
+                Check(!string.IsNullOrEmpty(def.vfxRef) && !string.IsNullOrEmpty(def.sfxRef), def.id + " visual/audio refs set");
+                CheckEq(def.echoCostPerLevel, 10, def.id + " upgrade cost rule");
+                CheckEq(def.MaxLevel, 3, def.id + " has 3 upgrade levels");
+                CheckEq(def.unlockConditions.Count, 1, def.id + " exactly one unlock condition");
+                CheckEq(def.unlockConditions[0].type, ConditionType.DecisionWas, def.id + " unlock keyed on the first decision");
+                Check(LevelRowX(def, 1).cooldown == 12f && LevelRowX(def, 2).cooldown == 9f && LevelRowX(def, 3).cooldown == 6f,
+                      def.id + " upgrades genuinely change cooldowns (12/9/6)");
+                Check(LevelRowX(def, 2).radius > LevelRowX(def, 1).radius && LevelRowX(def, 3).power > LevelRowX(def, 2).power,
+                      def.id + " upgrades change radius/power behaviour");
+            }
+            // different paths -> different abilities (mapping table)
+            Check(defs[0].unlockConditions[0].value == "ember_reach" && defs[1].unlockConditions[0].value == "tide_clear"
+                  && defs[2].unlockConditions[0].value == "stone_still", "decision options map 1:1 to abilities");
+
+            // a real booted session exposes the same definitions through GameServices
+            string dir = Path.Combine(Path.GetTempPath(), "crossroads_test_abcontent_" + Guid.NewGuid().ToString("N"));
+            IEncounterSource booted;
+            NewRun(dir, out booted);
+            Check(GameServices.Abilities != null, "AbilityManager bootstrapped with GameServices");
+            CheckEq(GameServices.Abilities.Definitions.Count, 3, "manager sees the authored definitions");
+            Check(GameServices.Abilities.Find("ember_pulse") != null && GameServices.Abilities.Find("nothing") == null,
+                  "Find resolves ids");
+            CheckEq(GameServices.Abilities.Level("ember_pulse"), 0, "level 0 while locked");
+            GameServices.Shutdown(silent: true);
+            Directory.Delete(dir, true);
+        }
+
+        private static AbilityLevelData LevelRowX(AbilityDefinitionData def, int level)
+        {
+            return def.LevelRow(level);
+        }
+
+        // ---------------------------------------------------------------- 23. decision -> ability paths
+        private static void TestAbilityUnlockPaths()
+        {
+            Log.Add("[23] Decision->ability mapping: each path unlocks exactly its own ability");
+            string[] options = { "ember_reach", "tide_clear", "stone_still" };
+            string[] owned = { "ember_pulse", "tide_mend", "stone_ward" };
+            for (int i = 0; i < options.Length; i++)
+            {
+                string dir = Path.Combine(Path.GetTempPath(), "crossroads_test_abpath_" + Guid.NewGuid().ToString("N"));
+                IEncounterSource content;
+                NewRun(dir, out content);
+                GameServices.Decisions.Resolve(StoryContentBuilder.DecisionFirstLight, options[i]);
+
+                Check(GameServices.Progress.HasAbility(owned[i]), "option " + options[i] + " -> " + owned[i] + " unlocked");
+                CheckEq(GameServices.Abilities.AccessState(owned[i]), AbilityAccessState.Unlocked, owned[i] + " usable");
+                CheckEq(GameServices.Abilities.Level(owned[i]), 1, owned[i] + " starts at level 1");
+                Check(!GameServices.Progress.IsAbilityBlocked(owned[i]), owned[i] + " not blocked");
+
+                for (int j = 0; j < owned.Length; j++)
+                {
+                    if (j == i) continue;
+                    Check(!GameServices.Progress.HasAbility(owned[j]), owned[j] + " stays locked on the " + options[i] + " path");
+                    CheckEq(GameServices.Abilities.AccessState(owned[j]), AbilityAccessState.Locked, owned[j] + " access = Locked");
+                }
+
+                // sheet rows mirror the same verdicts (UI model = manager + data, no hardcoded ids)
+                var rows = AbilitySheetModel.Build(GameServices.Abilities);
+                CheckEq(rows.Count, 3, "sheet lists every known ability");
+                bool sawOwner = false, sawLocked = false;
+                for (int r = 0; r < rows.Count; r++)
+                {
+                    if (rows[r].abilityId == owned[i])
+                    {
+                        sawOwner = true;
+                        Check(rows[r].canActivateNow, "owner row can activate");
+                        Check(rows[r].stateText.Contains("Lv 1"), "owner row shows level");
+                    }
+                    else
+                    {
+                        sawLocked = true;
+                        Check(rows[r].stateText.StartsWith("LOCKED"), rows[r].abilityId + " row shows the unlock hint");
+                        Check(!rows[r].canActivateNow, "locked row cannot activate");
+                    }
+                }
+                Check(sawOwner && sawLocked, "sheet shows both the owned and the locked abilities");
+
+                GameServices.Shutdown(silent: true);
+                Directory.Delete(dir, true);
+            }
+        }
+
+        // ---------------------------------------------------------------- 24. activation + cooldown state machine
+        private static void TestAbilityActivationAndCooldown()
+        {
+            Log.Add("[24] Activation: event payload, cooldown state machine, access gates");
+            string dir = Path.Combine(Path.GetTempPath(), "crossroads_test_abact_" + Guid.NewGuid().ToString("N"));
+            IEncounterSource content;
+            NewRun(dir, out content);
+            float now = 0f;
+            GameServices.Abilities.Now = () => now;
+            Harness.Reset();
+
+            CheckEq(GameServices.Abilities.Activate("ember_pulse"), AbilityActivation.Locked, "activate locked -> response");
+            CheckEq(GameServices.Abilities.Activate("no_such_ability"), AbilityActivation.Unknown, "unknown id -> response");
+            CheckEq(GameServices.Abilities.Activate(""), AbilityActivation.Unknown, "empty id -> response");
+
+            GameServices.Decisions.Resolve(StoryContentBuilder.DecisionFirstLight, "ember_reach");
+            CheckEq(GameServices.Abilities.Activate("ember_pulse"), AbilityActivation.Ok, "first activation succeeds");
+            CheckEq(Harness.AbilityUses.Count, 1, "AbilityUsedEvent fired once");
+            if (Harness.AbilityUses.Count == 1)
+            {
+                AbilityUsedEvent u0 = Harness.AbilityUses[0];
+                CheckEq(u0.abilityId, "ember_pulse", "event carries the id");
+                CheckEq(u0.level, 1, "event carries the CURRENT level");
+                CheckEq(u0.cooldown, 12f, "event carries the level row's cooldown");
+                CheckEq(u0.power, 1f, "event carries the level row's power");
+                CheckEq(u0.radius, 3.5f, "event carries the level row's radius");
+                CheckEq(u0.duration, 1f, "event carries the level row's duration");
+            }
+            CheckEq(GameServices.Abilities.Activate("ember_pulse"), AbilityActivation.CoolingDown, "second use blocked by cooldown");
+            Check(GameServices.Abilities.OnCooldown("ember_pulse"), "ability reports cooldown");
+            Check(GameServices.Abilities.CooldownRemaining("ember_pulse") > 11.9f && GameServices.Abilities.CooldownRemaining("ember_pulse") <= 12f,
+                  "remaining ~= full cooldown");
+
+            now += 12f;
+            CheckEq(GameServices.Abilities.CooldownRemaining("ember_pulse"), 0f, "cooldown expires on the clock");
+            Check(!GameServices.Abilities.OnCooldown("ember_pulse"), "no longer on cooldown");
+            CheckEq(GameServices.Abilities.Activate("ember_pulse"), AbilityActivation.Ok, "usable again after cooldown");
+
+            // energy cost gate (crafted definition with a real cost; authored prototype waves cost)
+            var costly = new AbilityDefinitionData
+            {
+                id = "test_cost", name = "Test Cost", line = "ember", category = AbilityCategory.Active,
+                levels = new List<AbilityLevelData>
+                {
+                    new AbilityLevelData { level = 1, cooldown = 1f, power = 1f, radius = 1f, duration = 1f, energyCost = 5 }
+                }
+            };
+            var freshState = new StateMutator(new GameState());
+            freshState.UnlockAbility("test_cost");
+            freshState.SetAbilityLevel("test_cost", 1);
+            var mgr = new AbilityManager(new List<AbilityDefinitionData> { costly },
+                new GameStateManager(freshState, content));
+            mgr.Now = () => 0f;
+            CheckEq(mgr.Activate("test_cost"), AbilityActivation.NotEnoughEnergy, "cost gate: not enough echoes");
+            freshState.GrantEchoes(5);
+            CheckEq(mgr.Activate("test_cost"), AbilityActivation.Ok, "cost gate: paid -> use");
+            CheckEq(mgr.Activate("test_cost"), AbilityActivation.CoolingDown, "cost gate: still on cooldown after pay");
+
+            GameServices.Shutdown(silent: true);
+            Directory.Delete(dir, true);
+        }
+
+        // ---------------------------------------------------------------- 25. upgrades (shrine decision)
+        private static void TestAbilityUpgrade()
+        {
+            Log.Add("[25] Upgrade: shrine decision raises levels, gates repeat buys, changes behaviour");
+            string dir = Path.Combine(Path.GetTempPath(), "crossroads_test_abup_" + Guid.NewGuid().ToString("N"));
+            IEncounterSource content;
+            NewRun(dir, out content);
+
+            GameServices.Decisions.Resolve(StoryContentBuilder.DecisionFirstLight, "ember_reach");
+            CheckEq(GameServices.Progress.Echoes, 15, "echo income from the first decision");
+
+            // shrine options are condition-gated per ability + cost + max level
+            var first = GameServices.Decisions.VisibleOptions(StoryContentBuilder.DecisionShrine);
+            bool sawOwn = false, sawLeave = false, sawOther = false;
+            for (int i = 0; i < first.Count; i++)
+            {
+                if (first[i].id == "deep_ember") sawOwn = true;
+                if (first[i].id == "leave") sawLeave = true;
+                if (first[i].id == "deep_tide" || first[i].id == "deep_stone") sawOther = true;
+            }
+            Check(sawOwn && sawLeave, "shrine offers the OWNED ability's upgrade + leave");
+            Check(!sawOther, "shrine never offers upgrades for abilities you do not own");
+
+            GameServices.Decisions.Resolve(StoryContentBuilder.DecisionShrine, "deep_ember");
+            CheckEq(GameServices.Abilities.Level("ember_pulse"), 2, "upgrade -> level 2");
+            CheckEq(GameServices.Progress.Echoes, 5, "upgrade costs 10 echoes");
+            CheckEq(GameServices.Progress.Skill("echo_attunement"), 2, "upgrade deepens the attunement skill");
+            CheckEq(GameServices.Abilities.CurrentRow("ember_pulse").cooldown, 9f, "behaviour changed: cooldown 12 -> 9");
+            CheckEq(GameServices.Abilities.CurrentRow("ember_pulse").radius, 4.5f, "behaviour changed: radius 3.5 -> 4.5");
+            Check(GameServices.Abilities.CanUpgrade("ember_pulse"), "can upgrade again");
+            CheckEq(GameServices.Abilities.AccessState("ember_pulse"), AbilityAccessState.Unlocked, "still usable after upgrade");
+
+            // repeat upgrade is gated by echoes (5 < 10)
+            var second = GameServices.Decisions.VisibleOptions(StoryContentBuilder.DecisionShrine);
+            bool sawDeep = false;
+            for (int i = 0; i < second.Count; i++) if (second[i].id == "deep_ember") sawDeep = true;
+            Check(!sawDeep, "upgrade option hidden without the 10 echoes");
+
+            GameServices.State.GrantEchoes(30);
+            GameServices.Decisions.Resolve(StoryContentBuilder.DecisionShrine, "deep_ember");
+            CheckEq(GameServices.Abilities.Level("ember_pulse"), 3, "second upgrade -> level 3 (max)");
+            CheckEq(GameServices.Abilities.CurrentRow("ember_pulse").cooldown, 6f, "max level cooldown 6s");
+            Check(!GameServices.Abilities.CanUpgrade("ember_pulse"), "max level: no further upgrade");
+            var third = GameServices.Decisions.VisibleOptions(StoryContentBuilder.DecisionShrine);
+            bool sawDeepAtMax = false;
+            for (int i = 0; i < third.Count; i++) if (third[i].id == "deep_ember") sawDeepAtMax = true;
+            Check(!sawDeepAtMax, "upgrade option hidden at max level (AbilityLevelBelow gate)");
+
+            // sheet model reflects the level + ready state
+            var rows = AbilitySheetModel.Build(GameServices.Abilities);
+            for (int i = 0; i < rows.Count; i++)
+            {
+                if (rows[i].abilityId == "ember_pulse")
+                {
+                    Check(rows[i].stateText.Contains("Lv 3"), "sheet shows the upgraded level");
+                    Check(rows[i].stateText.Contains("MAX"), "sheet marks the max level");
+                    CheckEq(rows[i].maxLevel, 3, "sheet carries the max level");
+                }
+            }
+
+            GameServices.Shutdown(silent: true);
+            Directory.Delete(dir, true);
+        }
+
+        // ---------------------------------------------------------------- 26. blocking + NPC reactions
+        private static void TestAbilityBlockAndNpcReaction()
+        {
+            Log.Add("[26] Blocking: a future decision seals an ability (persisted) and NPCs react");
+            string dir = Path.Combine(Path.GetTempPath(), "crossroads_test_abblock_" + Guid.NewGuid().ToString("N"));
+            IEncounterSource content;
+            NewRun(dir, out content);
+
+            GameServices.Decisions.Resolve(StoryContentBuilder.DecisionFirstLight, "ember_reach");
+            NpcBrain sera = new NpcBrain(content.Content.FindNpc("sera"), GameServices.Progress);
+            sera.Reapply();
+            CheckEq(sera.CurrentTitle, "Sera \u00b7 Watchful", "ember path: Sera watchful (drive state)");
+
+            // deepen the bind once -> attunement 2 -> Sera notices the power level
+            GameServices.Decisions.Resolve(StoryContentBuilder.DecisionShrine, "deep_ember");
+            sera.Reapply();
+            CheckEq(sera.CurrentTitle, "Sera \u00b7 Attuned", "NPC detects the deepened bind (ability level -> state)");
+
+            // seal: the harsher consequence
+            GameServices.Decisions.Resolve(StoryContentBuilder.DecisionShrine, "seal_ember");
+            CheckEq(GameServices.Abilities.AccessState("ember_pulse"), AbilityAccessState.Blocked, "sealed after the choice");
+            CheckEq(GameServices.Abilities.Activate("ember_pulse"), AbilityActivation.Blocked, "activation refused while sealed");
+            Check(GameServices.Progress.IsAbilityBlocked("ember_pulse"), "blocked persisted in state");
+            Check(!GameServices.Progress.HasAbility("ember_pulse"), "sealed ability leaves the owned list");
+            CheckEq(GameServices.Progress.AbilityLevel("ember_pulse"), 0, "sealed ability loses its level");
+            sera.Reapply();
+            CheckEq(sera.CurrentTitle, "Sera \u00b7 Warded", "NPC detects the sealed echo (new data-driven state)");
+
+            // a later decision can still restore it (unlock wins over block)
+            GameServices.State.UnlockAbility("ember_pulse");
+            Check(!GameServices.Progress.IsAbilityBlocked("ember_pulse"), "re-unlock clears the seal");
+            GameServices.State.SetAbilityLevel("ember_pulse", 2);
+            GameServices.Abilities.Now = () => 0f;
+            CheckEq(GameServices.Abilities.Activate("ember_pulse"), AbilityActivation.Ok, "restored ability works again");
+            CheckEq(GameServices.Abilities.Level("ember_pulse"), 2, "restored level kept");
+
+            // sheet states: locked hint / sealed / ready
+            var rows = AbilitySheetModel.Build(GameServices.Abilities);
+            for (int i = 0; i < rows.Count; i++)
+            {
+                if (rows[i].abilityId == "tide_mend")
+                    Check(rows[i].stateText.StartsWith("LOCKED") && rows[i].stateText.Contains("Put others first"),
+                          "locked row carries the data-driven unlock hint");
+            }
+
+            GameServices.Shutdown(silent: true);
+            Directory.Delete(dir, true);
+        }
+
+        // ---------------------------------------------------------------- 27. persistence across restarts
+        private static void TestAbilityPersistence()
+        {
+            Log.Add("[27] Persistence: unlock + level + block survive a full restart; cooldown does not");
+            string dir = Path.Combine(Path.GetTempPath(), "crossroads_test_abpersist_" + Guid.NewGuid().ToString("N"));
+
+            IEncounterSource content;
+            NewRun(dir, out content);
+            float now = 0f;
+            GameServices.Abilities.Now = () => now;
+            GameServices.Decisions.Resolve(StoryContentBuilder.DecisionFirstLight, "ember_reach");
+            GameServices.Decisions.Resolve(StoryContentBuilder.DecisionShrine, "deep_ember"); // Lv 2
+            CheckEq(GameServices.Abilities.Activate("ember_pulse"), AbilityActivation.Ok, "activate before saving");
+            now += 2f;
+            Check(GameServices.Abilities.CooldownRemaining("ember_pulse") > 0f, "cooldown running before save");
+            GameServices.PersistNow();
+            GameServices.Shutdown(silent: true);
+
+            NewRun(dir, out content);
+            Check(GameServices.Progress.HasAbility("ember_pulse"), "ability still owned after restart");
+            CheckEq(GameServices.Progress.AbilityLevel("ember_pulse"), 2, "level restored after restart");
+            CheckEq(GameServices.Abilities.Level("ember_pulse"), 2, "manager reads the restored level");
+            CheckEq(GameServices.Abilities.AccessState("ember_pulse"), AbilityAccessState.Unlocked, "usable after restart");
+            Check(!GameServices.Progress.HasAbility("tide_mend"), "other path's ability not granted");
+            CheckEq(GameServices.Abilities.CooldownRemaining("ember_pulse"), 0f, "cooldown is session-only (not persisted)");
+
+            // seal persists too
+            GameServices.Decisions.Resolve(StoryContentBuilder.DecisionShrine, "seal_ember");
+            GameServices.PersistNow();
+            GameServices.Shutdown(silent: true);
+
+            NewRun(dir, out content);
+            Check(GameServices.Progress.IsAbilityBlocked("ember_pulse"), "seal state restored after restart");
+            CheckEq(GameServices.Abilities.AccessState("ember_pulse"), AbilityAccessState.Blocked, "access restored after restart");
+            Check(!GameServices.Progress.HasAbility("ember_pulse"), "owned list restored without the sealed ability");
+            CheckEq(GameServices.Abilities.Level("ember_pulse"), 0, "level cleared by the seal is restored as cleared");
+            GameServices.Shutdown(silent: true);
+
+            // ---- schema: a v2 file lacking the power-system collections loads safely (in-memory v3 migration)
+            string dir2 = Path.Combine(Path.GetTempPath(), "crossroads_test_abv2_" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(dir2);
+            string v2 = "{\"schemaVersion\":2,\"meta\":{\"slotName\":\"v2 save\",\"timestamp\":\"x\",\"playtimeSec\":0},"
+                + "\"scene\":{\"sceneKey\":\"FirstLocation\",\"checkpointId\":\"hall_spawn\"},"
+                + "\"gameState\":{\"flags\":[{\"key\":\"c1_hall_drive\",\"value\":\"ember\"}],"
+                + "\"abilities\":[{\"key\":\"ember_pulse\",\"value\":\"1\"}],"
+                + "\"skills\":[{\"key\":\"echo_attunement\",\"value\":1}],\"echoBank\":5}}";
+            File.WriteAllText(Path.Combine(dir2, "save_slot_0.json"), v2);
+            var save = new SaveSystem(new TestJsonAdapter(), new TempPaths(dir2));
+            var data = save.Load(0);
+            Check(data != null, "v2 file loads (not refused)");
+            Check(data.schemaVersion == SaveData.CurrentSchemaVersion, "v2 upgraded to current schema in memory");
+            Check(data.gameState.HasAbility("ember_pulse"), "v2 ability preserved");
+            Check(data.gameState.blockedAbilities != null && data.gameState.abilityLevels != null,
+                  "missing power-system collections normalized (never null)");
+            CheckEq(data.gameState.blockedAbilities.Count, 0, "no phantom blocks after migration");
+            CheckEq(data.gameState.GetAbilityLevel("ember_pulse", 0), 0, "v2 file has no level -> defaults to 0");
+
+            Directory.Delete(dir2, true);
+            Directory.Delete(dir, true);
+        }
 
         // ---------------------------------------------------------------- 9. GameStateManager + progression attributes
         private static void TestProgressionManager()
@@ -738,7 +1081,7 @@ namespace Crossroads.Tests
             Check(mara.states.Count == 1 && mara.states[0].conditions.Count == 1
                   && mara.states[0].conditions[0].type == ConditionType.BondAtLeast, "mara fate state is bond-gated (relationship)");
             Check(sera.behaviour.personality == NpcPersonality.Wary, "sera personality: Wary (keeps distance)");
-            CheckEq(sera.states.Count, 3, "sera has one fate state per drive decision");
+            CheckEq(sera.states.Count, 5, "sera has drive states + ability-reaction states");
             Check(sera.FindInteraction("show_shard").conditions[0].type == ConditionType.ItemHeld, "sera shard interaction is item-gated");
 
             bool allResolve = true;
@@ -1048,7 +1391,8 @@ namespace Crossroads.Tests
             Check(mara.InteractionAvailable("confide"), "restart: confide available again");
             CheckEq(mara.PromptLabel(), "Comfort Mara", "restart: prompt restored");
             Check(sera.Profile.approach > 0f, "restart: Sera still approaches (tide behaviour restored)");
-            CheckEq(sera.CurrentTitle, "Sera \u00b7 Grateful", "restart: Sera's state restored");
+            // the tide+shard flow reaches attunement 2, so the ability-reaction state owns the title
+            CheckEq(sera.CurrentTitle, "Sera \u00b7 Attuned", "restart: ability-derived state restored from saved skills");
             Check(sera.InteractionAvailable("show_shard"), "restart: item-gated interaction restored");
 
             // and the later conversation still plays right after restart
@@ -1089,6 +1433,12 @@ namespace Crossroads.Tests
             TestNpcLogic();
             TestNpcConsequenceSequence();
             TestNpcRestart();
+            TestAbilityContent();
+            TestAbilityUnlockPaths();
+            TestAbilityActivationAndCooldown();
+            TestAbilityUpgrade();
+            TestAbilityBlockAndNpcReaction();
+            TestAbilityPersistence();
 
             Console.WriteLine("======================================");
             foreach (var line in Log) Console.WriteLine(line);
