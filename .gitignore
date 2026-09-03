@@ -74,5 +74,13 @@ Desktop.ini
 *.swp
 *~
 
+# ----- Derived reference frames (regenerate: scripts/extract_reference_frames.sh) -----
+/reference/frames/
+/reference/chars/
+/reference/contact_sheet.jpg
+
 # ----- Sandbox/workspace artifacts -----
 .arena/
+
+# ----- Tool caches -----
+.cache/

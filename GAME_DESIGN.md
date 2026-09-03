@@ -593,8 +593,8 @@ Since the audit found an **empty workspace**, every system is missing. Prioritiz
 
 ## 15. Art & Audio Direction (summary)
 
-- **Art:** stylized low-poly ("readable at arm's length"), flat shading + rim light, bold per-line color language; UI = bold sans, high contrast, card-based dialogue; VFX = shape-driven (cones/rings/runes) over particle soup.
-- **Character budget:** player/NPCs ≤ 8 k tris, enemies ≤ 5 k, crowd ≤ 1.5 k; single texture atlas per district.
+- **Art (UPDATED 2026-09-03 — reference-driven):** **semi-realistic stylized CG ("donghua grade"), mobile-optimized**, per the reference video analysis in `CHARACTER_REFERENCE.md` §2: idealized semi-real faces, realistic ~7.5-head proportions, chunky stylized hair, stylized PBR materials, muted realistic palette + sanctioned emissive accents (holo cyan, power gold, alert amber). The original "stylized low-poly" direction is superseded. Full character sheets: `CHARACTER_REFERENCE.md`; production pipeline + adjusted tri budgets: `ASSET_PIPELINE.md` §7 (hero ≤ 12 k tris, major NPC ≤ 8 k, enemies ≤ 6 k, crowd ≤ 2 k LOD-only).
+- **UI:** bold sans, high contrast, card-based dialogue; holo-cyan accent language matching reference UI panels. **VFX:** thin luminous rings/coils, light columns, floating orbs (reference t:0.5/t:345) over particle soup.
 - **Audio:** adaptive music = 3 layers (explore/combat/boss) cross-faded by `AudioService`; one leitmotif per affinity line woven into the main theme (the soundtrack itself reflects your build); diegetic stings for decisions (low chime = flag set) to teach consequence without UI spam.
 
 ---
