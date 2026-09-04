@@ -68,26 +68,9 @@ namespace Crossroads.UI
             srect.offsetMin = new Vector2(14f, -78f);
             srect.offsetMax = new Vector2(-14f, -2f);
 
-            // ---- ATTACK + DODGE (bottom-right, below POWERS) ----
-            var attack = RuntimeMenuFactory.CreateButton("AttackButton", parent, "ATTACK", 38,
-                new Color(0.16f, 0.24f, 0.30f, 0.95f), RuntimeMenuFactory.TextMain);
-            var arect = ((Image)attack.targetGraphic).rectTransform;
-            arect.anchorMin = new Vector2(1f, 0f);
-            arect.anchorMax = new Vector2(1f, 0f);
-            arect.pivot = new Vector2(1f, 0f);
-            arect.offsetMin = new Vector2(-330f, 24f);
-            arect.offsetMax = new Vector2(-90f, 134f);
-            attack.onClick.AddListener(OnAttackPressed);
-
-            var dodge = RuntimeMenuFactory.CreateButton("DodgeButton", parent, "DODGE", 32,
-                new Color(0.13f, 0.20f, 0.26f, 0.95f), RuntimeMenuFactory.TextMain);
-            var drect = ((Image)dodge.targetGraphic).rectTransform;
-            drect.anchorMin = new Vector2(1f, 0f);
-            drect.anchorMax = new Vector2(1f, 0f);
-            drect.pivot = new Vector2(1f, 0f);
-            drect.offsetMin = new Vector2(-470f, 34f);
-            drect.offsetMax = new Vector2(-350f, 124f);
-            dodge.onClick.AddListener(OnDodgePressed);
+            // ATTACK + DODGE touch buttons live in MobileControlsUI now (the mobile control
+            // rig) so they appear ONLY while a fight is actually active and never overlap
+            // the joystick / look pad. This HUD keeps bars, statuses and feedback.
 
             // ---- enemy bar (top-center, appears while engaged) ----
             _enemyRoot = RuntimeMenuFactory.CreatePanel("EnemyBar", parent, RuntimeMenuFactory.Panel).gameObject;
@@ -250,22 +233,7 @@ namespace Crossroads.UI
             _statusLine.text = _sb.ToString();
         }
 
-        // ---------------------------------------------------------------- buttons + fade
-        private void OnAttackPressed()
-        {
-            var player = GameObject.FindGameObjectWithTag("Player");
-            if (player == null) return;
-            var controller = player.GetComponent<PlayerCombatController>();
-            if (controller != null) controller.TryAttack();
-        }
-
-        private void OnDodgePressed()
-        {
-            var player = GameObject.FindGameObjectWithTag("Player");
-            if (player == null) return;
-            var controller = player.GetComponent<PlayerCombatController>();
-            if (controller != null) controller.TryDodge();
-        }
+        // ---------------------------------------------------------------- fade upkeep
 
         private void Update()
         {

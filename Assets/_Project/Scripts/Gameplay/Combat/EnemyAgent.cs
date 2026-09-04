@@ -37,6 +37,10 @@ namespace Crossroads.Gameplay
         private bool _strikeArcDebug;
 
         public string EnemyId { get { return enemyId; } }
+
+        // ---- headless test seams (single-assembly tests; never called by gameplay code) ----
+        internal void SetDefeatedForTests() { _defeatApplied = true; }
+        internal void SetEnabledForTests(bool value) { enabled = value; }
         public bool IsDefeated { get { return _defeatApplied; } }
         public CombatantState Combatant { get { return _combatant; } }
         public EnemyDefinitionData Definition { get { return _def; } }

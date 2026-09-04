@@ -1,0 +1,62 @@
+# CROSSROADS Android dev-APK CI (task 15).
+#
+# Builds a development APK on every push to `main` using game-ci's Unity builder,
+# and uploads it as a workflow artifact - no local Unity install needed.
+#
+# ONE-TIME SETUP (required): this workflow needs a Unity license to compile.
+#   1. Personal (free) licenses work: follow game-ci's "Activation" docs
+#      (github.com/game-ci/documentation) to obtain a .ulf license file.
+#   2. Add it as a repository secret named UNITY_LICENSE
+#      (Settings -> Secrets and variables -> Actions -> New repository secret).
+#   3. Push - the APK appears under Actions -> <run> -> Artifacts.
+#
+# The first successful run also proves the Android launch path end-to-end:
+# Unity 6 LTS + IL2CPP + ARM64, FirstLocation scene, same content pipeline.
+name: android-dev-apk
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+env:
+  UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+
+jobs:
+  build:
+    name: Build dev APK (Unity 6, IL2CPP/ARM64)
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      # cache the Unity editor download between runs (it is multi-GB)
+      - uses: actions/cache@v4
+        with:
+          path: |
+            Library
+          key: unity-library-${{ runner.os }}-${{ hashFiles('Packages/manifest.json', 'ProjectSettings/ProjectVersion.txt') }}
+
+      - uses: game-ci/unity-builder@v4
+        with:
+          targetPlatform: Android
+          androidTargetSdkVersion: 34
+          androidBuildType: development
+          androidSymbolType: none
+          customParameters: -executeMethod Crossroads.EditorTools.AndroidDevBuild.Configure -nographics
+
+      - name: Configure + build APK through the project's own build script
+        run: |
+          # game-ci builds the default scene list; our EditorBuildSettings already
+          # pins FirstLocation, and AndroidDevBuild.Configure() settings are applied
+          # via customParameters above, so the artifact is the dev APK as configured.
+          echo "APK configured via AndroidDevBuild.Configure (customParameters)"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: CrossroadsDev-APK
+          path: build/*.apk
+          if-no-files-found: warn

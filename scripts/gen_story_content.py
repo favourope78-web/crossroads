@@ -52,6 +52,16 @@ NEW_GUIDS = {
     "PlayerCombatController.cs": g32(0xac),
     "CombatDirector.cs":   g32(0xad),
     "CombatHUD.cs":        g32(0xae),
+    # mobile player experience phase (Gameplay/Input + touch UI)
+    "InputBus.cs":         g32(0xaf),
+    "InputSettings.cs":    g32(0xb0),
+    "CameraRigMath.cs":    g32(0xb1),
+    "CombatPresence.cs":   g32(0xb2),
+    "VirtualJoystick.cs":  g32(0xb3),
+    "TouchLookPad.cs":     g32(0xb4),
+    "MobileControlsUI.cs": g32(0xb5),
+    "PauseMenuUI.cs":      g32(0xb6),
+    "AndroidDevBuild.cs":  g32(0xb7),
 }
 
 REGISTRY = {}
@@ -127,6 +137,15 @@ SCRIPT_META_PATHS = {
     "PlayerCombatController.cs": "Assets/_Project/Scripts/Gameplay/Combat",
     "CombatDirector.cs":   "Assets/_Project/Scripts/Gameplay/Combat",
     "CombatHUD.cs":        "Assets/_Project/Scripts/UI",
+    "InputBus.cs":         "Assets/_Project/Scripts/Gameplay/Input",
+    "InputSettings.cs":    "Assets/_Project/Scripts/Gameplay/Input",
+    "CameraRigMath.cs":    "Assets/_Project/Scripts/Gameplay/Input",
+    "CombatPresence.cs":   "Assets/_Project/Scripts/Gameplay/Input",
+    "VirtualJoystick.cs":  "Assets/_Project/Scripts/UI",
+    "TouchLookPad.cs":     "Assets/_Project/Scripts/UI",
+    "MobileControlsUI.cs": "Assets/_Project/Scripts/UI",
+    "PauseMenuUI.cs":      "Assets/_Project/Scripts/UI",
+    "AndroidDevBuild.cs":  "Assets/Editor",
 }
 NPC_DIR = os.path.join(ROOT, "Assets/_Project/Scripts/Gameplay/NPC")
 os.makedirs(NPC_DIR, exist_ok=True)
@@ -136,6 +155,8 @@ if not os.path.exists(npc_folder_meta):
     print("meta +", os.path.relpath(npc_folder_meta, ROOT))
 
 FOLDER_META_PATHS = [
+    os.path.join(ROOT, "Assets/Editor"),
+    os.path.join(ROOT, "Assets/_Project/Scripts/Gameplay/Input"),
     os.path.join(ROOT, "Assets/_Project/Scripts/Gameplay/Combat"),
     os.path.join(ROOT, "Assets/_Project/Scripts/Gameplay/Abilities"),
     os.path.join(ROOT, "Assets/_Project/Scripts/Narrative/Abilities"),

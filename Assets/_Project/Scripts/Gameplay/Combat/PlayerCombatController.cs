@@ -108,7 +108,7 @@ namespace Crossroads.Gameplay
         private static bool ConsumeKeyDown(KeyCode key)
         {
 #if ENABLE_LEGACY_INPUT_MANAGER
-            if (Input.GetKeyDown(key)) return true;
+            if (UnityEngine.Input.GetKeyDown(key)) return true;
 #endif
 #if ENABLE_INPUT_SYSTEM
             var keyboard = UnityEngine.InputSystem.Keyboard.current;

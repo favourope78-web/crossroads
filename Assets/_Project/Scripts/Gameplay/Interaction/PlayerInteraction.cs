@@ -132,7 +132,7 @@ namespace Crossroads.Gameplay
         private static bool ConsumeInteractKey()
         {
 #if ENABLE_LEGACY_INPUT_MANAGER
-            if (Input.GetKeyDown(KeyCode.E)) return true;
+            if (UnityEngine.Input.GetKeyDown(KeyCode.E)) return true;
 #endif
 #if ENABLE_INPUT_SYSTEM
             if (UnityEngine.InputSystem.Keyboard.current != null &&

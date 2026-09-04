@@ -52,10 +52,34 @@ namespace Crossroads.Gameplay
                 return;
             }
 
-            float h = Input.GetAxis("Horizontal");
-            float v = Input.GetAxis("Vertical");
+            // ---- movement input: mobile joystick (InputBus) with desktop keyboard fallback ----
+            Vector2 touchMove = Crossroads.Gameplay.Input.InputBus.Movement;
+            float h, v;
+            if (touchMove.sqrMagnitude > Crossroads.Gameplay.Input.InputTuning.MoveEpsilon)
+            {
+                h = touchMove.x;
+                v = touchMove.y;
+            }
+            else
+            {
+                h = UnityEngine.Input.GetAxis("Horizontal");
+                v = UnityEngine.Input.GetAxis("Vertical");
+            }
             Vector3 input = new Vector3(h, 0f, v);
+            // camera-relative movement (the camera is now a free orbit rig): joystick up
+            // always means "away from the camera". Falls back to world axes headlessly.
             Vector3 moveDir = input.sqrMagnitude > 0.001f ? input.normalized : Vector3.zero;
+            var cam = Camera.main;
+            if (cam != null && moveDir.sqrMagnitude > 0.001f)
+            {
+                Vector3 f = cam.transform.forward; f.y = 0f;
+                Vector3 r = cam.transform.right; r.y = 0f;
+                if (f.sqrMagnitude > 0.001f)
+                {
+                    Vector3 rel = (r * input.x + f * input.z);
+                    moveDir = rel.sqrMagnitude > 0.001f ? rel.normalized : Vector3.zero;
+                }
+            }
 
             // camera-relative prototype: camera looks down +Z in test scene, so use world axes
             bool moving = moveDir.sqrMagnitude > 0.001f;

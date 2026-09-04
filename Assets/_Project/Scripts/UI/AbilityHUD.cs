@@ -196,6 +196,9 @@ namespace Crossroads.UI
             int n = Mathf.Min(rows.Count, _rowRoots.Count);
             for (int i = 0; i < n; i++)
             {
+                // task: show only what the player OWNS - locked lines are hidden entirely
+                // (blocked lines stay visible: the player owns them, a decision sealed them)
+                _rowRoots[i].SetActive(rows[i].access != AbilityAccessState.Locked);
                 _rowNameTexts[i].text = rows[i].name;
                 _rowStateTexts[i].text = rows[i].stateText;
                 _rowStateTexts[i].color = rows[i].access == AbilityAccessState.Unlocked

@@ -96,5 +96,14 @@
  "CombatDirector.cs": "c0a1fed20000000000000000000000ad",
  "CombatHUD.cs": "c0a1fed20000000000000000000000ae",
  "M_Enemy_Warden": "c0a1fed2000000000000000000000036",
- "M_Enemy_Warden_Hit": "c0a1fed2000000000000000000000037"
+ "M_Enemy_Warden_Hit": "c0a1fed2000000000000000000000037",
+ "InputBus.cs": "c0a1fed20000000000000000000000af",
+ "InputSettings.cs": "c0a1fed20000000000000000000000b0",
+ "CameraRigMath.cs": "c0a1fed20000000000000000000000b1",
+ "CombatPresence.cs": "c0a1fed20000000000000000000000b2",
+ "VirtualJoystick.cs": "c0a1fed20000000000000000000000b3",
+ "TouchLookPad.cs": "c0a1fed20000000000000000000000b4",
+ "MobileControlsUI.cs": "c0a1fed20000000000000000000000b5",
+ "PauseMenuUI.cs": "c0a1fed20000000000000000000000b6",
+ "AndroidDevBuild.cs": "c0a1fed20000000000000000000000b7"
 }

@@ -1457,10 +1457,17 @@ namespace Crossroads.Tests
             _passed += combatPassed;
             _failed += combatFailed;
 
+            // mobile player experience (Gameplay/Input + touch rig + settings)
+            int mobilePassed, mobileFailed;
+            MobileExperienceTests.RunAll(out mobilePassed, out mobileFailed);
+            _passed += mobilePassed;
+            _failed += mobileFailed;
+
             Console.WriteLine("======================================");
             foreach (var line in Log) Console.WriteLine(line);
             foreach (var line in WorldTests.GetLog()) Console.WriteLine(line);
             foreach (var line in CombatTests.GetLog()) Console.WriteLine(line);
+            foreach (var line in MobileExperienceTests.GetLog()) Console.WriteLine(line);
             Console.WriteLine("======================================");
             Console.WriteLine("RESULT: {0} passed, {1} failed", _passed, _failed);
             return _failed == 0 ? 0 : 1;

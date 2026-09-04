@@ -92,6 +92,7 @@ namespace UnityEngine
         public Transform parent { get; set; }
         public int childCount;
         public void SetParent(Transform p, bool worldPositionStays) { parent = p; }
+        public Transform GetChild(int index) { return null; }
         public void SetPositionAndRotation(Vector3 pos, Quaternion rot) { position = pos; rotation = rot; }
         public void Rotate(float x, float y, float z) { }
         public Vector3 forward { get { return Vector3.forward; } }
@@ -100,6 +101,15 @@ namespace UnityEngine
     public class RectTransform : Transform
     {
         public Vector2 anchorMin, anchorMax, pivot, offsetMin, offsetMax, sizeDelta, anchoredPosition;
+        public Rect rect { get { return new Rect(0f, 0f, 460f, 520f); } }
+    }
+
+    public static class RectTransformUtility
+    {
+        public static Vector2 WorldToScreenPoint(Camera cam, Vector3 worldPoint)
+        {
+            return new Vector2(worldPoint.x, worldPoint.y);
+        }
     }
 
     public struct Vector2
@@ -114,6 +124,13 @@ namespace UnityEngine
         public static Vector2 operator +(Vector2 a, Vector2 b) { return new Vector2(a.x + b.x, a.y + b.y); }
         public static Vector2 operator -(Vector2 a, Vector2 b) { return new Vector2(a.x - b.x, a.y - b.y); }
         public static Vector2 operator /(Vector2 a, float d) { return new Vector2(a.x / d, a.y / d); }
+        public static Vector2 operator *(Vector2 a, float d) { return new Vector2(a.x * d, a.y * d); }
+        public static Vector2 operator *(float d, Vector2 a) { return new Vector2(a.x * d, a.y * d); }
+        public static Vector2 ClampMagnitude(Vector2 v, float maxLength)
+        {
+            float m = v.magnitude;
+            return m > maxLength && m > 0f ? v / m * maxLength : v;
+        }
         public static bool operator ==(Vector2 a, Vector2 b) { return a.x == b.x && a.y == b.y; }
         public static bool operator !=(Vector2 a, Vector2 b) { return !(a == b); }
         public override bool Equals(object o) { return o is Vector2 && this == (Vector2)o; }
@@ -135,6 +152,7 @@ namespace UnityEngine
         public float magnitude { get { return (float)Math.Sqrt(x * x + y * y + z * z); } }
         public static Vector3 operator +(Vector3 a, Vector3 b) { return new Vector3(a.x + b.x, a.y + b.y, a.z + b.z); }
         public static Vector3 operator -(Vector3 a, Vector3 b) { return new Vector3(a.x - b.x, a.y - b.y, a.z - b.z); }
+        public static Vector3 operator -(Vector3 a) { return new Vector3(-a.x, -a.y, -a.z); }
         public static Vector3 operator *(Vector3 a, float d) { return new Vector3(a.x * d, a.y * d, a.z * d); }
         public static float Distance(Vector3 a, Vector3 b) { return (a - b).magnitude; }
         public static Vector3 Lerp(Vector3 a, Vector3 b, float t) { return a + (b - a) * t; }
@@ -173,6 +191,10 @@ namespace UnityEngine
     public struct Rect
     {
         public Vector2 position, size;
+        public float width { get { return size.x; } }
+        public float height { get { return size.y; } }
+        public float x { get { return position.x; } }
+        public float y { get { return position.y; } }
         public Rect(float x, float y, float w, float h) { position = new Vector2(x, y); size = new Vector2(w, h); }
         public static bool operator ==(Rect a, Rect b) { return a.position == b.position && a.size == b.size; }
         public static bool operator !=(Rect a, Rect b) { return !(a == b); }
@@ -205,6 +227,7 @@ namespace UnityEngine
     public static class Application
     {
         public static string persistentDataPath = ".";
+        public static int targetFrameRate = -1;
     }
 
     public static class Time
@@ -213,11 +236,15 @@ namespace UnityEngine
         public static float deltaTime { get { return 0.016f; } }
         public static float unscaledTime { get { return 0f; } }
         public static float unscaledDeltaTime { get { return 0.016f; } }
+        public static float timeScale = 1f;
     }
 
     public static class Mathf
     {
         public const float PI = 3.14159265358979f;
+        public const float Deg2Rad = 0.017453292519943295f;
+        public static float Sin(float a) { return (float)Math.Sin(a); }
+        public static float Cos(float a) { return (float)Math.Cos(a); }
         public static float Max(float a, float b) { return a > b ? a : b; }
         public static int Max(int a, int b) { return a > b ? a : b; }
         public static float SmoothDampAngle(float a, float b, ref float v, float t) { return b; }
@@ -390,8 +417,8 @@ namespace UnityEngine
 
     public class RuntimeAnimatorController : Object { }
 
-    public class AudioListener : Behaviour { }
-    public class Camera : Behaviour { }
+    public class AudioListener : Behaviour { public static float volume = 1f; }
+    public class Camera : Behaviour { public static Camera main; }
 
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
     public class RequireComponent : Attribute { public RequireComponent(Type t) { } }
@@ -401,6 +428,21 @@ namespace UnityEngine
     public class HideInInspector : Attribute { }
     public class RangeAttribute : Attribute { public RangeAttribute(float a, float b) { } }
     public class SpaceAttribute : Attribute { }
+}
+
+namespace UnityEngine
+{
+    public static class Physics
+    {
+        // headless: no geometry, so probes always report "all clear"
+        public static bool SphereCast(Ray origin, float radius, out RaycastHit hitInfo, float maxDistance)
+        {
+            hitInfo = default(RaycastHit);
+            return false;
+        }
+    }
+    public struct RaycastHit { public Vector3 point; public Vector3 normal; public float distance; public Collider collider; }
+    public struct Ray { public Vector3 origin; public Vector3 direction; public Ray(Vector3 o, Vector3 d) { origin = o; direction = d; } }
 }
 
 namespace UnityEngine.UI
@@ -462,6 +504,13 @@ namespace UnityEngine.UI
 
     public class GraphicRaycaster : UnityEngine.Behaviour { }
 
+    public class CanvasGroup : UnityEngine.Behaviour
+    {
+        public float alpha = 1f;
+        public bool interactable = true;
+        public bool blocksRaycasts = true;
+    }
+
     public class Canvas : UnityEngine.Behaviour
     {
         public UnityEngine.RenderMode renderMode;
@@ -487,6 +536,19 @@ namespace UnityEngine.EventSystems
         public static EventSystem current;
     }
     public class StandaloneInputModule : UnityEngine.Behaviour { }
+
+    public interface IPointerDownHandler { void OnPointerDown(PointerEventData eventData); }
+    public interface IPointerUpHandler { void OnPointerUp(PointerEventData eventData); }
+    public interface IDragHandler { void OnDrag(PointerEventData eventData); }
+
+    public class PointerEventData
+    {
+        public Vector2 position;
+        public Vector2 pressPosition;
+        public Vector2 delta;
+        public GameObject pressedObject;
+        public bool dragging;
+    }
 }
 
 namespace UnityEngine.InputSystem
