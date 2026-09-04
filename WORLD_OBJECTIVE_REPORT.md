@@ -103,4 +103,4 @@ Re-run: `cd scripts/decision_system_tests && mcs -langversion:latest -define:ENA
 
 ## 8. Commit
 
-Feature commit: `feat/world-objectives` — see `git log -1` (hash recorded in the chat report; this file ships with the change).
+Feature commit: **`dab76a9`** — *"World state & mission/objective system: Gameplay/World (ObjectiveManager, WorldStateSystem, WorldActionInteractable, NpcRelocator, WorldServices), objective-driven NPC states, ability-gated world interactions, mobile ObjectiveHUD, save v4 + migration, 3 decision-path objectives + follow-ups incl. failable crisis & recovery, event-driven world state, 566/566 tests + asset/scene regen + validation"* (43 files, +6894/−22).
