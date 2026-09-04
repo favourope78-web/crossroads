@@ -119,4 +119,4 @@ verification). Delivered:
 
 ## 8. Commit
 
-See the feature commit recorded below.
+Feature commit: **`1707982`** — *"Mobile player experience: Gameplay/Input (InputBus, JoystickFilter, InputSettings+store, CameraRigMath, CombatPresence), touch rig (VirtualJoystick, TouchLookPad, MobileControlsUI, PauseMenuUI with live-persisting settings), orbit camera with collision avoidance + indoor bias, camera-relative movement, combat-gated ATK/DODGE + interaction-driven INTERACT availability, owned-only ability sheet, Android dev-APK config + build script + CI workflow; 765/765 tests + validation + both compile configs"* (41 files, +2250/−59).
