@@ -51,6 +51,9 @@ namespace Crossroads.Gameplay
             // World & mission systems ride the same state/content (event-driven, no polling)
             WorldServices.Init();
 
+            // Branching-story runtime: derives the run's route from the same state (v5 saves)
+            CampaignServices.Init();
+
             // Power system clock: cooldowns run on real time (test rigs inject their own clock).
             if (GameServices.Abilities != null) GameServices.Abilities.Now = () => Time.time;
         }

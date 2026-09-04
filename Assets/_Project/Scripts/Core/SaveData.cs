@@ -11,7 +11,7 @@ namespace Crossroads.Core
     [Serializable]
     public class SaveData
     {
-        public const int CurrentSchemaVersion = 4;
+        public const int CurrentSchemaVersion = 5; // v5: + campaign beats/branches/chapters/journal
 
         public int schemaVersion = CurrentSchemaVersion;
         public SaveMeta meta = new SaveMeta();

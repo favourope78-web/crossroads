@@ -325,6 +325,78 @@ else:
                         if not _same(x.get(k), y.get(k)):
                             errors.append("combat onPlayerDefeat.%s: asset=%r json=%r" % (k, x.get(k), y.get(k)))
 
+        # chapters (branching campaign): full beat/branch parity + reference integrity
+        if len(data.get("chapters", [])) != len(content.get("chapters", [])):
+            errors.append("chapter count mismatch")
+        beat_ids = set()
+        for cha, chb in zip(data.get("chapters", []), content.get("chapters", [])):
+            for k in ("id", "title", "subtitle", "description", "completionJournal"):
+                if cha.get(k) != chb.get(k):
+                    errors.append("chapter %s: %s asset=%r json=%r" % (chb.get("id"), k, cha.get(k), chb.get(k)))
+            for lst_a, lst_b, lbl in ((cha.get("entryConditions", []), chb.get("entryConditions", []), "entryConditions"),
+                                      (cha.get("completionConditions", []), chb.get("completionConditions", []), "completionConditions")):
+                if len(lst_a) != len(lst_b):
+                    errors.append("chapter %s %s count mismatch" % (chb.get("id"), lbl))
+                    continue
+                for x, y in zip(lst_a, lst_b):
+                    for k in ("type", "key", "value", "amount"):
+                        if not _same(x.get(k), y.get(k)):
+                            errors.append("chapter %s %s.%s: asset=%r json=%r" % (chb.get("id"), lbl, k, x.get(k), y.get(k)))
+            ca_, cb_ = cha.get("completionEffects", []), chb.get("completionEffects", [])
+            if len(ca_) != len(cb_):
+                errors.append("chapter %s completionEffects count mismatch" % chb.get("id"))
+            else:
+                for x, y in zip(ca_, cb_):
+                    for k in ("type", "key", "value", "amount"):
+                        if not _same(x.get(k), y.get(k)):
+                            errors.append("chapter %s completionEffects.%s: asset=%r json=%r" % (chb.get("id"), k, x.get(k), y.get(k)))
+            if len(cha.get("beats", [])) != len(chb.get("beats", [])):
+                errors.append("chapter %s beat count mismatch" % chb.get("id"))
+            for ba, bb in zip(cha.get("beats", []), chb.get("beats", [])):
+                beat_ids.add(bb.get("id", ""))
+                for k in ("id", "title", "journalText", "resolveTrigger", "resolveKey", "priority"):
+                    if not _same(ba.get(k), bb.get(k)):
+                        errors.append("beat %s: %s asset=%r json=%r" % (bb.get("id"), k, ba.get(k), bb.get(k)))
+                if [str(x) for x in ba.get("requiredBeatIds", [])] != [str(x) for x in bb.get("requiredBeatIds", [])]:
+                    errors.append("beat %s requiredBeatIds mismatch" % bb.get("id"))
+                for lst_a, lst_b, lbl in ((ba.get("offerConditions", []), bb.get("offerConditions", []), "offerConditions"),
+                                          (ba.get("resolveConditions", []), bb.get("resolveConditions", []), "resolveConditions"),
+                                          (ba.get("onResolveEffects", []), bb.get("onResolveEffects", []), "onResolveEffects")):
+                    if len(lst_a) != len(lst_b):
+                        errors.append("beat %s %s count mismatch" % (bb.get("id"), lbl))
+                        continue
+                    for x, y in zip(lst_a, lst_b):
+                        for k in ("type", "key", "value", "amount"):
+                            if not _same(x.get(k), y.get(k)):
+                                errors.append("beat %s %s.%s: asset=%r json=%r" % (bb.get("id"), lbl, k, x.get(k), y.get(k)))
+            if len(cha.get("branches", [])) != len(chb.get("branches", [])):
+                errors.append("chapter %s branch count mismatch" % chb.get("id"))
+            for xa, xb in zip(cha.get("branches", []), chb.get("branches", [])):
+                for k in ("id", "fromBeatId", "toBeatId", "label"):
+                    if xa.get(k) != xb.get(k):
+                        errors.append("branch %s: %s asset=%r json=%r" % (xb.get("id"), k, xa.get(k), xb.get(k)))
+                for lst_a, lst_b, lbl in ((xa.get("requiredConditions", []), xb.get("requiredConditions", []), "requiredConditions"),
+                                          (xa.get("effects", []), xb.get("effects", []), "effects")):
+                    if len(lst_a) != len(lst_b):
+                        errors.append("branch %s %s count mismatch" % (xb.get("id"), lbl))
+                        continue
+                    for x, y in zip(lst_a, lst_b):
+                        for k in ("type", "key", "value", "amount"):
+                            if not _same(x.get(k), y.get(k)):
+                                errors.append("branch %s %s.%s: asset=%r json=%r" % (xb.get("id"), lbl, k, x.get(k), y.get(k)))
+
+        # campaign reference integrity (json side): branches point at real beats
+        for chb in content.get("chapters", []):
+            for xb in chb.get("branches", []):
+                if xb.get("fromBeatId", "") not in beat_ids:
+                    errors.append("branch %s: fromBeatId %r is not a beat" % (xb.get("id"), xb.get("fromBeatId")))
+                if xb.get("toBeatId", "") and xb.get("toBeatId") not in beat_ids:
+                    errors.append("branch %s: toBeatId %r is not a beat" % (xb.get("id"), xb.get("toBeatId")))
+            for bb in chb.get("beats", []):
+                for rb in bb.get("requiredBeatIds", []):
+                    if rb not in beat_ids:
+                        errors.append("beat %s: requiredBeatId %r is not a beat" % (bb.get("id"), rb))
+
         # npcs (data-driven NPC definitions)
         def _n(v):
             if isinstance(v, bool): return str(int(v))

@@ -35,6 +35,12 @@ namespace Crossroads.Core
         public List<ResolvedDecisionEntry> decisions = new List<ResolvedDecisionEntry>();
         public List<string> codex = new List<string>();
 
+        // ---- campaign state (v5: branching story runtime; missing fields normalize to empty) ----
+        public List<string> campaignBeats = new List<string>();     // resolved story-beat ids
+        public List<string> campaignBranches = new List<string>();  // taken branch ids (the run's route)
+        public List<string> campaignChapters = new List<string>();  // completed chapter ids
+        public List<string> campaignJournal = new List<string>();   // story log, oldest-first (capped)
+
         // ---- world & mission state (v4: objective runtime, npc locations, interaction unlocks) ----
         public List<ObjectiveProgressEntry> objectives = new List<ObjectiveProgressEntry>(); // objective id -> phase/progress
         public List<StringEntry> npcLocations = new List<StringEntry>();      // npcId -> location key (MoveNpc effect)
@@ -129,6 +135,22 @@ namespace Crossroads.Core
         public bool IsAreaClosed(string areaId)
         {
             return ContainsKey(closedAreas, areaId);
+        }
+
+        // ---- campaign lookups (read-only; writes belong to StateMutator) ----
+        public bool CampaignBeatResolved(string beatId)
+        {
+            return campaignBeats != null && campaignBeats.Contains(beatId);
+        }
+
+        public bool CampaignBranchTaken(string branchId)
+        {
+            return campaignBranches != null && campaignBranches.Contains(branchId);
+        }
+
+        public bool CampaignChapterCompleted(string chapterId)
+        {
+            return campaignChapters != null && campaignChapters.Contains(chapterId);
         }
 
         public void CopyAffinitiesFrom(GameState other)

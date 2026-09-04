@@ -62,6 +62,11 @@ NEW_GUIDS = {
     "MobileControlsUI.cs": g32(0xb5),
     "PauseMenuUI.cs":      g32(0xb6),
     "AndroidDevBuild.cs":  g32(0xb7),
+    # campaign phase (Core events + Gameplay/Campaign + UI)
+    "CampaignEvents.cs":   g32(0xb8),
+    "CampaignManager.cs":  g32(0xb9),
+    "CampaignServices.cs": g32(0xba),
+    "CampaignHUD.cs":      g32(0xbb),
 }
 
 REGISTRY = {}
@@ -146,6 +151,10 @@ SCRIPT_META_PATHS = {
     "MobileControlsUI.cs": "Assets/_Project/Scripts/UI",
     "PauseMenuUI.cs":      "Assets/_Project/Scripts/UI",
     "AndroidDevBuild.cs":  "Assets/Editor",
+    "CampaignEvents.cs":   "Assets/_Project/Scripts/Core",
+    "CampaignManager.cs":  "Assets/_Project/Scripts/Gameplay/Campaign",
+    "CampaignServices.cs": "Assets/_Project/Scripts/Gameplay/Campaign",
+    "CampaignHUD.cs":      "Assets/_Project/Scripts/UI",
 }
 NPC_DIR = os.path.join(ROOT, "Assets/_Project/Scripts/Gameplay/NPC")
 os.makedirs(NPC_DIR, exist_ok=True)
@@ -155,6 +164,7 @@ if not os.path.exists(npc_folder_meta):
     print("meta +", os.path.relpath(npc_folder_meta, ROOT))
 
 FOLDER_META_PATHS = [
+    os.path.join(ROOT, "Assets/_Project/Scripts/Gameplay/Campaign"),
     os.path.join(ROOT, "Assets/Editor"),
     os.path.join(ROOT, "Assets/_Project/Scripts/Gameplay/Input"),
     os.path.join(ROOT, "Assets/_Project/Scripts/Gameplay/Combat"),
@@ -456,6 +466,44 @@ enemies_out = ("    enemies:\n" + enemy_block(CONTENT["enemies"])) if CONTENT.ge
 combat_out = combat_settings_block(CONTENT["combat"]) if CONTENT.get("combat") else "    combat:\n      playerMaxHealth: 100"
 world_interactions_block = ("    worldInteractions:\n" + world_interaction_block(CONTENT.get("worldInteractions", []))) if CONTENT.get("worldInteractions") else "    worldInteractions: []"
 
+# ---- chapters (branching campaign: beats + branches, all condition/effect whitelists) ----
+def beat_block(b):
+    out = ["      - id: " + yaml_str(b["id"])]
+    out.append("        title: " + yaml_str(b["title"]))
+    out.append("        journalText: " + yaml_str(b["journalText"]))
+    out.append("        offerConditions:" + ("\n" + cond_lines(b["offerConditions"], 10, 12) if b["offerConditions"] else " []"))
+    out.append("        resolveTrigger: " + str(b["resolveTrigger"]))
+    out.append("        resolveKey: " + yaml_str(b.get("resolveKey", "")))
+    out.append("        resolveConditions:" + ("\n" + cond_lines(b["resolveConditions"], 10, 12) if b["resolveConditions"] else " []"))
+    out.append("        requiredBeatIds:\n" + str_list(b["requiredBeatIds"], 10) if b["requiredBeatIds"] else "        requiredBeatIds: []")
+    out.append("        onResolveEffects:" + ("\n" + eff_lines(b["onResolveEffects"], 10, 12) if b["onResolveEffects"] else " []"))
+    out.append("        priority: " + str(b.get("priority", 0)))
+    return "\n".join(out)
+
+def branch_block(br):
+    out = ["      - id: " + yaml_str(br["id"])]
+    out.append("        fromBeatId: " + yaml_str(br["fromBeatId"]))
+    out.append("        toBeatId: " + yaml_str(br.get("toBeatId", "")))
+    out.append("        label: " + yaml_str(br.get("label", "")))
+    out.append("        requiredConditions:" + ("\n" + cond_lines(br["requiredConditions"], 10, 12) if br["requiredConditions"] else " []"))
+    out.append("        effects:" + ("\n" + eff_lines(br["effects"], 10, 12) if br["effects"] else " []"))
+    return "\n".join(out)
+
+def chapter_block(ch):
+    out = ["    - id: " + yaml_str(ch["id"])]
+    out.append("      title: " + yaml_str(ch["title"]))
+    out.append("      subtitle: " + yaml_str(ch.get("subtitle", "")))
+    out.append("      description: " + yaml_str(ch.get("description", "")))
+    out.append("      entryConditions:" + ("\n" + cond_lines(ch["entryConditions"], 8, 10) if ch["entryConditions"] else " []"))
+    out.append("      beats:\n" + "\n".join(beat_block(b) for b in ch["beats"]) if ch["beats"] else "      beats: []")
+    out.append("      branches:\n" + "\n".join(branch_block(br) for br in ch["branches"]) if ch["branches"] else "      branches: []")
+    out.append("      completionConditions:" + ("\n" + cond_lines(ch["completionConditions"], 8, 10) if ch["completionConditions"] else " []"))
+    out.append("      completionEffects:" + ("\n" + eff_lines(ch["completionEffects"], 8, 10) if ch["completionEffects"] else " []"))
+    out.append("      completionJournal: " + yaml_str(ch.get("completionJournal", "")))
+    return "\n".join(out)
+
+chapters_out = ("    chapters:\n" + "\n".join(chapter_block(ch) for ch in CONTENT["chapters"])) if CONTENT.get("chapters") else "  chapters: []"
+
 ASSET = """%YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
 --- !u!114 &11400000
@@ -486,6 +534,7 @@ MonoBehaviour:
 @ABILITYCOMBAT@
 @ENEMIES@
 @COMBAT@
+@CHAPTERS@
 """.replace("@SCRIPT@", REGISTRY["ScriptableObjectAssets.cs"])
 ASSET = ASSET.replace("@NAME@", yaml_str(CONTENT["libraryName"]))
 ASSET = ASSET.replace("@ENCOUNTERS@", enc_block)
@@ -499,6 +548,7 @@ ASSET = ASSET.replace("@STATUSEFFECTS@", status_effects_block)
 ASSET = ASSET.replace("@ABILITYCOMBAT@", ability_combat_out)
 ASSET = ASSET.replace("@ENEMIES@", enemies_out)
 ASSET = ASSET.replace("@COMBAT@", combat_out)
+ASSET = ASSET.replace("@CHAPTERS@", chapters_out)
 
 DATA_DIR = os.path.join(ROOT, "Assets/_Project/Data/Decisions")
 os.makedirs(DATA_DIR, exist_ok=True)

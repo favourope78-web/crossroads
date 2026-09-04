@@ -40,7 +40,7 @@ namespace Crossroads.UI
             _objectives = ObjectiveHUD.Attach(safe);
             _combat = CombatHUD.Attach(safe);
 
-            Debug.Log("[CROSSROADS] Game UI ready (canvas + dialogue + HUD + objectives + combat + touch rig + pause)");
+            Debug.Log("[CROSSROADS] Game UI ready (canvas + dialogue + HUD + objectives + combat + touch rig + pause + campaign)");
         }
 
         private void Start()

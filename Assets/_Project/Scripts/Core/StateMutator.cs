@@ -17,6 +17,44 @@ namespace Crossroads.Core
             State = state ?? new GameState();
         }
 
+        // ------------------------------------------------ campaign (v5)
+        /// <summary>Records a resolved story beat. Returns true when newly recorded.</summary>
+        public bool MarkCampaignBeat(string beatId)
+        {
+            if (string.IsNullOrEmpty(beatId) || State.campaignBeats.Contains(beatId)) return false;
+            State.campaignBeats.Add(beatId);
+            StoryLog.Log("[CAMPAIGN] beat resolved: " + beatId);
+            return true;
+        }
+
+        /// <summary>Records a taken branch (the run's route through the story). True when new.</summary>
+        public bool MarkCampaignBranch(string branchId)
+        {
+            if (string.IsNullOrEmpty(branchId) || State.campaignBranches.Contains(branchId)) return false;
+            State.campaignBranches.Add(branchId);
+            StoryLog.Log("[CAMPAIGN] branch taken: " + branchId);
+            return true;
+        }
+
+        /// <summary>Records a completed chapter. True when newly recorded.</summary>
+        public bool MarkCampaignChapter(string chapterId)
+        {
+            if (string.IsNullOrEmpty(chapterId) || State.campaignChapters.Contains(chapterId)) return false;
+            State.campaignChapters.Add(chapterId);
+            StoryLog.Log("[CAMPAIGN] chapter completed: " + chapterId);
+            return true;
+        }
+
+        /// <summary>Appends a story journal line (capped ring, oldest dropped). True when kept.</summary>
+        public bool AddCampaignJournalLine(string line)
+        {
+            if (string.IsNullOrEmpty(line)) return false;
+            if (State.campaignJournal.Contains(line)) return false; // idempotent (beat texts are unique)
+            State.campaignJournal.Add(line);
+            while (State.campaignJournal.Count > 12) State.campaignJournal.RemoveAt(0);
+            return true;
+        }
+
         // ------------------------------------------------ flags
         public void SetFlag(string key, string value)
         {
@@ -413,6 +451,13 @@ namespace Crossroads.Core
             State.npcLocations = saved.npcLocations != null ? saved.npcLocations : new System.Collections.Generic.List<StringEntry>();
             State.interactionUnlocks = saved.interactionUnlocks != null ? saved.interactionUnlocks : new System.Collections.Generic.List<StringEntry>();
             State.closedAreas = saved.closedAreas != null ? saved.closedAreas : new System.Collections.Generic.List<StringEntry>();
+            // campaign route (v5): restore the exact run history - beats, branches, completed
+            // chapters and the journal. Without this the route silently re-derives on load and
+            // non-re-derivable lines (chapter starts) vanish from the journal.
+            State.campaignBeats = saved.campaignBeats != null ? saved.campaignBeats : new System.Collections.Generic.List<string>();
+            State.campaignBranches = saved.campaignBranches != null ? saved.campaignBranches : new System.Collections.Generic.List<string>();
+            State.campaignChapters = saved.campaignChapters != null ? saved.campaignChapters : new System.Collections.Generic.List<string>();
+            State.campaignJournal = saved.campaignJournal != null ? saved.campaignJournal : new System.Collections.Generic.List<string>();
             StoryLog.Log("[STATE] loaded " + saved.decisions.Count + " decision(s) from save");
         }
 

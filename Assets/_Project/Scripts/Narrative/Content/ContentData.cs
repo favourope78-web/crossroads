@@ -501,6 +501,69 @@ namespace Crossroads.Narrative
     }
 
     // =====================================================================================
+    // CAMPAIGN definitions (branching story framework). A campaign is fully data: chapters
+    // contain story beats and branches; the CampaignManager only re-evaluates conditions
+    // against live state - a designer adds chapters/branches through content, never code.
+    // Beats resolve on a decision, an objective outcome (completed OR failed - failure is
+    // a route, not a dead end), or plain conditions. Branches route the run and deliver
+    // consequences/unlocks through the same EffectApplier whitelist everything else uses.
+    // =====================================================================================
+
+    /// <summary>What finishes a story beat.</summary>
+    public enum BeatTrigger
+    {
+        Conditions = 0,        // resolveConditions become true (empty = resolves when offered)
+        DecisionMade = 1,      // the named decision was made (any option)
+        ObjectiveCompleted = 2,// the named objective reached Completed
+        ObjectiveFailed = 3    // the named objective reached Failed - failure branches the story
+    }
+
+    /// <summary>One story beat: a journal moment + its trigger + consequences + branch point.</summary>
+    [Serializable]
+    public class StoryBeatData
+    {
+        public string id = "";
+        public string title = "";
+        public string journalText = "";              // added to the story log when resolved
+        public List<DecisionConditionData> offerConditions = new List<DecisionConditionData>();
+        public BeatTrigger resolveTrigger = BeatTrigger.Conditions;
+        public string resolveKey = "";               // decisionId / objectiveId ("" for Conditions)
+        public List<DecisionConditionData> resolveConditions = new List<DecisionConditionData>();
+        public List<string> requiredBeatIds = new List<string>(); // small graph: non-linear ordering
+        public List<DecisionEffectData> onResolveEffects = new List<DecisionEffectData>();
+        public int priority;                          // availability ordering for the UI (lower = sooner)
+    }
+
+    /// <summary>A route out of a beat: first matching branch (authored order) fires.</summary>
+    [Serializable]
+    public class CampaignBranchData
+    {
+        public string id = "";
+        public string fromBeatId = "";
+        public string toBeatId = "";                  // the beat this route feeds (docs/tests/validation)
+        public string label = "";                     // player-facing path name ("Path of Ember")
+        public List<DecisionConditionData> requiredConditions = new List<DecisionConditionData>();
+        public List<DecisionEffectData> effects = new List<DecisionEffectData>(); // consequences + unlocks
+    }
+
+    /// <summary>A chapter: entry-gated beats + branches + completion. Multiple chapters may be
+    /// active at once (non-linear); completion unlocks whatever its effects say.</summary>
+    [Serializable]
+    public class CampaignChapterData
+    {
+        public string id = "";
+        public string title = "";
+        public string subtitle = "";
+        public string description = "";
+        public List<DecisionConditionData> entryConditions = new List<DecisionConditionData>();
+        public List<StoryBeatData> beats = new List<StoryBeatData>();
+        public List<CampaignBranchData> branches = new List<CampaignBranchData>();
+        public List<DecisionConditionData> completionConditions = new List<DecisionConditionData>();
+        public List<DecisionEffectData> completionEffects = new List<DecisionEffectData>();
+        public string completionJournal = "";
+    }
+
+    // =====================================================================================
     // Objective / mission definitions (GAME_DESIGN §5-§7: "objectives are authored per
     // path"; DEVELOPMENT_PLAN M2 systems core). Everything is plain serializable data:
     // a mission = one ObjectiveDefinitionData row; the ObjectiveManager never hardcodes
@@ -601,6 +664,7 @@ namespace Crossroads.Narrative
         public List<WorldInteractionData> worldInteractions = new List<WorldInteractionData>();
 
         // ---- combat content (core action system) ----
+        public List<CampaignChapterData> chapters = new List<CampaignChapterData>();
         public List<StatusEffectDefinitionData> statusEffects = new List<StatusEffectDefinitionData>();
         public List<AbilityCombatData> abilityCombat = new List<AbilityCombatData>();
         public List<EnemyDefinitionData> enemies = new List<EnemyDefinitionData>();
@@ -639,6 +703,28 @@ namespace Crossroads.Narrative
             for (int i = 0; i < worldInteractions.Count; i++) if (worldInteractions[i] != null && worldInteractions[i].key == key) return worldInteractions[i];
             return null;
         }
+        public CampaignChapterData FindChapter(string id)
+        {
+            if (chapters == null) return null;
+            for (int i = 0; i < chapters.Count; i++)
+                if (chapters[i] != null && chapters[i].id == id) return chapters[i];
+            return null;
+        }
+
+        public StoryBeatData FindBeat(string beatId, out CampaignChapterData owner)
+        {
+            owner = null;
+            if (chapters == null) return null;
+            for (int i = 0; i < chapters.Count; i++)
+            {
+                CampaignChapterData ch = chapters[i];
+                if (ch == null || ch.beats == null) continue;
+                for (int b = 0; b < ch.beats.Count; b++)
+                    if (ch.beats[b] != null && ch.beats[b].id == beatId) { owner = ch; return ch.beats[b]; }
+            }
+            return null;
+        }
+
         public StatusEffectDefinitionData FindStatusEffect(string id)
         {
             if (statusEffects == null) return null;

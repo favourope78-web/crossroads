@@ -82,6 +82,16 @@ namespace Crossroads.Narrative
         public const string StatusSuppression = "suppression";
         public const string StatusDodgeGuard = "dodge_guard";
         public const string StatusTideSoothe = "tide_soothe";
+        // campaign framework (branching story) ----------------------------------
+        public const string EncounterSeraEcho = "camp_sera_echo";
+        public const string DecisionSeraEcho = "camp_sera_echo_dec";
+        public const string GraphSeraEcho = "g_sera_echo";
+        public const string ChapterFirstLight = "ch_first_light";
+        public const string ChapterWhispers = "ch_whispers";
+        public const string BeatArrival = "beat_arrival";
+        public const string FlagPathResolved = "path_resolved";
+        public const string FlagChapterOneComplete = "ch1_complete";
+
         public const string VarWardenDrivenOff = "warden_driven_off";
         public const string VarTimesFelled = "times_felled";
         public const string VarPlayerHp = "player_hp";
@@ -1202,6 +1212,250 @@ namespace Crossroads.Narrative
                     new DecisionEffectData { type = EffectType.AddCodex, key = "c1_warden_driven_off" }
                 },
                 completionNotice = "Objective complete - the Warden will not report you. Sera saw all of it."
+            });
+
+            // ================================================================ CAMPAIGN FRAMEWORK CONTENT
+            // Branching story: chapters -> beats -> branches, all data (Gameplay/Campaign
+            // only re-evaluates conditions; a designer adds chapters through content).
+
+            // ---- second encounter: Sera reacts to the FIRST decision (branch dialogue) ----
+            content.decisions.Add(new DecisionNodeData
+            {
+                id = DecisionSeraEcho,
+                promptText = "Sera saw which way the light took you. What do you tell her?",
+                options = new List<DecisionOptionData>
+                {
+                    new DecisionOptionData
+                    {
+                        id = "tell_her", text = "Tell her the truth of it.",
+                        afterText = "Sera nods once, slow. 'Then we hold the line together.'",
+                        effects = new List<DecisionEffectData>
+                        {
+                            new DecisionEffectData { type = EffectType.SetFlag, key = "sera_echo_seen", value = "1" },
+                            new DecisionEffectData { type = EffectType.AddBond, key = "sera", amount = 2 }
+                        }
+                    },
+                    new DecisionOptionData
+                    {
+                        id = "deflect", text = "Keep it behind your teeth.",
+                        afterText = "'Fair,' Sera says. 'Keep it that way until it's ready.'",
+                        effects = new List<DecisionEffectData>
+                        {
+                            new DecisionEffectData { type = EffectType.SetFlag, key = "sera_echo_seen", value = "1" }
+                        }
+                    }
+                }
+            });
+
+            content.graphs.Add(new DialogueGraphData
+            {
+                id = GraphSeraEcho,
+                nodes = new List<DialogueNodeData>
+                {
+                    new DialogueNodeData { id = "n_se1", speaker = "Sera",
+                        text = "You came back with the whole hall behind your eyes. Come on - out with it.",
+                        nextId = "n_se_pick" },
+                    new DialogueNodeData { id = "n_se_pick", branchPrefix = "se_line" },
+                    new DialogueNodeData { id = "se_line", speaker = "Sera",
+                        text = "Something changed in you out there. I can hear it in your steps." },
+                    new DialogueNodeData { id = "se_line_ember", speaker = "Sera",
+                        text = "Ember still hums under your nails. The beacon forgot your name - but the Choir sent a Warden to check on you. That is not finished.",
+                        nextId = "n_se_dec",
+                        conditions = new List<DecisionConditionData> { new DecisionConditionData { type = ConditionType.DecisionWas, key = DecisionFirstLight, value = "ember_reach" } } },
+                    new DialogueNodeData { id = "se_line_tide", speaker = "Sera",
+                        text = "You went into the water for the twins and came out carrying their peace. The tide leaves marks like that.",
+                        nextId = "n_se_dec",
+                        conditions = new List<DecisionConditionData> { new DecisionConditionData { type = ConditionType.DecisionWas, key = DecisionFirstLight, value = "tide_clear" } } },
+                    new DialogueNodeData { id = "se_line_stone", speaker = "Sera",
+                        text = "You held the line with your shoulders. Stone remembers hands that stay.",
+                        nextId = "n_se_dec",
+                        conditions = new List<DecisionConditionData> { new DecisionConditionData { type = ConditionType.DecisionWas, key = DecisionFirstLight, value = "stone_still" } } },
+                    new DialogueNodeData { id = "n_se_dec", decisionId = DecisionSeraEcho }
+                }
+            });
+
+            content.encounters.Add(new EncounterDefinitionData
+            {
+                id = EncounterSeraEcho, npcName = "Sera", graphId = GraphSeraEcho, startNodeId = "n_se1"
+            });
+
+            // sera's post-decision DEFAULT interaction (first in her list; condition-gated)
+            NpcDefinitionData seraNpc = content.FindNpc("sera");
+            if (seraNpc != null && seraNpc.interactions != null)
+            {
+                seraNpc.interactions.Insert(0, new NpcInteractionData
+                {
+                    id = "talk_echo", label = "Talk about what happened", encounterId = EncounterSeraEcho,
+                    conditions = new List<DecisionConditionData> { new DecisionConditionData { type = ConditionType.DecisionWas, key = DecisionFirstLight, value = "" } }
+                });
+            }
+
+            // ---- Chapter One: The First Light (the branching vertical slice) ----
+            content.chapters.Add(new CampaignChapterData
+            {
+                id = ChapterFirstLight, title = "Chapter One", subtitle = "The First Light",
+                description = "The Fracture Hall takes Ari in, asks its first question, and the answer routes everything after it.",
+                beats = new List<StoryBeatData>
+                {
+                    new StoryBeatData
+                    {
+                        id = BeatArrival, title = "Answer the hall's first question",
+                        journalText = "The Fracture Hall took you in - and asked its first question.",
+                        resolveTrigger = BeatTrigger.DecisionMade, resolveKey = DecisionFirstLight, priority = 0
+                    },
+                    new StoryBeatData
+                    {
+                        id = "beat_sera_echo", title = "Tell Sera what the light left",
+                        journalText = "You told Sera what the light left in you. She did not flinch.",
+                        offerConditions = new List<DecisionConditionData> { new DecisionConditionData { type = ConditionType.DecisionWas, key = DecisionFirstLight, value = "" } },
+                        resolveTrigger = BeatTrigger.DecisionMade, resolveKey = DecisionSeraEcho,
+                        requiredBeatIds = new List<string> { BeatArrival }, priority = 4
+                    },
+                    new StoryBeatData
+                    {
+                        id = "beat_warden", title = "Drive off the Choir Warden",
+                        journalText = "The Warden will not report you. Sera saw all of it.",
+                        offerConditions = new List<DecisionConditionData> { new DecisionConditionData { type = ConditionType.DecisionWas, key = DecisionFirstLight, value = "" } },
+                        resolveTrigger = BeatTrigger.ObjectiveCompleted, resolveKey = ObjectiveWardenHunt,
+                        requiredBeatIds = new List<string> { BeatArrival }, priority = 5
+                    },
+                    new StoryBeatData
+                    {
+                        id = "beat_sera_confide", title = "Sera's waystation key",
+                        journalText = "Sera trusts you enough to show the waystation key.",
+                        offerConditions = new List<DecisionConditionData> { new DecisionConditionData { type = ConditionType.BondAtLeast, key = "sera", amount = 7 } },
+                        resolveTrigger = BeatTrigger.Conditions,
+                        requiredBeatIds = new List<string> { BeatArrival },
+                        onResolveEffects = new List<DecisionEffectData>
+                        {
+                            new DecisionEffectData { type = EffectType.SetFlag, key = "waystation_key", value = "1" },
+                            new DecisionEffectData { type = EffectType.GrantEchoes, amount = 10 }
+                        },
+                        priority = 6
+                    },
+                    new StoryBeatData
+                    {
+                        id = "beat_ember_mastery", title = "The ember answers faster",
+                        journalText = "The ember answers faster now. It wants a second door.",
+                        offerConditions = new List<DecisionConditionData> { new DecisionConditionData { type = ConditionType.AbilityOwned, key = AbilityEmber } },
+                        resolveTrigger = BeatTrigger.Conditions,
+                        requiredBeatIds = new List<string> { BeatArrival },
+                        onResolveEffects = new List<DecisionEffectData> { new DecisionEffectData { type = EffectType.SetFlag, key = "ember_mastery", value = "1" } },
+                        priority = 7
+                    },
+                    new StoryBeatData
+                    {
+                        id = "beat_ember_path", title = "Silence the Choir Beacon",
+                        journalText = "The beacon is quiet. The annex belongs to the hall again.",
+                        offerConditions = new List<DecisionConditionData> { new DecisionConditionData { type = ConditionType.FlagIs, key = "path_ember", value = "1" } },
+                        resolveTrigger = BeatTrigger.ObjectiveCompleted, resolveKey = ObjectiveEmberBeacon,
+                        requiredBeatIds = new List<string> { BeatArrival }, priority = 10
+                    },
+                    new StoryBeatData
+                    {
+                        id = "beat_tide_path", title = "Carry the twins' peace back",
+                        journalText = "The twins have their locket back, and Mara knows the truth of the rush.",
+                        offerConditions = new List<DecisionConditionData> { new DecisionConditionData { type = ConditionType.FlagIs, key = "path_tide", value = "1" } },
+                        resolveTrigger = BeatTrigger.ObjectiveCompleted, resolveKey = "obj_tide_report",
+                        requiredBeatIds = new List<string> { BeatArrival }, priority = 10
+                    },
+                    new StoryBeatData
+                    {
+                        id = "beat_stone_path", title = "Brace the north line",
+                        journalText = "The barricade held. The north line is yours.",
+                        offerConditions = new List<DecisionConditionData> { new DecisionConditionData { type = ConditionType.FlagIs, key = "path_stone", value = "1" } },
+                        resolveTrigger = BeatTrigger.ObjectiveCompleted, resolveKey = ObjectiveStoneBarricade,
+                        requiredBeatIds = new List<string> { BeatArrival }, priority = 10
+                    },
+                    new StoryBeatData
+                    {
+                        id = "beat_stone_fell", title = "The line fell",
+                        journalText = "The barricade fell. The hall breathed dust - and kept breathing.",
+                        offerConditions = new List<DecisionConditionData> { new DecisionConditionData { type = ConditionType.FlagIs, key = "path_stone", value = "1" } },
+                        resolveTrigger = BeatTrigger.ObjectiveFailed, resolveKey = ObjectiveStoneBarricade,
+                        requiredBeatIds = new List<string> { BeatArrival }, priority = 10
+                    },
+                    new StoryBeatData
+                    {
+                        id = "beat_recovery", title = "Haul the line back up",
+                        journalText = "You hauled the line back up with your own hands.",
+                        offerConditions = new List<DecisionConditionData> { new DecisionConditionData { type = ConditionType.FlagIs, key = "path_fell", value = "1" } },
+                        resolveTrigger = BeatTrigger.ObjectiveCompleted, resolveKey = ObjectiveStoneRebuild,
+                        requiredBeatIds = new List<string> { "beat_stone_fell" }, priority = 11
+                    },
+                    new StoryBeatData
+                    {
+                        id = "beat_council", title = "The hall exhales",
+                        journalText = "The hall held its breath - and let it out. Chapter One closes.",
+                        offerConditions = new List<DecisionConditionData> { new DecisionConditionData { type = ConditionType.FlagIs, key = FlagPathResolved, value = "1" } },
+                        resolveTrigger = BeatTrigger.Conditions,
+                        requiredBeatIds = new List<string> { BeatArrival }, priority = 20
+                    }
+                },
+                branches = new List<CampaignBranchData>
+                {
+                    new CampaignBranchData { id = "br_trode_ember", fromBeatId = BeatArrival, toBeatId = "beat_ember_path",
+                        label = "Path of Ember",
+                        requiredConditions = new List<DecisionConditionData> { new DecisionConditionData { type = ConditionType.DecisionWas, key = DecisionFirstLight, value = "ember_reach" } },
+                        effects = new List<DecisionEffectData> { new DecisionEffectData { type = EffectType.SetFlag, key = "path_ember", value = "1" } } },
+                    new CampaignBranchData { id = "br_trode_tide", fromBeatId = BeatArrival, toBeatId = "beat_tide_path",
+                        label = "Path of Tide",
+                        requiredConditions = new List<DecisionConditionData> { new DecisionConditionData { type = ConditionType.DecisionWas, key = DecisionFirstLight, value = "tide_clear" } },
+                        effects = new List<DecisionEffectData> { new DecisionEffectData { type = EffectType.SetFlag, key = "path_tide", value = "1" } } },
+                    new CampaignBranchData { id = "br_trode_stone", fromBeatId = BeatArrival, toBeatId = "beat_stone_path",
+                        label = "Path of Stone",
+                        requiredConditions = new List<DecisionConditionData> { new DecisionConditionData { type = ConditionType.DecisionWas, key = DecisionFirstLight, value = "stone_still" } },
+                        effects = new List<DecisionEffectData> { new DecisionEffectData { type = EffectType.SetFlag, key = "path_stone", value = "1" } } },
+                    new CampaignBranchData { id = "br_ember_settled", fromBeatId = "beat_ember_path", toBeatId = "beat_council",
+                        effects = new List<DecisionEffectData> { new DecisionEffectData { type = EffectType.SetFlag, key = FlagPathResolved, value = "1" } } },
+                    new CampaignBranchData { id = "br_tide_settled", fromBeatId = "beat_tide_path", toBeatId = "beat_council",
+                        effects = new List<DecisionEffectData> { new DecisionEffectData { type = EffectType.SetFlag, key = FlagPathResolved, value = "1" } } },
+                    new CampaignBranchData { id = "br_stone_settled", fromBeatId = "beat_stone_path", toBeatId = "beat_council",
+                        label = "The Line Held",
+                        effects = new List<DecisionEffectData> { new DecisionEffectData { type = EffectType.SetFlag, key = FlagPathResolved, value = "1" } } },
+                    new CampaignBranchData { id = "br_line_fell", fromBeatId = "beat_stone_fell", toBeatId = "beat_recovery",
+                        label = "The Line Fell",
+                        effects = new List<DecisionEffectData> { new DecisionEffectData { type = EffectType.SetFlag, key = "path_fell", value = "1" } } },
+                    new CampaignBranchData { id = "br_line_reheld", fromBeatId = "beat_recovery", toBeatId = "beat_council",
+                        label = "The Line Held Again",
+                        effects = new List<DecisionEffectData> { new DecisionEffectData { type = EffectType.SetFlag, key = FlagPathResolved, value = "1" } } },
+                    new CampaignBranchData { id = "br_told_sera", fromBeatId = "beat_sera_echo",
+                        label = "Sera Holds the Line With You",
+                        requiredConditions = new List<DecisionConditionData> { new DecisionConditionData { type = ConditionType.DecisionWas, key = DecisionSeraEcho, value = "tell_her" } } },
+                    new CampaignBranchData { id = "br_deflected", fromBeatId = "beat_sera_echo",
+                        label = "Some Doors Stay Shut",
+                        requiredConditions = new List<DecisionConditionData> { new DecisionConditionData { type = ConditionType.DecisionWas, key = DecisionSeraEcho, value = "deflect" } } },
+                    new CampaignBranchData { id = "br_second_door", fromBeatId = "beat_ember_mastery",
+                        label = "The Ember Widens",
+                        effects = new List<DecisionEffectData> { new DecisionEffectData { type = EffectType.SetFlag, key = "ember_second_door", value = "1" } } }
+                },
+                completionConditions = new List<DecisionConditionData> { new DecisionConditionData { type = ConditionType.FlagIs, key = FlagPathResolved, value = "1" } },
+                completionEffects = new List<DecisionEffectData>
+                {
+                    new DecisionEffectData { type = EffectType.SetFlag, key = FlagChapterOneComplete, value = "1" },
+                    new DecisionEffectData { type = EffectType.AddCodex, key = "c1_ch1_complete" }
+                },
+                completionJournal = "Chapter One: The First Light - complete."
+            });
+
+            // ---- Chapter Two teaser: chapters chain through content data alone ----
+            content.chapters.Add(new CampaignChapterData
+            {
+                id = ChapterWhispers, title = "Chapter Two", subtitle = "Whispers Under the Hall",
+                description = "Teaser beat: the framework's proof that a designer adds the next chapter as pure data.",
+                entryConditions = new List<DecisionConditionData> { new DecisionConditionData { type = ConditionType.FlagIs, key = FlagChapterOneComplete, value = "1" } },
+                beats = new List<StoryBeatData>
+                {
+                    new StoryBeatData
+                    {
+                        id = "beat_whispers", title = "Something knows your name",
+                        journalText = "Somewhere under the hall, something whispers your new name.",
+                        resolveTrigger = BeatTrigger.Conditions,
+                        onResolveEffects = new List<DecisionEffectData> { new DecisionEffectData { type = EffectType.SetFlag, key = "ch2_teaser", value = "1" } }
+                    }
+                },
+                completionEffects = new List<DecisionEffectData> { new DecisionEffectData { type = EffectType.AddCodex, key = "c1_ch2_teaser" } },
+                completionJournal = "To be continued."
             });
 
             return content;

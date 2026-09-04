@@ -105,5 +105,9 @@
  "TouchLookPad.cs": "c0a1fed20000000000000000000000b4",
  "MobileControlsUI.cs": "c0a1fed20000000000000000000000b5",
  "PauseMenuUI.cs": "c0a1fed20000000000000000000000b6",
- "AndroidDevBuild.cs": "c0a1fed20000000000000000000000b7"
+ "AndroidDevBuild.cs": "c0a1fed20000000000000000000000b7",
+ "CampaignEvents.cs": "c0a1fed20000000000000000000000b8",
+ "CampaignManager.cs": "c0a1fed20000000000000000000000b9",
+ "CampaignServices.cs": "c0a1fed20000000000000000000000ba",
+ "CampaignHUD.cs": "c0a1fed20000000000000000000000bb"
 }

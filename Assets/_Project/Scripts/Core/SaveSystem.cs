@@ -132,6 +132,10 @@ namespace Crossroads.Core
             if (g.npcLocations == null) g.npcLocations = new System.Collections.Generic.List<StringEntry>();
             if (g.interactionUnlocks == null) g.interactionUnlocks = new System.Collections.Generic.List<StringEntry>();
             if (g.closedAreas == null) g.closedAreas = new System.Collections.Generic.List<StringEntry>();
+            if (g.campaignBeats == null) g.campaignBeats = new System.Collections.Generic.List<string>();
+            if (g.campaignBranches == null) g.campaignBranches = new System.Collections.Generic.List<string>();
+            if (g.campaignChapters == null) g.campaignChapters = new System.Collections.Generic.List<string>();
+            if (g.campaignJournal == null) g.campaignJournal = new System.Collections.Generic.List<string>();
         }
 
         /// <summary>Writes Current atomically (.tmp -> replace) and mirrors an autosave copy.</summary>

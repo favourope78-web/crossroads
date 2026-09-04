@@ -1188,7 +1188,11 @@ namespace Crossroads.Tests
             Check(GameServices.Progress.HasItem(StoryContentBuilder.ItemShard), "shard taken");
             brain.Reapply();
             Check(brain.InteractionAvailable("show_shard"), "show_shard unlocks with the item held");
-            CheckEq(brain.PromptLabel(), "Talk to Sera", "talk stays first: the interaction LIST grew, prompt kept");
+            // campaign phase: after the first-light decision sera's DEFAULT became the
+            // branch-reactive echo talk (prepended, condition-gated); plain talk stays available
+            CheckEq(brain.PromptLabel(), "Talk about what happened",
+                  "post-decision default is the branch-reactive echo talk");
+            Check(brain.InteractionAvailable("talk"), "plain talk still available in the list");
 
             GameServices.Shutdown(silent: true);
             Directory.Delete(dir, true);
@@ -1463,11 +1467,18 @@ namespace Crossroads.Tests
             _passed += mobilePassed;
             _failed += mobileFailed;
 
+            // core branching campaign (Gameplay/Campaign)
+            int campaignPassed, campaignFailed;
+            CampaignTests.RunAll(out campaignPassed, out campaignFailed);
+            _passed += campaignPassed;
+            _failed += campaignFailed;
+
             Console.WriteLine("======================================");
             foreach (var line in Log) Console.WriteLine(line);
             foreach (var line in WorldTests.GetLog()) Console.WriteLine(line);
             foreach (var line in CombatTests.GetLog()) Console.WriteLine(line);
             foreach (var line in MobileExperienceTests.GetLog()) Console.WriteLine(line);
+            foreach (var line in CampaignTests.GetLog()) Console.WriteLine(line);
             Console.WriteLine("======================================");
             Console.WriteLine("RESULT: {0} passed, {1} failed", _passed, _failed);
             return _failed == 0 ? 0 : 1;

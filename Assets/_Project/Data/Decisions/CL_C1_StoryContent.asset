@@ -42,6 +42,10 @@ MonoBehaviour:
       npcName: "Mara"
       graphId: "g_c1_hall_mara_report"
       startNodeId: "start"
+    - id: "camp_sera_echo"
+      npcName: "Sera"
+      graphId: "g_sera_echo"
+      startNodeId: "n_se1"
     decisions:
     - id: "dec_c1_hall_first_light"
       promptText: "The Fracture light hovers over the hall. It is waiting. How do you answer it?"
@@ -554,6 +558,34 @@ MonoBehaviour:
           key: "mara"
           value: ""
           amount: 2
+    - id: "camp_sera_echo_dec"
+      promptText: "Sera saw which way the light took you. What do you tell her?"
+      timeLimitSeconds: 0.0
+      timeoutOptionIndex: 0
+      codexEntryId: "c1_sera_echo"
+      options:
+      - id: "tell_her"
+        text: "Tell her the truth of it."
+        afterText: "Sera nods once, slow. 'Then we hold the line together.'"
+        conditions: []
+        effects:
+        - type: 0
+          key: "sera_echo_seen"
+          value: "1"
+          amount: 0
+        - type: 4
+          key: "sera"
+          value: ""
+          amount: 2
+      - id: "deflect"
+        text: "Keep it behind your teeth."
+        afterText: "'Fair,' Sera says. 'Keep it that way until it's ready.'"
+        conditions: []
+        effects:
+        - type: 0
+          key: "sera_echo_seen"
+          value: "1"
+          amount: 0
     graphs:
     - id: "g_c1_hall_first_light"
       nodes:
@@ -1249,6 +1281,76 @@ MonoBehaviour:
         decisionId: ""
         conditions: []
         end: 1
+    - id: "g_sera_echo"
+      nodes:
+      - id: "n_se1"
+        speaker: "Sera"
+        text: "You came back with the whole hall behind your eyes. Come on - out with it."
+        nextId: "n_se_pick"
+        branchPrefix: ""
+        decisionId: ""
+        conditions: []
+        end: 0
+      - id: "n_se_pick"
+        speaker: ""
+        text: ""
+        nextId: ""
+        branchPrefix: "se_line"
+        decisionId: ""
+        conditions: []
+        end: 0
+      - id: "se_line"
+        speaker: "Sera"
+        text: "Something changed in you out there. I can hear it in your steps."
+        nextId: ""
+        branchPrefix: ""
+        decisionId: ""
+        conditions: []
+        end: 0
+      - id: "se_line_ember"
+        speaker: "Sera"
+        text: "Ember still hums under your nails. The beacon forgot your name - but the Choir sent a Warden to check on you. That is not finished."
+        nextId: "n_se_dec"
+        branchPrefix: ""
+        decisionId: ""
+        conditions:
+        - type: 6
+          key: "dec_c1_hall_first_light"
+          value: "ember_reach"
+          amount: 0
+        end: 0
+      - id: "se_line_tide"
+        speaker: "Sera"
+        text: "You went into the water for the twins and came out carrying their peace. The tide leaves marks like that."
+        nextId: "n_se_dec"
+        branchPrefix: ""
+        decisionId: ""
+        conditions:
+        - type: 6
+          key: "dec_c1_hall_first_light"
+          value: "tide_clear"
+          amount: 0
+        end: 0
+      - id: "se_line_stone"
+        speaker: "Sera"
+        text: "You held the line with your shoulders. Stone remembers hands that stay."
+        nextId: "n_se_dec"
+        branchPrefix: ""
+        decisionId: ""
+        conditions:
+        - type: 6
+          key: "dec_c1_hall_first_light"
+          value: "stone_still"
+          amount: 0
+        end: 0
+      - id: "n_se_dec"
+        speaker: ""
+        text: ""
+        nextId: ""
+        branchPrefix: ""
+        decisionId: "camp_sera_echo_dec"
+        conditions: []
+        end: 0
     progression:
       abilities:
       - id: "ember_pulse"
@@ -1557,6 +1659,14 @@ MonoBehaviour:
         moveSpeed: 0.8
         reactRadius: -1
       interactions:
+      - id: "talk_echo"
+        label: "Talk about what happened"
+        encounterId: "camp_sera_echo"
+        conditions:
+        - type: 6
+          key: "dec_c1_hall_first_light"
+          value: ""
+          amount: 0
       - id: "talk"
         label: "Talk to Sera"
         encounterId: "c1_hall_sera"
@@ -2159,3 +2269,352 @@ MonoBehaviour:
           key: "c1_felled_once"
           value: ""
           amount: 0
+    chapters:
+    - id: "ch_first_light"
+      title: "Chapter One"
+      subtitle: "The First Light"
+      description: "The Fracture Hall takes Ari in, asks its first question, and the answer routes everything after it."
+      entryConditions: []
+      beats:
+      - id: "beat_arrival"
+        title: "Answer the hall's first question"
+        journalText: "The Fracture Hall took you in - and asked its first question."
+        offerConditions: []
+        resolveTrigger: 1
+        resolveKey: "dec_c1_hall_first_light"
+        resolveConditions: []
+        requiredBeatIds: []
+        onResolveEffects: []
+        priority: 0
+      - id: "beat_sera_echo"
+        title: "Tell Sera what the light left"
+        journalText: "You told Sera what the light left in you. She did not flinch."
+        offerConditions:
+          - type: 6
+            key: "dec_c1_hall_first_light"
+            value: ""
+            amount: 0
+        resolveTrigger: 1
+        resolveKey: "camp_sera_echo_dec"
+        resolveConditions: []
+        requiredBeatIds:
+          - "beat_arrival"
+        onResolveEffects: []
+        priority: 4
+      - id: "beat_warden"
+        title: "Drive off the Choir Warden"
+        journalText: "The Warden will not report you. Sera saw all of it."
+        offerConditions:
+          - type: 6
+            key: "dec_c1_hall_first_light"
+            value: ""
+            amount: 0
+        resolveTrigger: 2
+        resolveKey: "obj_warden_hunt"
+        resolveConditions: []
+        requiredBeatIds:
+          - "beat_arrival"
+        onResolveEffects: []
+        priority: 5
+      - id: "beat_sera_confide"
+        title: "Sera's waystation key"
+        journalText: "Sera trusts you enough to show the waystation key."
+        offerConditions:
+          - type: 5
+            key: "sera"
+            value: ""
+            amount: 7
+        resolveTrigger: 0
+        resolveKey: ""
+        resolveConditions: []
+        requiredBeatIds:
+          - "beat_arrival"
+        onResolveEffects:
+          - type: 0
+            key: "waystation_key"
+            value: "1"
+            amount: 0
+          - type: 10
+            key: ""
+            value: ""
+            amount: 10
+        priority: 6
+      - id: "beat_ember_mastery"
+        title: "The ember answers faster"
+        journalText: "The ember answers faster now. It wants a second door."
+        offerConditions:
+          - type: 11
+            key: "ember_pulse"
+            value: ""
+            amount: 0
+        resolveTrigger: 0
+        resolveKey: ""
+        resolveConditions: []
+        requiredBeatIds:
+          - "beat_arrival"
+        onResolveEffects:
+          - type: 0
+            key: "ember_mastery"
+            value: "1"
+            amount: 0
+        priority: 7
+      - id: "beat_ember_path"
+        title: "Silence the Choir Beacon"
+        journalText: "The beacon is quiet. The annex belongs to the hall again."
+        offerConditions:
+          - type: 0
+            key: "path_ember"
+            value: "1"
+            amount: 0
+        resolveTrigger: 2
+        resolveKey: "obj_ember_beacon"
+        resolveConditions: []
+        requiredBeatIds:
+          - "beat_arrival"
+        onResolveEffects: []
+        priority: 10
+      - id: "beat_tide_path"
+        title: "Carry the twins' peace back"
+        journalText: "The twins have their locket back, and Mara knows the truth of the rush."
+        offerConditions:
+          - type: 0
+            key: "path_tide"
+            value: "1"
+            amount: 0
+        resolveTrigger: 2
+        resolveKey: "obj_tide_report"
+        resolveConditions: []
+        requiredBeatIds:
+          - "beat_arrival"
+        onResolveEffects: []
+        priority: 10
+      - id: "beat_stone_path"
+        title: "Brace the north line"
+        journalText: "The barricade held. The north line is yours."
+        offerConditions:
+          - type: 0
+            key: "path_stone"
+            value: "1"
+            amount: 0
+        resolveTrigger: 2
+        resolveKey: "obj_stone_barricade"
+        resolveConditions: []
+        requiredBeatIds:
+          - "beat_arrival"
+        onResolveEffects: []
+        priority: 10
+      - id: "beat_stone_fell"
+        title: "The line fell"
+        journalText: "The barricade fell. The hall breathed dust - and kept breathing."
+        offerConditions:
+          - type: 0
+            key: "path_stone"
+            value: "1"
+            amount: 0
+        resolveTrigger: 3
+        resolveKey: "obj_stone_barricade"
+        resolveConditions: []
+        requiredBeatIds:
+          - "beat_arrival"
+        onResolveEffects: []
+        priority: 10
+      - id: "beat_recovery"
+        title: "Haul the line back up"
+        journalText: "You hauled the line back up with your own hands."
+        offerConditions:
+          - type: 0
+            key: "path_fell"
+            value: "1"
+            amount: 0
+        resolveTrigger: 2
+        resolveKey: "obj_stone_rebuild"
+        resolveConditions: []
+        requiredBeatIds:
+          - "beat_stone_fell"
+        onResolveEffects: []
+        priority: 11
+      - id: "beat_council"
+        title: "The hall exhales"
+        journalText: "The hall held its breath - and let it out. Chapter One closes."
+        offerConditions:
+          - type: 0
+            key: "path_resolved"
+            value: "1"
+            amount: 0
+        resolveTrigger: 0
+        resolveKey: ""
+        resolveConditions: []
+        requiredBeatIds:
+          - "beat_arrival"
+        onResolveEffects: []
+        priority: 20
+      branches:
+      - id: "br_trode_ember"
+        fromBeatId: "beat_arrival"
+        toBeatId: "beat_ember_path"
+        label: "Path of Ember"
+        requiredConditions:
+          - type: 6
+            key: "dec_c1_hall_first_light"
+            value: "ember_reach"
+            amount: 0
+        effects:
+          - type: 0
+            key: "path_ember"
+            value: "1"
+            amount: 0
+      - id: "br_trode_tide"
+        fromBeatId: "beat_arrival"
+        toBeatId: "beat_tide_path"
+        label: "Path of Tide"
+        requiredConditions:
+          - type: 6
+            key: "dec_c1_hall_first_light"
+            value: "tide_clear"
+            amount: 0
+        effects:
+          - type: 0
+            key: "path_tide"
+            value: "1"
+            amount: 0
+      - id: "br_trode_stone"
+        fromBeatId: "beat_arrival"
+        toBeatId: "beat_stone_path"
+        label: "Path of Stone"
+        requiredConditions:
+          - type: 6
+            key: "dec_c1_hall_first_light"
+            value: "stone_still"
+            amount: 0
+        effects:
+          - type: 0
+            key: "path_stone"
+            value: "1"
+            amount: 0
+      - id: "br_ember_settled"
+        fromBeatId: "beat_ember_path"
+        toBeatId: "beat_council"
+        label: ""
+        requiredConditions: []
+        effects:
+          - type: 0
+            key: "path_resolved"
+            value: "1"
+            amount: 0
+      - id: "br_tide_settled"
+        fromBeatId: "beat_tide_path"
+        toBeatId: "beat_council"
+        label: ""
+        requiredConditions: []
+        effects:
+          - type: 0
+            key: "path_resolved"
+            value: "1"
+            amount: 0
+      - id: "br_stone_settled"
+        fromBeatId: "beat_stone_path"
+        toBeatId: "beat_council"
+        label: "The Line Held"
+        requiredConditions: []
+        effects:
+          - type: 0
+            key: "path_resolved"
+            value: "1"
+            amount: 0
+      - id: "br_line_fell"
+        fromBeatId: "beat_stone_fell"
+        toBeatId: "beat_recovery"
+        label: "The Line Fell"
+        requiredConditions: []
+        effects:
+          - type: 0
+            key: "path_fell"
+            value: "1"
+            amount: 0
+      - id: "br_line_reheld"
+        fromBeatId: "beat_recovery"
+        toBeatId: "beat_council"
+        label: "The Line Held Again"
+        requiredConditions: []
+        effects:
+          - type: 0
+            key: "path_resolved"
+            value: "1"
+            amount: 0
+      - id: "br_told_sera"
+        fromBeatId: "beat_sera_echo"
+        toBeatId: ""
+        label: "Sera Holds the Line With You"
+        requiredConditions:
+          - type: 6
+            key: "camp_sera_echo_dec"
+            value: "tell_her"
+            amount: 0
+        effects: []
+      - id: "br_deflected"
+        fromBeatId: "beat_sera_echo"
+        toBeatId: ""
+        label: "Some Doors Stay Shut"
+        requiredConditions:
+          - type: 6
+            key: "camp_sera_echo_dec"
+            value: "deflect"
+            amount: 0
+        effects: []
+      - id: "br_second_door"
+        fromBeatId: "beat_ember_mastery"
+        toBeatId: ""
+        label: "The Ember Widens"
+        requiredConditions: []
+        effects:
+          - type: 0
+            key: "ember_second_door"
+            value: "1"
+            amount: 0
+      completionConditions:
+        - type: 0
+          key: "path_resolved"
+          value: "1"
+          amount: 0
+      completionEffects:
+        - type: 0
+          key: "ch1_complete"
+          value: "1"
+          amount: 0
+        - type: 9
+          key: "c1_ch1_complete"
+          value: ""
+          amount: 0
+      completionJournal: "Chapter One: The First Light - complete."
+    - id: "ch_whispers"
+      title: "Chapter Two"
+      subtitle: "Whispers Under the Hall"
+      description: "Teaser beat: the framework's proof that a designer adds the next chapter as pure data."
+      entryConditions:
+        - type: 0
+          key: "ch1_complete"
+          value: "1"
+          amount: 0
+      beats:
+      - id: "beat_whispers"
+        title: "Something knows your name"
+        journalText: "Somewhere under the hall, something whispers your new name."
+        offerConditions: []
+        resolveTrigger: 0
+        resolveKey: ""
+        resolveConditions: []
+        requiredBeatIds: []
+        onResolveEffects:
+          - type: 0
+            key: "ch2_teaser"
+            value: "1"
+            amount: 0
+        priority: 0
+      branches: []
+      completionConditions: []
+      completionEffects:
+        - type: 9
+          key: "c1_ch2_teaser"
+          value: ""
+          amount: 0
+      completionJournal: "To be continued."
