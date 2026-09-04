@@ -114,4 +114,4 @@ change — proven by the tidewell being 100% data + generated geometry.
 
 ## 9. Commit
 
-Feature commit: **`<HASH>`** — *"World expansion & location system: data-driven locations (LocationManager/LocationServices, LocationEvents, MapHUD, LocationTransitionFader), three prototype locations (hall hub / annex combat with relocated Warden / tide-gated Tidewell Shrine with relocated Sera), area-id-namespace travel graph, first-arrival world changes, ability-gated hidden cache, env profiles + per-location kits, scene regen (162 roots) + validation, LocationTests 64-71; 962/962 checks + validation + both compile configs"*.
+Feature commit: **`e017141`** — *"World expansion & location system: data-driven locations (LocationManager/LocationServices, LocationEvents, MapHUD, LocationTransitionFader), three prototype locations (hall hub / annex combat with relocated Warden / tide-gated Tidewell Shrine with relocated Sera), area-id-namespace travel graph, first-arrival world changes, ability-gated hidden cache, env profiles + per-location kits, scene regen (162 roots) + validation, LocationTests 64-71; 962/962 checks + validation + both compile configs"*.
