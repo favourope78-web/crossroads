@@ -391,6 +391,41 @@ for s in strings:
     if s not in builder and s.encode("ascii", "backslashreplace").decode() not in builder:
         errors.append("C# builder missing content string: " + s[:64])
 
+# ---------------------------------------------------------------- 3b. scene reference TYPES
+# Unity is type-strict about scene fileIDs: m_Father/m_Children/SceneRoots.m_Roots must
+# reference Transforms (class 4); StoryWorldState entity/variant targets reference
+# GameObjects (class 1); NpcRelocator targets reference Transforms.
+cls_of = {}
+for block in scene_txt.split("--- !u!")[1:]:
+    m = re.match(r"(\d+) &(\d+)", block.split("\n", 1)[0].strip())
+    if m:
+        cls_of[int(m.group(2))] = int(m.group(1))
+
+def _ref_class_err(rid, want, ctx):
+    got = cls_of.get(rid)
+    if got != want:
+        errors.append("%s references fileID %d (class %s, expected class %d)" % (ctx, rid, got, want))
+
+for block in scene_txt.split("--- !u!")[1:]:
+    m = re.match(r"(\d+) &(\d+)", block.split("\n", 1)[0].strip())
+    if not m:
+        continue
+    cls, bid = int(m.group(1)), int(m.group(2))
+    if cls == 4:  # Transform: father + children must be Transforms
+        f = re.search(r"m_Father: \{fileID: (\d+)\}", block)
+        if f and int(f.group(1)) != 0:
+            _ref_class_err(int(f.group(1)), 4, "Transform &%d m_Father" % bid)
+        for c in re.findall(r"^  - \{fileID: (\d+)\}$", block, re.M):
+            _ref_class_err(int(c), 4, "Transform &%d m_Children" % bid)
+    elif cls == 1660057539:  # SceneRoots: roots must be Transforms
+        for r in re.findall(r"^  - \{fileID: (\d+)\}$", block, re.M):
+            _ref_class_err(int(r), 4, "SceneRoots.m_Roots")
+    elif cls == 114:  # MonoBehaviours: entity targets are GameObjects; relocator targets are Transforms
+        is_relocator = "locationKey:" in block
+        for t in re.findall(r"^    target: \{fileID: (\d+)\}$", block, re.M):
+            _ref_class_err(int(t), 4 if is_relocator else 1,
+                           "%s target" % ("NpcRelocator" if is_relocator else "entity binding"))
+
 # ---------------------------------------------------------------- 4. scene sanity
 root_count = len(re.findall(r"^  - \{fileID: \d+\}$", scene_txt.split("SceneRoots:")[-1], re.M)) if "SceneRoots:" in scene_txt else 0
 print("Scene roots:", root_count)

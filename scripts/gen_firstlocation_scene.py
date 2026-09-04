@@ -115,6 +115,7 @@ out = ["%YAML 1.1", "%TAG !u! tag:unity3d.com,2011:"]
 fid = [1000]
 blocks = []
 root_gids = []
+go2tid = {}  # GameObject id -> its Transform id (SceneRoots must reference Transforms)
 
 def nid():
     fid[0] += 2
@@ -269,6 +270,7 @@ GameObject:
   m_Name: %s
   m_Tag: Untagged
   m_IsActive: %d""" % (g, "\n".join(comp_lines), name, is_active))
+    go2tid[g] = ids["transform"]
     return g, ids
 
 def euler_to_quat(euler_xyz):
@@ -635,7 +637,7 @@ m_tide  = emit_marker("Seq_Tide_Marker", "M_Seq_Tide", (-3.2, 0, -3.2))
 m_stone = emit_marker("Seq_Stone_Marker", "M_Seq_Stone", (0, 0, 3.2))
 
 # ---- tide bystanders (the twins; exist only on the Tide path) ----
-by_gid, _, _ = emit_char_root("Seq_Tide_Bystanders", [], (14.5, 0, 0), (0, -90, 0), 0, [
+by_gid, by_ids, _ = emit_char_root("Seq_Tide_Bystanders", [], (14.5, 0, 0), (0, -90, 0), 0, [
     ("Civilian_1", "M_Npc_Civilian", CAPSULE, (0, 0.78, 0), (0.5, 0.66, 0.5)),
     ("Civilian_1_Head", "M_Npc_Civilian", SPHERE, (0, 1.5, 0), (0.30, 0.30, 0.30)),
     ("Civilian_2", "M_Npc_Civilian", CAPSULE, (1.1, 0.78, 0), (0.5, 0.62, 0.5)),
@@ -898,7 +900,7 @@ calm_gid, _, _ = emit_char_root("Seq_Tide_Calm", [], (14.5, 0, 0), (0, -90, 0), 
 
 # ---- Twins return point (child of the tide bystanders; exists when they do) ----
 twins_return_gid, twins_return_ids = emit_gameobject("TwinsReturnPoint", ["transform", "action"])
-emit_transform(twins_return_ids["transform"], twins_return_gid, (0.4, 0, 0.9), (0, 0, 0), (1, 1, 1), father=by_gid)
+emit_transform(twins_return_ids["transform"], twins_return_gid, (0.4, 0, 0.9), (0, 0, 0), (1, 1, 1), father=by_ids["transform"])
 emit_monobehaviour(twins_return_ids["action"], twins_return_gid, REG["WorldActionInteractable.cs"],
     world_action_fields(
         "Return the keepsake",
@@ -1032,7 +1034,7 @@ emit_monobehaviour(ids["worldstate"], gid, REG["StoryWorldState.cs"],
 root_gids.append(gid)
 
 # ---- SceneRoots (root order, Unity 6) ----
-roots_txt = "\n".join("  - {fileID: %d}" % g for g in root_gids)
+roots_txt = "\n".join("  - {fileID: %d}" % go2tid[g] for g in root_gids)
 add_block("""--- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

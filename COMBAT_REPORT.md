@@ -86,7 +86,12 @@ Re-run: `cd scripts/decision_system_tests && mcs -langversion:latest -define:ENA
 3. **Var changes don't autosave by themselves** (counters churn); the player controller therefore persists explicitly on defeat/revive via the existing `PersistNow(autosaveMirror:true)` — test [48] mirrors the controller and proves `times_felled`/`player_hp` survive a restart.
 4. **No Narrative→Gameplay dependency added.** Combat content lives in `ContentData` (Narrative) as plain data; the Gameplay runtime reads it through the existing content service. Consequences flow only through `EffectApplier` — one write path for decisions, objectives and combat alike.
 5. **Ability integration is consume-only.** `CombatDirector` subscribes to the same `AbilityUsedEvent` the HUD/VFX already use; blocked/cooling-down abilities never emit, so combat can't fire them — asserted in test [45].
+6. **Latent scene-reference bug (found while rendering the project map, fixed).** `SceneRoots.m_Roots` listed **GameObject** ids where Unity expects **Transform** ids, and `TwinsReturnPoint.m_Father` pointed at the bystanders' GameObject instead of its Transform — both pre-dating the combat phase and invisible to needle checks. `gen_firstlocation_scene.py` now maps GO→Transform ids for roots and parents, and `validate_assets.py` gained a **scene reference-type check** (father/children/roots must be class-4 Transforms; entity targets class-1 GameObjects; relocator targets Transforms) so the whole class of bug is permanently guarded. Scene regenerated; 145 roots verified.
 
 ## 9. Commit
 
+Scene-reference fix + project map: see the follow-up commit below.
+
 Feature commit: **`ad0d030`** — *"Core action & combat system: Gameplay/Combat (CombatantState, EnemyBrain FSM, EnemyAgent, PlayerCombatController, CombatDirector, CombatResolution, CombatEvents), data-driven damage types/attacks/statuses/ability payloads/enemy archetypes/player settings, Choir Warden prototype + west-transept test area, defeat consequences via EffectApplier + hunt objective + Sera Shieldmate state, mobile CombatHUD, non-destructive player defeat policy, 689/689 tests + asset/scene regen + validation"* (43 files, +4696/−46).
+
+Follow-up (scene reference-type fix, validator guard, `render_scene_map.py` + `PROJECT_MAP.png` + in-engine concept render): recorded in git history immediately after `36f205f`.
