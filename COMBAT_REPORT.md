@@ -89,4 +89,4 @@ Re-run: `cd scripts/decision_system_tests && mcs -langversion:latest -define:ENA
 
 ## 9. Commit
 
-See the feature commit recorded below.
+Feature commit: **`ad0d030`** — *"Core action & combat system: Gameplay/Combat (CombatantState, EnemyBrain FSM, EnemyAgent, PlayerCombatController, CombatDirector, CombatResolution, CombatEvents), data-driven damage types/attacks/statuses/ability payloads/enemy archetypes/player settings, Choir Warden prototype + west-transept test area, defeat consequences via EffectApplier + hunt objective + Sera Shieldmate state, mobile CombatHUD, non-destructive player defeat policy, 689/689 tests + asset/scene regen + validation"* (43 files, +4696/−46).
