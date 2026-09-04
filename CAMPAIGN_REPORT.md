@@ -144,4 +144,4 @@ Per scope: no full story, no large enemy roster, no multiplayer, no advanced AI.
 
 ## 9. Commit
 
-Feature commit: **`<HASH>`** — *"Core branching campaign system: data-driven chapters/beats/branches (CampaignManager + CampaignServices, CampaignEvents, CampaignHUD), v5 save fields + LoadFrom restore + Normalize guards, stone-route failure-as-recovery, sera side branches (bond-gated confide, ability-gated second door), ch_whispers chained by data, content+builder+asset regen, deep completionEffects validation, CampaignTests 57–63; 853/853 checks + validation + both compile configs"*.
+Feature commit: **`bb924c3`** — *"Core branching campaign system: data-driven chapters/beats/branches (CampaignManager + CampaignServices, CampaignEvents, CampaignHUD), v5 save fields + LoadFrom restore + Normalize guards, stone-route failure-as-recovery, sera side branches (bond-gated confide, ability-gated second door), ch_whispers chained by data, content+builder+asset regen, deep completionEffects validation, CampaignTests 57–63; 853/853 checks + validation + both compile configs"*.
