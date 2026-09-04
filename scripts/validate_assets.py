@@ -177,6 +177,60 @@ else:
                             if (la.get("description") or "") != (lb.get("description") or ""):
                                 errors.append("ability %s Lv%s description mismatch" % (rb.get("id"), lb.get("level")))
 
+        # objectives (data-driven mission system, Gameplay/World)
+        if len(data.get("objectives", [])) != len(content.get("objectives", [])):
+            errors.append("objective count mismatch")
+        for oa, ob in zip(data.get("objectives", []), content.get("objectives", [])):
+            for k in ("id", "title", "description", "type", "areaId", "giverNpcId",
+                      "counterVar", "counterTarget", "counterText",
+                      "completionNotice", "failureNotice"):
+                if str(oa.get(k)) != str(ob.get(k)):
+                    errors.append("objective %s: %s asset=%r json=%r" % (ob.get("id"), k, oa.get(k), ob.get(k)))
+            if int(oa.get("autoActivate", 1)) != int(ob.get("autoActivate", 1)):
+                errors.append("objective %s autoActivate mismatch" % ob.get("id"))
+            for lst_a, lst_b, lbl in ((oa["offerConditions"], ob["offerConditions"], "offerConditions"),
+                                      (oa["completeConditions"], ob["completeConditions"], "completeConditions"),
+                                      (oa["failConditions"], ob["failConditions"], "failConditions"),
+                                      (oa["consequences"], ob["consequences"], "consequences"),
+                                      (oa["failureConsequences"], ob["failureConsequences"], "failureConsequences")):
+                if len(lst_a) != len(lst_b):
+                    errors.append("objective %s %s count mismatch" % (ob.get("id"), lbl))
+                    continue
+                for x, y in zip(lst_a, lst_b):
+                    for k in ("type", "key", "value", "amount"):
+                        if not _same(x.get(k), y.get(k)):
+                            errors.append("objective %s %s.%s: asset=%r json=%r" % (ob.get("id"), lbl, k, x.get(k), y.get(k)))
+            if len(oa.get("steps", [])) != len(ob.get("steps", [])):
+                errors.append("objective %s step count mismatch" % ob.get("id"))
+            else:
+                for sa, sb in zip(oa.get("steps", []), ob.get("steps", [])):
+                    if sa.get("text", "") != sb.get("text", ""):
+                        errors.append("objective %s step text mismatch" % ob.get("id"))
+                    if len(sa.get("conditions", [])) != len(sb.get("conditions", [])):
+                        errors.append("objective %s step conditions count mismatch" % ob.get("id"))
+                    else:
+                        for x, y in zip(sa.get("conditions", []), sb.get("conditions", [])):
+                            for k in ("type", "key", "value", "amount"):
+                                if not _same(x.get(k), y.get(k)):
+                                    errors.append("objective %s step cond.%s: asset=%r json=%r" % (ob.get("id"), k, x.get(k), y.get(k)))
+            if [f for f in oa.get("followUps", [])] != [f for f in ob.get("followUps", [])]:
+                errors.append("objective %s followUps mismatch" % ob.get("id"))
+
+        # world interactions (unlock registry)
+        if len(data.get("worldInteractions", [])) != len(content.get("worldInteractions", [])):
+            errors.append("worldInteraction count mismatch")
+        for wa, wb in zip(data.get("worldInteractions", []), content.get("worldInteractions", [])):
+            for k in ("key", "label"):
+                if wa.get(k) != wb.get(k):
+                    errors.append("worldInteraction %s: %s asset=%r json=%r" % (wb.get("key"), k, wa.get(k), wb.get(k)))
+            if len(wa.get("conditions", [])) != len(wb.get("conditions", [])):
+                errors.append("worldInteraction %s conditions count mismatch" % wb.get("key"))
+                continue
+            for x, y in zip(wa.get("conditions", []), wb.get("conditions", [])):
+                for k in ("type", "key", "value", "amount"):
+                    if not _same(x.get(k), y.get(k)):
+                        errors.append("worldInteraction %s cond.%s: asset=%r json=%r" % (wb.get("key"), k, x.get(k), y.get(k)))
+
         # npcs (data-driven NPC definitions)
         def _n(v):
             if isinstance(v, bool): return str(int(v))
@@ -248,15 +302,22 @@ root_count = len(re.findall(r"^  - \{fileID: \d+\}$", scene_txt.split("SceneRoot
 print("Scene roots:", root_count)
 for needle in ["Mara_NPC", "Sera_NPC", "EchoShard", "EnergySeal",
                "Seq_Ember_Marker", "Seq_Tide_Marker", "Seq_Stone_Marker", "Seq_Tide_Bystanders",
+               "Seq_Tide_Calm", "TwinsReturnPoint",
                "AreaTrigger_Annex", "AreaTrigger_Hall", "SM_WallPanel_flank", "m_IsActive: 0",
                "npcId: mara", "npcId: sera",
                "encounterId: c1_hall_shard",
+               "ChoirBeacon", "EmberCache", "KeepsakeCrate", "Barricade", "WardStone", "Rubble",
+               "NpcRelocator", "Loc_Sera_AnnexGate", "locationKey: annex_gate",
+               "useCountVar: brace_count", "useCountVar: rubble_count",
+               "key: choir_beacon", "key: ember_cache", "key: keepsake_crate",
+               "key: barricade", "key: barricade_rubble", "key: tide_calm",
                "areaId: annex", "defaultActive: 1", "m_IsTrigger: 1"]:
     if needle not in scene_txt:
         errors.append("scene missing: " + needle)
 
 for script_key in ["NpcAgent.cs", "NpcInteractable.cs", "StoryWorldState.cs", "StoryModeBootstrap.cs",
-                   "GameUIBootstrap.cs", "AreaGate.cs", "StoryEventInteractable.cs", "AreaTrigger.cs"]:
+                   "GameUIBootstrap.cs", "AreaGate.cs", "StoryEventInteractable.cs", "AreaTrigger.cs",
+                   "WorldActionInteractable.cs", "NpcRelocator.cs"]:
     if scene_txt.count(registry[script_key]) == 0:
         errors.append("scene does not reference %s" % script_key)
 

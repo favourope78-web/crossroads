@@ -1,5 +1,5 @@
 {
- "_comment": "Prototype story content for CROSSROADS (decision + progression phase). Generated into ScriptableObject assets by gen_story_content.py and mirrored by StoryContentBuilder.cs (validated by validate_assets.py). Enums are the ints from ContentData.cs (ConditionType: FlagIs=0 FlagIsNot=1 FlagMissing=2 VarAtLeast=3 AffinityAtLeast=4 BondAtLeast=5 DecisionWas=6 DecisionNotMade=7 CodexOwned=8 ReputationAtLeast=9 ItemHeld=10 AbilityOwned=11 AreaUnlocked=12 SkillAtLeast=13 | EffectType: SetFlag=0 ClearFlag=1 AddAffinity=2 SetAffinity=3 AddBond=4 SetVar=5 AddVar=6 SetWorldState=7 SpawnEntity=8 AddCodex=9 GrantEchoes=10 AddReputation=11 SetReputation=12 UnlockAbility=13 AddSkillLevel=14 AddItem=15 RemoveItem=16 UnlockArea=17).",
+ "_comment": "Prototype story content for CROSSROADS (decision + progression + world/objective phase). Generated into ScriptableObject assets by gen_story_content.py and mirrored by StoryContentBuilder.cs (validated by validate_assets.py). Enums are the ints from ContentData.cs (ConditionType: FlagIs=0 FlagIsNot=1 FlagMissing=2 VarAtLeast=3 AffinityAtLeast=4 BondAtLeast=5 DecisionWas=6 DecisionNotMade=7 CodexOwned=8 ReputationAtLeast=9 ItemHeld=10 AbilityOwned=11 AreaUnlocked=12 SkillAtLeast=13 EchoesAtLeast=14 AbilityLevelBelow=15 ObjectiveActive=16 ObjectiveCompleted=17 ObjectiveFailed=18 WorldStateIs=19 | EffectType: SetFlag=0 ClearFlag=1 AddAffinity=2 SetAffinity=3 AddBond=4 SetVar=5 AddVar=6 SetWorldState=7 SpawnEntity=8 AddCodex=9 GrantEchoes=10 AddReputation=11 SetReputation=12 UnlockAbility=13 AddSkillLevel=14 AddItem=15 RemoveItem=16 UnlockArea=17 UpgradeAbility=18 BlockAbility=19 MoveNpc=20 CloseArea=21 ReopenArea=22 UnlockInteraction=23 | ObjectiveType: Main=0 Side=1 Crisis=2 Recovery=3).",
  "libraryName": "CL_C1_StoryContent",
  "progression": {
   "abilities": [
@@ -160,6 +160,16 @@
     "id": "echo_shard",
     "name": "Fracture Shard",
     "description": "A cold-warm sliver of the Fracture light. It held still for you."
+   },
+   {
+    "id": "twins_keepsake",
+    "name": "Twins' Keepsake",
+    "description": "A stamped tin locket, warm from being held too tight. It belongs to the twins by the east columns."
+   },
+   {
+    "id": "ember_core",
+    "name": "Ember Core",
+    "description": "What the beacon guarded before it forgot your name. It hums with banked heat."
    }
   ],
   "reputationGroups": [
@@ -222,6 +232,12 @@
    "id": "c1_east_shrine",
    "npcName": "Echo Shrine",
    "graphId": "g_c1_east_shrine",
+   "startNodeId": "start"
+  },
+  {
+   "id": "c1_hall_mara_report",
+   "npcName": "Mara",
+   "graphId": "g_c1_hall_mara_report",
    "startNodeId": "start"
   }
  ],
@@ -950,6 +966,61 @@
      "afterText": "You step back. The plinth dims, patient as stone.",
      "conditions": [],
      "effects": []
+    }
+   ]
+  },
+  {
+   "id": "dec_tide_report",
+   "promptText": "Mara waits by the east columns. What do you tell her about the twins?",
+   "timeLimitSeconds": 0.0,
+   "timeoutOptionIndex": 0,
+   "codexEntryId": "c1_tide_report",
+   "options": [
+    {
+     "id": "tell_all",
+     "text": "Everything. The rush, the light, the small hand in yours.",
+     "afterText": "Mara listens to all of it, and something in her shoulders lets go.",
+     "conditions": [],
+     "effects": [
+      {
+       "type": 0,
+       "key": "tide_reported",
+       "value": "1",
+       "amount": 0
+      },
+      {
+       "type": 4,
+       "key": "mara",
+       "value": "",
+       "amount": 5
+      },
+      {
+       "type": 2,
+       "key": "tide",
+       "value": "",
+       "amount": 5
+      }
+     ]
+    },
+    {
+     "id": "keep_light",
+     "text": "That it went fine. Some things should stay theirs.",
+     "afterText": "Mara nods once, letting it be - but she catches your sleeve before you go.",
+     "conditions": [],
+     "effects": [
+      {
+       "type": 0,
+       "key": "tide_reported",
+       "value": "1",
+       "amount": 0
+      },
+      {
+       "type": 4,
+       "key": "mara",
+       "value": "",
+       "amount": 2
+      }
+     ]
     }
    ]
   }
@@ -1803,6 +1874,119 @@
      "conditions": []
     }
    ]
+  },
+  {
+   "id": "g_c1_hall_mara_report",
+   "nodes": [
+    {
+     "id": "start",
+     "speaker": "",
+     "text": "",
+     "nextId": "",
+     "branchPrefix": "report_line",
+     "decisionId": "",
+     "conditions": [],
+     "end": false
+    },
+    {
+     "id": "report_line_done",
+     "speaker": "Mara",
+     "text": "You told me. I keep replaying it - the good part. Thank you for that.",
+     "nextId": "end",
+     "branchPrefix": "",
+     "decisionId": "",
+     "conditions": [
+      {
+       "type": 6,
+       "key": "dec_tide_report",
+       "value": "",
+       "amount": 0
+      }
+     ],
+     "end": false
+    },
+    {
+     "id": "report_line_keepsake",
+     "speaker": "Mara",
+     "text": "You found it? The locket? Ari, they've been asking everyone for a week.",
+     "nextId": "report_offer",
+     "branchPrefix": "",
+     "decisionId": "",
+     "conditions": [
+      {
+       "type": 17,
+       "key": "obj_tide_keepsake",
+       "value": "",
+       "amount": 0
+      }
+     ],
+     "end": false
+    },
+    {
+     "id": "report_line_default",
+     "speaker": "Mara",
+     "text": "The twins, the light, all of it - I want to hear how you're carrying it.",
+     "nextId": "report_offer",
+     "branchPrefix": "",
+     "decisionId": "",
+     "conditions": [],
+     "end": false
+    },
+    {
+     "id": "report_offer",
+     "speaker": "",
+     "text": "",
+     "nextId": "",
+     "branchPrefix": "report_after",
+     "decisionId": "dec_tide_report",
+     "conditions": [],
+     "end": false
+    },
+    {
+     "id": "report_after_tell",
+     "speaker": "Mara",
+     "text": "'That's who you are now,' she says. 'Don't lose them to the light.'",
+     "nextId": "end",
+     "branchPrefix": "",
+     "decisionId": "",
+     "conditions": [
+      {
+       "type": 6,
+       "key": "dec_tide_report",
+       "value": "tell_all",
+       "amount": 0
+      }
+     ],
+     "end": false
+    },
+    {
+     "id": "report_after_keep",
+     "speaker": "Mara",
+     "text": "'Then it's theirs,' she agrees. 'But you're allowed to be proud of it.'",
+     "nextId": "end",
+     "branchPrefix": "",
+     "decisionId": "",
+     "conditions": [
+      {
+       "type": 6,
+       "key": "dec_tide_report",
+       "value": "keep_light",
+       "amount": 0
+      }
+     ],
+     "end": false
+    },
+    {
+     "id": "end",
+     "speaker": "",
+     "text": "",
+     "nextId": "",
+     "branchPrefix": "",
+     "decisionId": "",
+     "conditions": [],
+     "end": true
+    }
+   ]
   }
  ],
  "npcs": [
@@ -1826,6 +2010,22 @@
     {
      "conditions": [
       {
+       "type": 17,
+       "key": "obj_tide_report",
+       "value": "",
+       "amount": 0
+      }
+     ],
+     "title": "Mara · Heartened",
+     "moodLine": "Mara stands easier since you told her how it felt.",
+     "approachDistance": 1.2,
+     "avoidDistance": -1.0,
+     "moveSpeed": -1.0,
+     "reactRadius": -1.0
+    },
+    {
+     "conditions": [
+      {
        "type": 5,
        "key": "mara",
        "value": "",
@@ -1841,6 +2041,25 @@
     }
    ],
    "interactions": [
+    {
+     "id": "report",
+     "label": "Tell her about the twins",
+     "encounterId": "c1_hall_mara_report",
+     "conditions": [
+      {
+       "type": 17,
+       "key": "obj_tide_keepsake",
+       "value": "",
+       "amount": 0
+      },
+      {
+       "type": 7,
+       "key": "dec_tide_report",
+       "value": "",
+       "amount": 0
+      }
+     ]
+    },
     {
      "id": "confide",
      "label": "Comfort Mara",
@@ -1897,6 +2116,38 @@
     "usesRoutine": 1
    },
    "states": [
+    {
+     "conditions": [
+      {
+       "type": 17,
+       "key": "obj_ember_beacon",
+       "value": "",
+       "amount": 0
+      }
+     ],
+     "title": "Sera · Vanguard",
+     "moodLine": "'The beacon's quiet. First time in days I can hear myself think.' Sera takes her watch by the annex gate.",
+     "approachDistance": 1.4,
+     "avoidDistance": 0.0,
+     "moveSpeed": 1.0,
+     "reactRadius": -1.0
+    },
+    {
+     "conditions": [
+      {
+       "type": 17,
+       "key": "obj_stone_barricade",
+       "value": "",
+       "amount": 0
+      }
+     ],
+     "title": "Sera · Steadied",
+     "moodLine": "'It held. You held it.' Sera's shoulders drop an inch.",
+     "approachDistance": 1.5,
+     "avoidDistance": 0.0,
+     "moveSpeed": 1.0,
+     "reactRadius": -1.0
+    },
     {
      "conditions": [
       {
@@ -2015,6 +2266,569 @@
       "z": 2.2
      },
      "dwellSeconds": 2.0
+    }
+   ]
+  }
+ ],
+ "objectives": [
+  {
+   "id": "obj_ember_beacon",
+   "title": "Silence the Choir Beacon",
+   "description": "The Choir's beacon in the north annex marks everyone the light touched - starting with you. Ember answers heat: make the beacon forget your name.",
+   "type": 0,
+   "areaId": "annex",
+   "giverNpcId": "",
+   "offerConditions": [
+    {
+     "type": 6,
+     "key": "dec_c1_hall_first_light",
+     "value": "ember_reach",
+     "amount": 0
+    }
+   ],
+   "autoActivate": true,
+   "completeConditions": [
+    {
+     "type": 0,
+     "key": "beacon_silenced",
+     "value": "1",
+     "amount": 0
+    }
+   ],
+   "failConditions": [],
+   "counterVar": "",
+   "counterTarget": 0,
+   "counterText": "",
+   "steps": [],
+   "consequences": [
+    {
+     "type": 7,
+     "key": "annex",
+     "value": "quiet",
+     "amount": 0
+    },
+    {
+     "type": 8,
+     "key": "ember_cache",
+     "value": "1",
+     "amount": 0
+    },
+    {
+     "type": 11,
+     "key": "choir",
+     "value": "",
+     "amount": -10
+    },
+    {
+     "type": 11,
+     "key": "folk",
+     "value": "",
+     "amount": 5
+    },
+    {
+     "type": 4,
+     "key": "sera",
+     "value": "",
+     "amount": 4
+    },
+    {
+     "type": 20,
+     "key": "sera",
+     "value": "annex_gate",
+     "amount": 0
+    },
+    {
+     "type": 10,
+     "key": "",
+     "value": "",
+     "amount": 10
+    },
+    {
+     "type": 9,
+     "key": "c1_beacon_silenced",
+     "value": "",
+     "amount": 0
+    }
+   ],
+   "failureConsequences": [],
+   "followUps": [
+    "obj_ember_cache"
+   ],
+   "completionNotice": "Objective complete - the beacon no longer knows your name.",
+   "failureNotice": ""
+  },
+  {
+   "id": "obj_ember_cache",
+   "title": "Claim the Ember Cache",
+   "description": "Where the beacon stood, the hall left a gift for the hand that quieted it. Open the cache.",
+   "type": 1,
+   "areaId": "annex",
+   "giverNpcId": "",
+   "offerConditions": [
+    {
+     "type": 17,
+     "key": "obj_ember_beacon",
+     "value": "",
+     "amount": 0
+    }
+   ],
+   "autoActivate": true,
+   "completeConditions": [
+    {
+     "type": 0,
+     "key": "ember_cache_opened",
+     "value": "1",
+     "amount": 0
+    }
+   ],
+   "failConditions": [],
+   "counterVar": "",
+   "counterTarget": 0,
+   "counterText": "",
+   "steps": [],
+   "consequences": [
+    {
+     "type": 15,
+     "key": "ember_core",
+     "value": "",
+     "amount": 0
+    },
+    {
+     "type": 10,
+     "key": "",
+     "value": "",
+     "amount": 15
+    },
+    {
+     "type": 9,
+     "key": "c1_ember_cache",
+     "value": "",
+     "amount": 0
+    }
+   ],
+   "failureConsequences": [],
+   "followUps": [],
+   "completionNotice": "Objective complete - the hall's gift is yours.",
+   "failureNotice": ""
+  },
+  {
+   "id": "obj_tide_keepsake",
+   "title": "The Twins' Keepsake",
+   "description": "The twins you pulled clear lost their mother's keepsake in the rush. The tide left it glinting by the east columns - find it and bring it back.",
+   "type": 0,
+   "areaId": "hall",
+   "giverNpcId": "sera",
+   "offerConditions": [
+    {
+     "type": 6,
+     "key": "dec_c1_hall_first_light",
+     "value": "tide_clear",
+     "amount": 0
+    }
+   ],
+   "autoActivate": true,
+   "completeConditions": [
+    {
+     "type": 0,
+     "key": "keepsake_returned",
+     "value": "1",
+     "amount": 0
+    }
+   ],
+   "failConditions": [],
+   "counterVar": "",
+   "counterTarget": 0,
+   "counterText": "",
+   "steps": [
+    {
+     "text": "Find the keepsake by the east columns",
+     "conditions": [
+      {
+       "type": 0,
+       "key": "keepsake_found",
+       "value": "1",
+       "amount": 0
+      }
+     ]
+    },
+    {
+     "text": "Bring it back to the twins",
+     "conditions": [
+      {
+       "type": 0,
+       "key": "keepsake_returned",
+       "value": "1",
+       "amount": 0
+      }
+     ]
+    }
+   ],
+   "consequences": [
+    {
+     "type": 4,
+     "key": "sera",
+     "value": "",
+     "amount": 8
+    },
+    {
+     "type": 11,
+     "key": "folk",
+     "value": "",
+     "amount": 6
+    },
+    {
+     "type": 8,
+     "key": "tide_bystanders",
+     "value": "0",
+     "amount": 0
+    },
+    {
+     "type": 8,
+     "key": "tide_calm",
+     "value": "1",
+     "amount": 0
+    },
+    {
+     "type": 7,
+     "key": "hall",
+     "value": "twins_blessed",
+     "amount": 0
+    },
+    {
+     "type": 10,
+     "key": "",
+     "value": "",
+     "amount": 10
+    },
+    {
+     "type": 9,
+     "key": "c1_twins_keepsake",
+     "value": "",
+     "amount": 0
+    }
+   ],
+   "failureConsequences": [],
+   "followUps": [
+    "obj_tide_report"
+   ],
+   "completionNotice": "Objective complete - the twins hold their mother's keepsake again.",
+   "failureNotice": ""
+  },
+  {
+   "id": "obj_tide_report",
+   "title": "Tell Mara What the Light Did",
+   "description": "Mara has been watching since the light chose you. She should hear what the twins' gratitude looked like.",
+   "type": 1,
+   "areaId": "hall",
+   "giverNpcId": "mara",
+   "offerConditions": [
+    {
+     "type": 17,
+     "key": "obj_tide_keepsake",
+     "value": "",
+     "amount": 0
+    }
+   ],
+   "autoActivate": true,
+   "completeConditions": [
+    {
+     "type": 6,
+     "key": "dec_tide_report",
+     "value": "",
+     "amount": 0
+    }
+   ],
+   "failConditions": [],
+   "counterVar": "",
+   "counterTarget": 0,
+   "counterText": "",
+   "steps": [],
+   "consequences": [
+    {
+     "type": 4,
+     "key": "mara",
+     "value": "",
+     "amount": 5
+    },
+    {
+     "type": 2,
+     "key": "tide",
+     "value": "",
+     "amount": 5
+    },
+    {
+     "type": 9,
+     "key": "c1_tide_report",
+     "value": "",
+     "amount": 0
+    }
+   ],
+   "failureConsequences": [],
+   "followUps": [],
+   "completionNotice": "Objective complete - Mara knows what the light did.",
+   "failureNotice": ""
+  },
+  {
+   "id": "obj_stone_barricade",
+   "title": "Steady the North Barricade",
+   "description": "The Choir's next sweep will come through the north passage. The barricade holds twice as long with hands on it - or once, forever, with stillness. Careful: give your echo back to the shrine and the wood remembers gravity.",
+   "type": 2,
+   "areaId": "hall",
+   "giverNpcId": "",
+   "offerConditions": [
+    {
+     "type": 6,
+     "key": "dec_c1_hall_first_light",
+     "value": "stone_still",
+     "amount": 0
+    }
+   ],
+   "autoActivate": true,
+   "completeConditions": [
+    {
+     "type": 3,
+     "key": "brace_count",
+     "value": "",
+     "amount": 2
+    }
+   ],
+   "failConditions": [
+    {
+     "type": 0,
+     "key": "c1_echo_sealed",
+     "value": "1",
+     "amount": 0
+    }
+   ],
+   "counterVar": "brace_count",
+   "counterTarget": 2,
+   "counterText": "Braces set",
+   "steps": [],
+   "consequences": [
+    {
+     "type": 11,
+     "key": "wards",
+     "value": "",
+     "amount": 8
+    },
+    {
+     "type": 11,
+     "key": "folk",
+     "value": "",
+     "amount": 3
+    },
+    {
+     "type": 4,
+     "key": "mara",
+     "value": "",
+     "amount": 2
+    },
+    {
+     "type": 7,
+     "key": "hall",
+     "value": "barricade_held",
+     "amount": 0
+    },
+    {
+     "type": 10,
+     "key": "",
+     "value": "",
+     "amount": 10
+    },
+    {
+     "type": 9,
+     "key": "c1_barricade_held",
+     "value": "",
+     "amount": 0
+    }
+   ],
+   "failureConsequences": [
+    {
+     "type": 8,
+     "key": "barricade",
+     "value": "0",
+     "amount": 0
+    },
+    {
+     "type": 8,
+     "key": "barricade_rubble",
+     "value": "1",
+     "amount": 0
+    },
+    {
+     "type": 7,
+     "key": "hall",
+     "value": "barricade_fell",
+     "amount": 0
+    },
+    {
+     "type": 11,
+     "key": "wards",
+     "value": "",
+     "amount": -6
+    },
+    {
+     "type": 21,
+     "key": "annex",
+     "value": "",
+     "amount": 0
+    },
+    {
+     "type": 9,
+     "key": "c1_barricade_fell",
+     "value": "",
+     "amount": 0
+    }
+   ],
+   "followUps": [
+    "obj_stone_rebuild"
+   ],
+   "completionNotice": "Objective complete - the north passage will hold.",
+   "failureNotice": "Objective failed - you gave your stillness back, and the barricade fell."
+  },
+  {
+   "id": "obj_stone_rebuild",
+   "title": "Clear the Fallen Barricade",
+   "description": "Stillness was given back, and the wood remembered gravity. Clear the rubble - the passage is needed either way.",
+   "type": 3,
+   "areaId": "hall",
+   "giverNpcId": "",
+   "offerConditions": [
+    {
+     "type": 18,
+     "key": "obj_stone_barricade",
+     "value": "",
+     "amount": 0
+    }
+   ],
+   "autoActivate": true,
+   "completeConditions": [
+    {
+     "type": 3,
+     "key": "rubble_count",
+     "value": "",
+     "amount": 2
+    }
+   ],
+   "failConditions": [],
+   "counterVar": "rubble_count",
+   "counterTarget": 2,
+   "counterText": "Rubble cleared",
+   "steps": [],
+   "consequences": [
+    {
+     "type": 11,
+     "key": "folk",
+     "value": "",
+     "amount": 3
+    },
+    {
+     "type": 7,
+     "key": "hall",
+     "value": "passage_cleared",
+     "amount": 0
+    },
+    {
+     "type": 22,
+     "key": "annex",
+     "value": "",
+     "amount": 0
+    },
+    {
+     "type": 10,
+     "key": "",
+     "value": "",
+     "amount": 5
+    }
+   ],
+   "failureConsequences": [],
+   "followUps": [],
+   "completionNotice": "Objective complete - the passage is clear again.",
+   "failureNotice": ""
+  }
+ ],
+ "worldInteractions": [
+  {
+   "key": "choir_beacon_channel",
+   "label": "Channel ember into the beacon",
+   "conditions": [
+    {
+     "type": 11,
+     "key": "ember_pulse",
+     "value": "",
+     "amount": 0
+    }
+   ]
+  },
+  {
+   "key": "ember_cache_open",
+   "label": "Open the ember cache",
+   "conditions": [
+    {
+     "type": 0,
+     "key": "beacon_silenced",
+     "value": "1",
+     "amount": 0
+    }
+   ]
+  },
+  {
+   "key": "keepsake_search",
+   "label": "Search the crate",
+   "conditions": [
+    {
+     "type": 0,
+     "key": "c1_hall_drive",
+     "value": "tide",
+     "amount": 0
+    }
+   ]
+  },
+  {
+   "key": "keepsake_return",
+   "label": "Return the keepsake",
+   "conditions": [
+    {
+     "type": 10,
+     "key": "twins_keepsake",
+     "value": "",
+     "amount": 0
+    }
+   ]
+  },
+  {
+   "key": "barricade_brace",
+   "label": "Brace the barricade",
+   "conditions": [
+    {
+     "type": 0,
+     "key": "c1_hall_drive",
+     "value": "stone",
+     "amount": 0
+    }
+   ]
+  },
+  {
+   "key": "barricade_wedge",
+   "label": "Wedge the line with stillness",
+   "conditions": [
+    {
+     "type": 11,
+     "key": "stone_ward",
+     "value": "",
+     "amount": 0
+    }
+   ]
+  },
+  {
+   "key": "rubble_clear",
+   "label": "Clear the rubble",
+   "conditions": [
+    {
+     "type": 19,
+     "key": "hall",
+     "value": "barricade_fell",
+     "amount": 0
     }
    ]
   }

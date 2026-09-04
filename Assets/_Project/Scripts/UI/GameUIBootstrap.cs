@@ -14,6 +14,7 @@ namespace Crossroads.UI
         private StateHUD _state;
         private ToastUI _toast;
         private AbilityHUD _abilities;
+        private ObjectiveHUD _objectives;
 
         private void Awake()
         {
@@ -25,8 +26,9 @@ namespace Crossroads.UI
             _state = StateHUD.Attach(safe);
             _toast = ToastUI.Attach(safe);
             _abilities = AbilityHUD.Attach(safe);
+            _objectives = ObjectiveHUD.Attach(safe);
 
-            Debug.Log("[CROSSROADS] Game UI ready (canvas + dialogue + HUD)");
+            Debug.Log("[CROSSROADS] Game UI ready (canvas + dialogue + HUD + objectives)");
         }
 
         private void Start()
@@ -36,6 +38,7 @@ namespace Crossroads.UI
             _interaction.Hide();
             _dialogue.HideSilently();
             _abilities.Refresh();
+            _objectives.Refresh();
         }
     }
 }

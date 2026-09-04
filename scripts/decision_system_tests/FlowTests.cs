@@ -1078,10 +1078,15 @@ namespace Crossroads.Tests
             Check(mara != null && sera != null, "mara + sera definitions present");
             Check(mara.displayName == "Mara" && mara.sheetRef == "REF-02", "mara identity + CHARACTER_REFERENCE sheet ref");
             Check(mara.behaviour.personality == NpcPersonality.Friendly, "mara personality: Friendly (approaches)");
-            Check(mara.states.Count == 1 && mara.states[0].conditions.Count == 1
-                  && mara.states[0].conditions[0].type == ConditionType.BondAtLeast, "mara fate state is bond-gated (relationship)");
+            Check(mara.states.Count == 2 && mara.states[1].conditions.Count == 1
+                  && mara.states[1].conditions[0].type == ConditionType.BondAtLeast, "mara bond fate state present (relationship)");
+            Check(mara.states[0].conditions.Count == 1
+                  && mara.states[0].conditions[0].type == ConditionType.ObjectiveCompleted, "mara objective-driven fate state present (reacts to missions)");
+            Check(mara.FindInteraction("report") != null
+                  && mara.FindInteraction("report").conditions[0].type == ConditionType.ObjectiveCompleted,
+                  "mara 'report' interaction is objective-gated");
             Check(sera.behaviour.personality == NpcPersonality.Wary, "sera personality: Wary (keeps distance)");
-            CheckEq(sera.states.Count, 5, "sera has drive states + ability-reaction states");
+            CheckEq(sera.states.Count, 7, "sera has drive + ability + objective-reaction states");
             Check(sera.FindInteraction("show_shard").conditions[0].type == ConditionType.ItemHeld, "sera shard interaction is item-gated");
 
             bool allResolve = true;
@@ -1440,8 +1445,15 @@ namespace Crossroads.Tests
             TestAbilityBlockAndNpcReaction();
             TestAbilityPersistence();
 
+            // world state + objective/mission system (Gameplay/World)
+            int worldPassed, worldFailed;
+            WorldTests.RunAll(out worldPassed, out worldFailed);
+            _passed += worldPassed;
+            _failed += worldFailed;
+
             Console.WriteLine("======================================");
             foreach (var line in Log) Console.WriteLine(line);
+            foreach (var line in WorldTests.GetLog()) Console.WriteLine(line);
             Console.WriteLine("======================================");
             Console.WriteLine("RESULT: {0} passed, {1} failed", _passed, _failed);
             return _failed == 0 ? 0 : 1;

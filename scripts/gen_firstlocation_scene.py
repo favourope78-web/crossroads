@@ -805,6 +805,168 @@ BoxCollider:
 emit_monobehaviour(trig_hall_ids["area_hall"], trig_hall_gid, REG["AreaTrigger.cs"], "  areaId: hall")
 root_gids.append(trig_hall_gid)
 
+
+# ================================================================
+# WORLD / OBJECTIVE scene additions (data-driven world actions + relocation)
+# ================================================================
+
+def cond_yaml(t, key, value='\"\"', amount=0):
+    return ("    - type: %d\n      key: %s\n      value: %s\n      amount: %d" % (t, key, value, amount))
+
+def eff_yaml(t, key, value='\"\"', amount=0):
+    return ("    - type: %d\n      key: %s\n      value: %s\n      amount: %d" % (t, key, value, amount))
+
+def world_action_fields(prompt, conds, effects, use_var, max_uses, consume,
+                        locked_notice, use_notice, locked_label, radius, priority):
+    lines = [
+        "  promptLabel: " + prompt,
+        "  interactRadius: %s" % radius,
+        "  priority: %s" % priority,
+        "  conditions:" + ("\n" + "\n".join(conds) if conds else " []"),
+        "  lockedNotice: " + locked_notice,
+        "  perUseEffects:" + ("\n" + "\n".join(effects) if effects else " []"),
+        "  useCountVar: " + use_var,
+        "  maxUses: %d" % max_uses,
+        "  consumeEntityKey: " + consume,
+        "  useNotice: " + use_notice,
+        "  spentNotice: There is nothing left to do here.",
+        "  hidePromptWhenSpent: 1",
+        "  lockedLabel: " + locked_label,
+        "  spentLabel: " + locked_label,
+    ]
+    return "\n".join(lines)
+
+# ---- Choir Beacon (annex; the ember ability gates the channel) ----
+beacon_gid, beacon_ids, _ = emit_char_root("ChoirBeacon", ["action"], (6.5, 0, 27), (0, -25, 0), 1, [
+    ("Pylon", "M_Hall_Metal", CUBE, (0, 1.15, 0), (0.42, 2.3, 0.42)),
+    ("BeaconHead", "M_Seq_Ember", SPHERE, (0, 2.55, 0), (0.55, 0.55, 0.55)),
+    ("Base", "M_Hall_Metal", CUBE, (0, 0.09, 0), (1.0, 0.18, 1.0)),
+])
+emit_monobehaviour(beacon_ids["action"], beacon_gid, REG["WorldActionInteractable.cs"],
+    world_action_fields(
+        "Choir Beacon",
+        [cond_yaml(11, "ember_pulse")],
+        [eff_yaml(0, "beacon_silenced", "\"1\"")],
+        "beacon_uses", 1, "choir_beacon",
+        "\"The beacon's light does not answer your empty hands.\"",
+        "\"Ember pours into the beacon. It forgets your name.\"",
+        "Choir Beacon", 3.2, 23))
+
+# ---- Ember Cache (spawns where the beacon stood after it is silenced) ----
+cache_gid, cache_ids, _ = emit_char_root("EmberCache", ["action"], (6.5, 0, 24.6), (0, 0, 0), 0, [
+    ("CacheBox", "M_Hall_Metal", CUBE, (0, 0.28, 0), (0.95, 0.55, 0.95)),
+    ("CacheGlow", "M_Seq_Ember", SPHERE, (0, 0.72, 0), (0.36, 0.36, 0.36)),
+])
+emit_monobehaviour(cache_ids["action"], cache_gid, REG["WorldActionInteractable.cs"],
+    world_action_fields(
+        "Ember Cache",
+        [cond_yaml(0, "beacon_silenced", "\"1\"")],
+        [eff_yaml(0, "ember_cache_opened", "\"1\""),
+         eff_yaml(15, "ember_core"),
+         eff_yaml(10, "", amount=15)],
+        "cache_uses", 1, "ember_cache",
+        "\"A seam of warmth in the floor. It is not ready to open.\"",
+        "\"The cache opens. An ember core, banked and patient.\"",
+        "Ember Cache", 3.0, 23))
+
+# ---- Keepsake Crate (hall east columns; tide path only) ----
+crate_gid, crate_ids, _ = emit_char_root("KeepsakeCrate", ["action"], (15.8, 0, 1.6), (0, 12, 0), 1, [
+    ("Crate", "M_Hall_Metal", CUBE, (0, 0.34, 0), (0.9, 0.62, 0.65)),
+    ("Lid", "M_Hall_Concrete", CUBE, (0, 0.70, 0), (0.98, 0.12, 0.72)),
+])
+emit_monobehaviour(crate_ids["action"], crate_gid, REG["WorldActionInteractable.cs"],
+    world_action_fields(
+        "Keepsake Crate",
+        [cond_yaml(0, "c1_hall_drive", "tide")],
+        [eff_yaml(15, "twins_keepsake"),
+         eff_yaml(0, "keepsake_found", "\"1\"")],
+        "crate_uses", 1, "keepsake_crate",
+        "\"A crate of run-run belongings, damp and sad. Nothing here answers you.\"",
+        "\"A tin locket, still warm. The twins' keepsake.\"",
+        "Keepsake Crate", 3.0, 22))
+
+# ---- Calm twins (spawned when the keepsake is returned; replaces the anxious pair) ----
+calm_gid, _, _ = emit_char_root("Seq_Tide_Calm", [], (14.5, 0, 0), (0, -90, 0), 0, [
+    ("Civilian_1", "M_Npc_Civilian", CAPSULE, (0, 0.40, 0), (0.5, 0.33, 0.5)),
+    ("Civilian_1_Head", "M_Npc_Civilian", SPHERE, (0, 0.94, 0), (0.30, 0.30, 0.30)),
+    ("Civilian_2", "M_Npc_Civilian", CAPSULE, (1.1, 0.40, 0), (0.5, 0.31, 0.5)),
+    ("Civilian_2_Head", "M_Npc_Civilian", SPHERE, (1.1, 0.90, 0), (0.28, 0.28, 0.28)),
+])
+
+# ---- Twins return point (child of the tide bystanders; exists when they do) ----
+twins_return_gid, twins_return_ids = emit_gameobject("TwinsReturnPoint", ["transform", "action"])
+emit_transform(twins_return_ids["transform"], twins_return_gid, (0.4, 0, 0.9), (0, 0, 0), (1, 1, 1), father=by_gid)
+emit_monobehaviour(twins_return_ids["action"], twins_return_gid, REG["WorldActionInteractable.cs"],
+    world_action_fields(
+        "Return the keepsake",
+        [cond_yaml(10, "twins_keepsake")],
+        [eff_yaml(16, "twins_keepsake"),
+         eff_yaml(0, "keepsake_returned", "\"1\"")],
+        "deliver_uses", 1, "",
+        "\"The twins press close. Come back when you hold what they lost.\"",
+        "\"The smaller twin takes the locket and stops crying mid-breath.\"",
+        "The Twins", 3.4, 21))
+
+# ---- Barricade (north passage; stone path braces it 0/2) ----
+barricade_gid, barricade_ids, _ = emit_char_root("Barricade", ["action"], (3.6, 0, 17.2), (0, 0, 0), 1, [
+    ("Plank_1", "M_Hall_Concrete", CUBE, (0, 0.55, 0), (2.6, 0.30, 0.45)),
+    ("Plank_2", "M_Hall_Concrete", CUBE, (0, 0.95, 0), (2.6, 0.30, 0.45)),
+    ("Brace", "M_Hall_Metal", CUBE, (0, 0.30, 0.34), (0.35, 1.05, 0.25)),
+])
+emit_monobehaviour(barricade_ids["action"], barricade_gid, REG["WorldActionInteractable.cs"],
+    world_action_fields(
+        "Brace the Barricade",
+        [cond_yaml(0, "c1_hall_drive", "stone")],
+        [],
+        "brace_count", 2, "",
+        "\"The barricade wants steadier hands than yours.\"",
+        "\"You wedge the brace tight. The line steadies.\"",
+        "The Barricade", 3.2, 22))
+
+# ---- Ward Stone (stone ability one-shot: wedge the whole line at once) ----
+ward_gid, ward_ids, _ = emit_char_root("WardStone", ["action"], (-3.6, 0, 17.2), (0, 0, 0), 1, [
+    ("Socket", "M_Hall_Metal", CUBE, (0, 0.16, 0), (0.85, 0.32, 0.85)),
+    ("Stone", "M_Seq_Stone", SPHERE, (0, 0.62, 0), (0.42, 0.42, 0.42)),
+])
+emit_monobehaviour(ward_ids["action"], ward_gid, REG["WorldActionInteractable.cs"],
+    world_action_fields(
+        "Wedge the Line with Stillness",
+        [cond_yaml(11, "stone_ward")],
+        [eff_yaml(5, "brace_count", amount=2)],
+        "wedge_uses", 1, "",
+        "\"A socket in the floor, waiting for an echo you do not carry.\"",
+        "\"Stillness pours into the stone. The whole line settles at once.\"",
+        "Ward Stone", 3.0, 22))
+
+# ---- Rubble (spawned when the barricade falls; clear 0/2 to reopen) ----
+rubble_gid, rubble_ids, _ = emit_char_root("Rubble", ["action"], (3.6, 0, 17.2), (0, 7, 0), 0, [
+    ("Chunk_1", "M_Hall_Concrete", CUBE, (-0.7, 0.25, 0.1), (0.9, 0.5, 0.7)),
+    ("Chunk_2", "M_Hall_Concrete", CUBE, (0.6, 0.20, -0.2), (1.1, 0.4, 0.6)),
+    ("Chunk_3", "M_Hall_Metal", CUBE, (0.0, 0.55, 0.25), (0.5, 1.0, 0.3)),
+])
+emit_monobehaviour(rubble_ids["action"], rubble_gid, REG["WorldActionInteractable.cs"],
+    world_action_fields(
+        "Clear the Rubble",
+        [cond_yaml(19, "hall", "barricade_fell")],
+        [],
+        "rubble_count", 2, "",
+        "\"Splinters and dust. There is nothing to do here.\"",
+        "\"You haul the splinters aside. The way opens.\"",
+        "The Rubble", 3.2, 22))
+
+# ---- NPC relocation: Sera takes the annex gate after the beacon falls quiet ----
+loc_gid, loc_ids = emit_gameobject("Loc_Sera_AnnexGate", ["transform"])
+emit_transform(loc_ids["transform"], loc_gid, (2.8, 0, 22.6), (0, 180, 0), (1, 1, 1))
+reloc_gid, reloc_ids = emit_gameobject("NpcRelocator", ["transform", "relocator"])
+emit_transform(reloc_ids["transform"], reloc_gid, (0, 0, 0), (0, 0, 0), (1, 1, 1))
+emit_monobehaviour(reloc_ids["relocator"], reloc_gid, REG["NpcRelocator.cs"],
+    "  bindings:\n"
+    "  - npcId: sera\n"
+    "    locationKey: annex_gate\n"
+    "    target: {fileID: %d}\n"
+    "    notice: Sera takes her watch by the annex gate.\n"
+    "  toastOnLiveMove: 1" % loc_ids["transform"])
+
 # ---- world-state applier: replays persisted consequences on every load ----
 # ---- world-state applier: replays persisted consequences on every load ----
 gid, ids = emit_gameobject("StoryWorldState", ["transform", "worldstate"])
@@ -816,7 +978,14 @@ emit_monobehaviour(ids["worldstate"], gid, REG["StoryWorldState.cs"],
     "  - key: stone_marker\n    target: {fileID: %d}\n    defaultActive: 0\n"
     "  - key: tide_bystanders\n    target: {fileID: %d}\n    defaultActive: 0\n"
     "  - key: echo_shard\n    target: {fileID: %d}\n    defaultActive: 1\n"
-    "  areaVariants: []" % (m_ember, m_tide, m_stone, by_gid, shard_gid))
+    "  - key: choir_beacon\n    target: {fileID: %d}\n    defaultActive: 1\n"
+    "  - key: ember_cache\n    target: {fileID: %d}\n    defaultActive: 0\n"
+    "  - key: keepsake_crate\n    target: {fileID: %d}\n    defaultActive: 1\n"
+    "  - key: barricade\n    target: {fileID: %d}\n    defaultActive: 1\n"
+    "  - key: barricade_rubble\n    target: {fileID: %d}\n    defaultActive: 0\n"
+    "  - key: tide_calm\n    target: {fileID: %d}\n    defaultActive: 0\n"
+    "  areaVariants: []" % (m_ember, m_tide, m_stone, by_gid, shard_gid,
+                           beacon_gid, cache_gid, crate_gid, barricade_gid, rubble_gid, calm_gid))
 root_gids.append(gid)
 
 # ---- SceneRoots (root order, Unity 6) ----

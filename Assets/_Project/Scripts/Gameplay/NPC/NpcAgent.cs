@@ -86,6 +86,9 @@ namespace Crossroads.Gameplay
                 EventBus.Subscribe<AbilityLevelChangedEvent>(OnLiveStateEvent);
                 EventBus.Subscribe<AbilityBlockedEvent>(OnLiveStateEvent);
                 EventBus.Subscribe<AreaUnlockedEvent>(OnLiveStateEvent);
+                EventBus.Subscribe<ObjectiveChangedEvent>(OnLiveStateEvent);
+                EventBus.Subscribe<WorldStateChangedEvent>(OnLiveStateEvent);
+                EventBus.Subscribe<AreaClosedEvent>(OnLiveStateEvent);
                 EventBus.Subscribe<StateLoadedEvent>(OnLoadOrReset);
                 EventBus.Subscribe<StateResetEvent>(OnLoadOrReset);
                 EventBus.Subscribe<DialogueStartedEvent>(OnDialogueStarted);
@@ -104,6 +107,9 @@ namespace Crossroads.Gameplay
                 EventBus.Unsubscribe<AbilityLevelChangedEvent>(OnLiveStateEvent);
                 EventBus.Unsubscribe<AbilityBlockedEvent>(OnLiveStateEvent);
                 EventBus.Unsubscribe<AreaUnlockedEvent>(OnLiveStateEvent);
+                EventBus.Unsubscribe<ObjectiveChangedEvent>(OnLiveStateEvent);
+                EventBus.Unsubscribe<WorldStateChangedEvent>(OnLiveStateEvent);
+                EventBus.Unsubscribe<AreaClosedEvent>(OnLiveStateEvent);
                 EventBus.Unsubscribe<StateLoadedEvent>(OnLoadOrReset);
                 EventBus.Unsubscribe<StateResetEvent>(OnLoadOrReset);
                 EventBus.Unsubscribe<DialogueStartedEvent>(OnDialogueStarted);
@@ -122,6 +128,9 @@ namespace Crossroads.Gameplay
         private void OnLiveStateEvent(AbilityLevelChangedEvent e) { Apply(silent: false, live: true); }
         private void OnLiveStateEvent(AbilityBlockedEvent e) { Apply(silent: false, live: true); }
         private void OnLiveStateEvent(AreaUnlockedEvent e) { Apply(silent: false, live: true); }
+        private void OnLiveStateEvent(ObjectiveChangedEvent e) { Apply(silent: false, live: true); }
+        private void OnLiveStateEvent(WorldStateChangedEvent e) { Apply(silent: false, live: true); }
+        private void OnLiveStateEvent(AreaClosedEvent e) { Apply(silent: false, live: true); }
         private void OnLoadOrReset(StateLoadedEvent e) { Apply(silent: false, live: false); }
         private void OnLoadOrReset(StateResetEvent e) { Apply(silent: false, live: false); }
 
@@ -204,6 +213,25 @@ namespace Crossroads.Gameplay
         public string PromptLabel()
         {
             return _brain != null ? _brain.PromptLabel() : "Talk";
+        }
+
+        /// <summary>
+        /// World-state relocation (NpcRelocator / MoveNpc effect): moves the NPC to a
+        /// persisted location and pins the routine there (single endless dwell), so the
+        /// behaviour FSM keeps running normally at the new spot instead of walking back.
+        /// </summary>
+        public void RelocateTo(Point3 position)
+        {
+            transform.position = new Vector3(position.x, position.y, position.z);
+            if (_logic != null)
+            {
+                _logic = new NpcLogic(new List<NpcStopData>
+                {
+                    new NpcStopData { position = position, dwellSeconds = 9999f }
+                });
+                _logic.Reset();
+            }
+            StoryLog.Log("[CROSSROADS] NPC " + npcId + " relocated to " + position);
         }
 
         /// <summary>Available interactions right now (data-driven, condition-gated).</summary>

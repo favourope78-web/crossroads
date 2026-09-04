@@ -48,6 +48,9 @@ namespace Crossroads.Gameplay
             GameServices.Init(new UnityJsonSerializer(), new PersistentDataPathProvider("crossroads"),
                 content, sceneKey, checkpointId, saveSlot, loadExisting: !devClearSaveOnStart);
 
+            // World & mission systems ride the same state/content (event-driven, no polling)
+            WorldServices.Init();
+
             // Power system clock: cooldowns run on real time (test rigs inject their own clock).
             if (GameServices.Abilities != null) GameServices.Abilities.Now = () => Time.time;
         }

@@ -79,5 +79,12 @@
  "AbilityManager.cs": "c0a1fed2000000000000000000000095",
  "AbilityPulseVFX.cs": "c0a1fed2000000000000000000000096",
  "AbilityHUD.cs": "c0a1fed2000000000000000000000097",
- "AbilitySheetModel.cs": "c0a1fed2000000000000000000000098"
+ "AbilitySheetModel.cs": "c0a1fed2000000000000000000000098",
+ "WorldEvents.cs": "c0a1fed20000000000000000000000a0",
+ "ObjectiveSystem.cs": "c0a1fed20000000000000000000000a1",
+ "WorldStateSystem.cs": "c0a1fed20000000000000000000000a2",
+ "WorldActionInteractable.cs": "c0a1fed20000000000000000000000a3",
+ "NpcRelocator.cs": "c0a1fed20000000000000000000000a4",
+ "ObjectiveHUD.cs": "c0a1fed20000000000000000000000a5",
+ "WorldServices.cs": "c0a1fed20000000000000000000000a6"
 }

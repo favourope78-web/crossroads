@@ -92,6 +92,22 @@ namespace Crossroads.Narrative
                         category = "flag";
                         text = e.value == "1" ? "Presence stirs: " + e.key : "Presence fades: " + e.key;
                         break;
+                    case EffectType.MoveNpc:
+                        category = "world";
+                        text = (index != null ? index.NpcName(e.key) : e.key) + " moves to " + e.value.Replace('_', ' ');
+                        break;
+                    case EffectType.CloseArea:
+                        category = "area";
+                        text = "Area sealed: " + (index != null ? index.AreaName(e.key) : e.key);
+                        break;
+                    case EffectType.ReopenArea:
+                        category = "area";
+                        text = "Area open: " + (index != null ? index.AreaName(e.key) : e.key);
+                        break;
+                    case EffectType.UnlockInteraction:
+                        category = "world";
+                        text = "New possibility: " + e.key.Replace('_', ' ');
+                        break;
                 }
                 if (!string.IsNullOrEmpty(text)) notices.Add(new ChangeNotice(category, text));
             }

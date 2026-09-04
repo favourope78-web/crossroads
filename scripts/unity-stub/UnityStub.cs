@@ -417,6 +417,7 @@ namespace UnityEngine.UI
         public UnityEngine.FontStyle fontStyle;
         public UnityEngine.HorizontalWrapMode horizontalOverflow;
         public UnityEngine.VerticalWrapMode verticalOverflow;
+        public bool supportRichText = true;
     }
 
 

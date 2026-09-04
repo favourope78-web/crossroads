@@ -33,7 +33,7 @@ namespace Crossroads.Narrative
 
         public const string DriveFlag = "c1_hall_drive";
         public const string AreaHall = "hall";
-        public const string AreaAnnex = "east_annex";
+        public const string AreaAnnex = "annex"; // matches the scene gate/trigger id + story_content.json
 
         public const string AbilityEmber = "ember_pulse";
         public const string AbilityTide = "tide_mend";
@@ -51,6 +51,29 @@ namespace Crossroads.Narrative
         public const string GraphMaraConfide = "g_c1_hall_mara_confide";
         public const string EncounterSeraShard = "c1_hall_sera_shard";
         public const string GraphSeraShard = "g_c1_hall_sera_shard";
+
+        // objectives / world-interaction phase ----------------------------------
+        public const string ObjectiveEmberBeacon = "obj_ember_beacon";
+        public const string ObjectiveEmberCache = "obj_ember_cache";
+        public const string ObjectiveTideKeepsake = "obj_tide_keepsake";
+        public const string ObjectiveTideReport = "obj_tide_report";
+        public const string ObjectiveStoneBarricade = "obj_stone_barricade";
+        public const string ObjectiveStoneRebuild = "obj_stone_rebuild";
+
+        public const string ItemKeepsake = "twins_keepsake";
+        public const string ItemEmberCore = "ember_core";
+
+        public const string FlagBeaconSilenced = "beacon_silenced";
+        public const string FlagEmberCacheOpened = "ember_cache_opened";
+        public const string FlagKeepsakeFound = "keepsake_found";
+        public const string FlagKeepsakeReturned = "keepsake_returned";
+        public const string VarBraceCount = "brace_count";
+        public const string VarRubbleCount = "rubble_count";
+        public const string LocationSeraAnnexGate = "annex_gate";
+
+        public const string EncounterMaraReport = "c1_hall_mara_report";
+        public const string GraphMaraReport = "g_c1_hall_mara_report";
+        public const string DecisionTideReport = "dec_tide_report";
 
         public static StoryContentData CreateFirstLightContent()
         {
@@ -114,6 +137,10 @@ namespace Crossroads.Narrative
             content.progression.skills.Add(new SkillDefinitionData { id = SkillAttunement, name = "Echo Attunement", maxLevel = 3 });
             content.progression.items.Add(new ItemDefinitionData { id = ItemShard, name = "Fracture Shard",
                 description = "A cold-warm sliver of the Fracture light. It held still for you." });
+            content.progression.items.Add(new ItemDefinitionData { id = ItemKeepsake, name = "Twins' Keepsake",
+                description = "A stamped tin locket, warm from being held too tight. It belongs to the twins by the east columns." });
+            content.progression.items.Add(new ItemDefinitionData { id = ItemEmberCore, name = "Ember Core",
+                description = "What the beacon guarded before it forgot your name. It hums with banked heat." });
             content.progression.reputationGroups.AddRange(new List<ReputationGroupData>
             {
                 new ReputationGroupData { id = "choir", name = "The Choir" },
@@ -123,7 +150,7 @@ namespace Crossroads.Narrative
             content.progression.areas.AddRange(new List<AreaDefinitionData>
             {
                 new AreaDefinitionData { id = AreaHall, name = "Fracture Hall" },
-                new AreaDefinitionData { id = AreaAnnex, name = "East Annex" }
+                new AreaDefinitionData { id = AreaAnnex, name = "North Annex" }
             });
 
             // ---------------------------------------------------------------- decision 1 (the branch)
@@ -663,7 +690,8 @@ namespace Crossroads.Narrative
                 new EncounterDefinitionData { id = EncounterSera, npcName = "Sera", graphId = GraphSera, startNodeId = "start" },
                 new EncounterDefinitionData { id = EncounterMaraConfide, npcName = "Mara", graphId = GraphMaraConfide, startNodeId = "start" },
                 new EncounterDefinitionData { id = EncounterSeraShard, npcName = "Sera", graphId = GraphSeraShard, startNodeId = "start" },
-                new EncounterDefinitionData { id = EncounterShrine, npcName = "Echo Shrine", graphId = GraphShrine, startNodeId = "start" }
+                new EncounterDefinitionData { id = EncounterShrine, npcName = "Echo Shrine", graphId = GraphShrine, startNodeId = "start" },
+                new EncounterDefinitionData { id = EncounterMaraReport, npcName = "Mara", graphId = GraphMaraReport, startNodeId = "start" }
             });
 
             // ---------------------------------------------------------------- NPC definitions (§9: one character = one data row)
@@ -683,6 +711,13 @@ namespace Crossroads.Narrative
                     {
                         new NpcStateData
                         {
+                            conditions = new List<DecisionConditionData> { new DecisionConditionData { type = ConditionType.ObjectiveCompleted, key = ObjectiveTideReport } },
+                            title = "Mara · Heartened",
+                            moodLine = "Mara stands easier since you told her how it felt.",
+                            approachDistance = 1.2f, avoidDistance = -1f, moveSpeed = -1f, reactRadius = -1f
+                        },
+                        new NpcStateData
+                        {
                             conditions = new List<DecisionConditionData> { new DecisionConditionData { type = ConditionType.BondAtLeast, key = NpcMara, amount = 8 } },
                             title = "Mara · Warm",
                             moodLine = "Mara's eyes soften. She stays closer now.",
@@ -691,6 +726,12 @@ namespace Crossroads.Narrative
                     },
                     interactions = new List<NpcInteractionData>
                     {
+                        new NpcInteractionData { id = "report", label = "Tell her about the twins", encounterId = EncounterMaraReport,
+                            conditions = new List<DecisionConditionData>
+                            {
+                                new DecisionConditionData { type = ConditionType.ObjectiveCompleted, key = ObjectiveTideKeepsake },
+                                new DecisionConditionData { type = ConditionType.DecisionNotMade, key = DecisionTideReport }
+                            } },
                         new NpcInteractionData { id = "confide", label = "Comfort Mara", encounterId = EncounterMaraConfide,
                             conditions = new List<DecisionConditionData> { new DecisionConditionData { type = ConditionType.BondAtLeast, key = NpcMara, amount = 8 } } },
                         new NpcInteractionData { id = "talk", label = "Talk to Mara", encounterId = EncounterFirstLight }
@@ -713,6 +754,20 @@ namespace Crossroads.Narrative
                     },
                     states = new List<NpcStateData>
                     {
+                        new NpcStateData
+                        {
+                            conditions = new List<DecisionConditionData> { new DecisionConditionData { type = ConditionType.ObjectiveCompleted, key = ObjectiveEmberBeacon } },
+                            title = "Sera · Vanguard",
+                            moodLine = "'The beacon's quiet. First time in days I can hear myself think.' Sera takes her watch by the annex gate.",
+                            approachDistance = 1.4f, avoidDistance = 0f, moveSpeed = 1.0f, reactRadius = -1f
+                        },
+                        new NpcStateData
+                        {
+                            conditions = new List<DecisionConditionData> { new DecisionConditionData { type = ConditionType.ObjectiveCompleted, key = ObjectiveStoneBarricade } },
+                            title = "Sera · Steadied",
+                            moodLine = "'It held. You held it.' Sera's shoulders drop an inch.",
+                            approachDistance = 1.5f, avoidDistance = 0f, moveSpeed = 1.0f, reactRadius = -1f
+                        },
                         new NpcStateData
                         {
                             conditions = new List<DecisionConditionData> { new DecisionConditionData { type = ConditionType.FlagIs, key = "c1_echo_sealed", value = "1" } },
@@ -760,6 +815,227 @@ namespace Crossroads.Narrative
                         new NpcStopData { position = new Point3(16.5f, 0f, 3.2f), dwellSeconds = 2.0f },
                         new NpcStopData { position = new Point3(18.5f, 0f, 2.2f), dwellSeconds = 2.0f }
                     }
+                }
+            });
+
+            // ================================================================ OBJECTIVE / MISSION SYSTEM
+            // Three path objectives (one per First Light decision) + follow-ups, all data.
+            // Each demonstrates a different capability:
+            //   ember  - ability-gated completion (the beacon only answers ember), follow-up cache
+            //   tide   - two-step checklist + NPC-delivered completion via a dialogue decision
+            //   stone  - counter progress (0/2), FAILABLE (sealing your echo topples it), recovery follow-up
+
+            content.objectives.AddRange(new List<ObjectiveDefinitionData>
+            {
+                // ---- EMBER PATH -------------------------------------------------
+                new ObjectiveDefinitionData
+                {
+                    id = ObjectiveEmberBeacon, title = "Silence the Choir Beacon", type = ObjectiveType.Main,
+                    areaId = AreaAnnex, description = "The Choir's beacon in the north annex marks everyone the light touched - starting with you. Ember answers heat: make the beacon forget your name.",
+                    offerConditions = new List<DecisionConditionData> { new DecisionConditionData { type = ConditionType.DecisionWas, key = DecisionFirstLight, value = "ember_reach" } },
+                    completeConditions = new List<DecisionConditionData> { new DecisionConditionData { type = ConditionType.FlagIs, key = FlagBeaconSilenced, value = "1" } },
+                    consequences = new List<DecisionEffectData>
+                    {
+                        new DecisionEffectData { type = EffectType.SetWorldState, key = AreaAnnex, value = "quiet" },
+                        new DecisionEffectData { type = EffectType.SpawnEntity, key = "ember_cache", value = "1" },
+                        new DecisionEffectData { type = EffectType.AddReputation, key = "choir", amount = -10 },
+                        new DecisionEffectData { type = EffectType.AddReputation, key = "folk", amount = 5 },
+                        new DecisionEffectData { type = EffectType.AddBond, key = "sera", amount = 4 },
+                        new DecisionEffectData { type = EffectType.MoveNpc, key = "sera", value = LocationSeraAnnexGate },
+                        new DecisionEffectData { type = EffectType.GrantEchoes, amount = 10 },
+                        new DecisionEffectData { type = EffectType.AddCodex, key = "c1_beacon_silenced" }
+                    },
+                    followUps = new List<string> { ObjectiveEmberCache },
+                    completionNotice = "Objective complete - the beacon no longer knows your name."
+                },
+                new ObjectiveDefinitionData
+                {
+                    id = ObjectiveEmberCache, title = "Claim the Ember Cache", type = ObjectiveType.Side,
+                    areaId = AreaAnnex, description = "Where the beacon stood, the hall left a gift for the hand that quieted it. Open the cache.",
+                    offerConditions = new List<DecisionConditionData> { new DecisionConditionData { type = ConditionType.ObjectiveCompleted, key = ObjectiveEmberBeacon } },
+                    completeConditions = new List<DecisionConditionData> { new DecisionConditionData { type = ConditionType.FlagIs, key = FlagEmberCacheOpened, value = "1" } },
+                    consequences = new List<DecisionEffectData>
+                    {
+                        new DecisionEffectData { type = EffectType.AddItem, key = ItemEmberCore },
+                        new DecisionEffectData { type = EffectType.GrantEchoes, amount = 15 },
+                        new DecisionEffectData { type = EffectType.AddCodex, key = "c1_ember_cache" }
+                    },
+                    completionNotice = "Objective complete - the hall's gift is yours."
+                },
+
+                // ---- TIDE PATH --------------------------------------------------
+                new ObjectiveDefinitionData
+                {
+                    id = ObjectiveTideKeepsake, title = "The Twins' Keepsake", type = ObjectiveType.Main,
+                    areaId = AreaHall, giverNpcId = NpcSera, description = "The twins you pulled clear lost their mother's keepsake in the rush. The tide left it glinting by the east columns - find it and bring it back.",
+                    offerConditions = new List<DecisionConditionData> { new DecisionConditionData { type = ConditionType.DecisionWas, key = DecisionFirstLight, value = "tide_clear" } },
+                    steps = new List<ObjectiveStepData>
+                    {
+                        new ObjectiveStepData { text = "Find the keepsake by the east columns",
+                            conditions = new List<DecisionConditionData> { new DecisionConditionData { type = ConditionType.FlagIs, key = FlagKeepsakeFound, value = "1" } } },
+                        new ObjectiveStepData { text = "Bring it back to the twins",
+                            conditions = new List<DecisionConditionData> { new DecisionConditionData { type = ConditionType.FlagIs, key = FlagKeepsakeReturned, value = "1" } } }
+                    },
+                    completeConditions = new List<DecisionConditionData> { new DecisionConditionData { type = ConditionType.FlagIs, key = FlagKeepsakeReturned, value = "1" } },
+                    consequences = new List<DecisionEffectData>
+                    {
+                        new DecisionEffectData { type = EffectType.AddBond, key = "sera", amount = 8 },
+                        new DecisionEffectData { type = EffectType.AddReputation, key = "folk", amount = 6 },
+                        new DecisionEffectData { type = EffectType.SpawnEntity, key = "tide_bystanders", value = "0" },
+                        new DecisionEffectData { type = EffectType.SpawnEntity, key = "tide_calm", value = "1" },
+                        new DecisionEffectData { type = EffectType.SetWorldState, key = AreaHall, value = "twins_blessed" },
+                        new DecisionEffectData { type = EffectType.GrantEchoes, amount = 10 },
+                        new DecisionEffectData { type = EffectType.AddCodex, key = "c1_twins_keepsake" }
+                    },
+                    followUps = new List<string> { ObjectiveTideReport },
+                    completionNotice = "Objective complete - the twins hold their mother's keepsake again."
+                },
+                new ObjectiveDefinitionData
+                {
+                    id = ObjectiveTideReport, title = "Tell Mara What the Light Did", type = ObjectiveType.Side,
+                    areaId = AreaHall, giverNpcId = NpcMara, description = "Mara has been watching since the light chose you. She should hear what the twins' gratitude looked like.",
+                    offerConditions = new List<DecisionConditionData> { new DecisionConditionData { type = ConditionType.ObjectiveCompleted, key = ObjectiveTideKeepsake } },
+                    completeConditions = new List<DecisionConditionData> { new DecisionConditionData { type = ConditionType.DecisionWas, key = DecisionTideReport, value = "" } },
+                    consequences = new List<DecisionEffectData>
+                    {
+                        new DecisionEffectData { type = EffectType.AddBond, key = "mara", amount = 5 },
+                        new DecisionEffectData { type = EffectType.AddAffinity, key = "tide", amount = 5 },
+                        new DecisionEffectData { type = EffectType.AddCodex, key = "c1_tide_report" }
+                    },
+                    completionNotice = "Objective complete - Mara knows what the light did."
+                },
+
+                // ---- STONE PATH -------------------------------------------------
+                new ObjectiveDefinitionData
+                {
+                    id = ObjectiveStoneBarricade, title = "Steady the North Barricade", type = ObjectiveType.Crisis,
+                    areaId = AreaHall, description = "The Choir's next sweep will come through the north passage. The barricade holds twice as long with hands on it - or once, forever, with stillness. Careful: give your echo back to the shrine and the wood remembers gravity.",
+                    offerConditions = new List<DecisionConditionData> { new DecisionConditionData { type = ConditionType.DecisionWas, key = DecisionFirstLight, value = "stone_still" } },
+                    counterVar = VarBraceCount, counterTarget = 2, counterText = "Braces set",
+                    completeConditions = new List<DecisionConditionData> { new DecisionConditionData { type = ConditionType.VarAtLeast, key = VarBraceCount, amount = 2 } },
+                    failConditions = new List<DecisionConditionData> { new DecisionConditionData { type = ConditionType.FlagIs, key = "c1_echo_sealed", value = "1" } },
+                    consequences = new List<DecisionEffectData>
+                    {
+                        new DecisionEffectData { type = EffectType.AddReputation, key = "wards", amount = 8 },
+                        new DecisionEffectData { type = EffectType.AddReputation, key = "folk", amount = 3 },
+                        new DecisionEffectData { type = EffectType.AddBond, key = "mara", amount = 2 },
+                        new DecisionEffectData { type = EffectType.SetWorldState, key = AreaHall, value = "barricade_held" },
+                        new DecisionEffectData { type = EffectType.GrantEchoes, amount = 10 },
+                        new DecisionEffectData { type = EffectType.AddCodex, key = "c1_barricade_held" }
+                    },
+                    failureConsequences = new List<DecisionEffectData>
+                    {
+                        new DecisionEffectData { type = EffectType.SpawnEntity, key = "barricade", value = "0" },
+                        new DecisionEffectData { type = EffectType.SpawnEntity, key = "barricade_rubble", value = "1" },
+                        new DecisionEffectData { type = EffectType.SetWorldState, key = AreaHall, value = "barricade_fell" },
+                        new DecisionEffectData { type = EffectType.AddReputation, key = "wards", amount = -6 },
+                        new DecisionEffectData { type = EffectType.CloseArea, key = AreaAnnex },
+                        new DecisionEffectData { type = EffectType.AddCodex, key = "c1_barricade_fell" }
+                    },
+                    followUps = new List<string> { ObjectiveStoneRebuild },
+                    completionNotice = "Objective complete - the north passage will hold.",
+                    failureNotice = "Objective failed - you gave your stillness back, and the barricade fell."
+                },
+                new ObjectiveDefinitionData
+                {
+                    id = ObjectiveStoneRebuild, title = "Clear the Fallen Barricade", type = ObjectiveType.Recovery,
+                    areaId = AreaHall, description = "Stillness was given back, and the wood remembered gravity. Clear the rubble - the passage is needed either way.",
+                    offerConditions = new List<DecisionConditionData> { new DecisionConditionData { type = ConditionType.ObjectiveFailed, key = ObjectiveStoneBarricade } },
+                    counterVar = VarRubbleCount, counterTarget = 2, counterText = "Rubble cleared",
+                    completeConditions = new List<DecisionConditionData> { new DecisionConditionData { type = ConditionType.VarAtLeast, key = VarRubbleCount, amount = 2 } },
+                    consequences = new List<DecisionEffectData>
+                    {
+                        new DecisionEffectData { type = EffectType.AddReputation, key = "folk", amount = 3 },
+                        new DecisionEffectData { type = EffectType.SetWorldState, key = AreaHall, value = "passage_cleared" },
+                        new DecisionEffectData { type = EffectType.ReopenArea, key = AreaAnnex },
+                        new DecisionEffectData { type = EffectType.GrantEchoes, amount = 5 }
+                    },
+                    completionNotice = "Objective complete - the passage is clear again."
+                }
+            });
+
+            // world interaction unlock registry: what THIS player may touch (persisted,
+            // event-synced, path- and ability-dependent)
+            content.worldInteractions.AddRange(new List<WorldInteractionData>
+            {
+                new WorldInteractionData { key = "choir_beacon_channel", label = "Channel ember into the beacon",
+                    conditions = new List<DecisionConditionData> { new DecisionConditionData { type = ConditionType.AbilityOwned, key = AbilityEmber } } },
+                new WorldInteractionData { key = "ember_cache_open", label = "Open the ember cache",
+                    conditions = new List<DecisionConditionData> { new DecisionConditionData { type = ConditionType.FlagIs, key = FlagBeaconSilenced, value = "1" } } },
+                new WorldInteractionData { key = "keepsake_search", label = "Search the crate",
+                    conditions = new List<DecisionConditionData> { new DecisionConditionData { type = ConditionType.FlagIs, key = DriveFlag, value = "tide" } } },
+                new WorldInteractionData { key = "keepsake_return", label = "Return the keepsake",
+                    conditions = new List<DecisionConditionData> { new DecisionConditionData { type = ConditionType.ItemHeld, key = ItemKeepsake } } },
+                new WorldInteractionData { key = "barricade_brace", label = "Brace the barricade",
+                    conditions = new List<DecisionConditionData> { new DecisionConditionData { type = ConditionType.FlagIs, key = DriveFlag, value = "stone" } } },
+                new WorldInteractionData { key = "barricade_wedge", label = "Wedge the line with stillness",
+                    conditions = new List<DecisionConditionData> { new DecisionConditionData { type = ConditionType.AbilityOwned, key = AbilityStone } } },
+                new WorldInteractionData { key = "rubble_clear", label = "Clear the rubble",
+                    conditions = new List<DecisionConditionData> { new DecisionConditionData { type = ConditionType.WorldStateIs, key = AreaHall, value = "barricade_fell" } } }
+            });
+
+            // ---------------------------------------------------------------- decision 5 (tide report - completes an objective through dialogue)
+            content.decisions.Add(new DecisionNodeData
+            {
+                id = DecisionTideReport,
+                promptText = "Mara waits by the east columns. What do you tell her about the twins?",
+                codexEntryId = "c1_tide_report",
+                options = new List<DecisionOptionData>
+                {
+                    new DecisionOptionData
+                    {
+                        id = "tell_all",
+                        text = "Everything. The rush, the light, the small hand in yours.",
+                        afterText = "Mara listens to all of it, and something in her shoulders lets go.",
+                        effects = new List<DecisionEffectData>
+                        {
+                            new DecisionEffectData { type = EffectType.SetFlag, key = "tide_reported", value = "1" },
+                            new DecisionEffectData { type = EffectType.AddBond, key = "mara", amount = 5 },
+                            new DecisionEffectData { type = EffectType.AddAffinity, key = "tide", amount = 5 }
+                        }
+                    },
+                    new DecisionOptionData
+                    {
+                        id = "keep_light",
+                        text = "That it went fine. Some things should stay theirs.",
+                        afterText = "Mara nods once, letting it be - but she catches your sleeve before you go.",
+                        effects = new List<DecisionEffectData>
+                        {
+                            new DecisionEffectData { type = EffectType.SetFlag, key = "tide_reported", value = "1" },
+                            new DecisionEffectData { type = EffectType.AddBond, key = "mara", amount = 2 }
+                        }
+                    }
+                }
+            });
+
+            // ---------------------------------------------------------------- graph 7 (Mara report)
+            content.graphs.Add(new DialogueGraphData
+            {
+                id = GraphMaraReport,
+                nodes = new List<DialogueNodeData>
+                {
+                    new DialogueNodeData { id = "start", speaker = "", text = "", branchPrefix = "report_line" },
+                    new DialogueNodeData { id = "report_line_done", speaker = "Mara",
+                        text = "You told me. I keep replaying it - the good part. Thank you for that.",
+                        nextId = "end",
+                        conditions = new List<DecisionConditionData> { new DecisionConditionData { type = ConditionType.DecisionWas, key = DecisionTideReport, value = "" } } },
+                    new DialogueNodeData { id = "report_line_keepsake", speaker = "Mara",
+                        text = "You found it? The locket? Ari, they've been asking everyone for a week.",
+                        nextId = "report_offer",
+                        conditions = new List<DecisionConditionData> { new DecisionConditionData { type = ConditionType.ObjectiveCompleted, key = ObjectiveTideKeepsake } } },
+                    new DialogueNodeData { id = "report_line_default", speaker = "Mara",
+                        text = "The twins, the light, all of it - I want to hear how you're carrying it.",
+                        nextId = "report_offer" },
+                    new DialogueNodeData { id = "report_offer", speaker = "", text = "", decisionId = DecisionTideReport, branchPrefix = "report_after" },
+                    new DialogueNodeData { id = "report_after_tell", speaker = "Mara",
+                        text = "'That's who you are now,' she says. 'Don't lose them to the light.'",
+                        nextId = "end",
+                        conditions = new List<DecisionConditionData> { new DecisionConditionData { type = ConditionType.DecisionWas, key = DecisionTideReport, value = "tell_all" } } },
+                    new DialogueNodeData { id = "report_after_keep", speaker = "Mara",
+                        text = "'Then it's theirs,' she agrees. 'But you're allowed to be proud of it.'",
+                        nextId = "end",
+                        conditions = new List<DecisionConditionData> { new DecisionConditionData { type = ConditionType.DecisionWas, key = DecisionTideReport, value = "keep_light" } } },
+                    new DialogueNodeData { id = "end", speaker = "", text = "", end = true }
                 }
             });
 

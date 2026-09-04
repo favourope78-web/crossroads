@@ -35,6 +35,12 @@ namespace Crossroads.Core
         public List<ResolvedDecisionEntry> decisions = new List<ResolvedDecisionEntry>();
         public List<string> codex = new List<string>();
 
+        // ---- world & mission state (v4: objective runtime, npc locations, interaction unlocks) ----
+        public List<ObjectiveProgressEntry> objectives = new List<ObjectiveProgressEntry>(); // objective id -> phase/progress
+        public List<StringEntry> npcLocations = new List<StringEntry>();      // npcId -> location key (MoveNpc effect)
+        public List<StringEntry> interactionUnlocks = new List<StringEntry>(); // unlock key -> "1" (condition-gated, persisted)
+        public List<StringEntry> closedAreas = new List<StringEntry>();       // area ids re-sealed after being opened
+
         // Affinity meters 0..100 (GAME_DESIGN §3.2). Hollow stays hidden in UI.
         public int ember;
         public int tide;
@@ -87,6 +93,42 @@ namespace Crossroads.Core
                 case "hollow": return hollow;
                 default: return 0;
             }
+        }
+
+        // ---- world & mission lookups (read-only; writes belong to StateMutator) ----
+        public ObjectiveProgressEntry GetObjectiveEntry(string objectiveId)
+        {
+            if (objectives == null) return null;
+            for (int i = 0; i < objectives.Count; i++)
+                if (objectives[i] != null && objectives[i].id == objectiveId) return objectives[i];
+            return null;
+        }
+
+        public int GetObjectivePhase(string objectiveId, int fallback = (int)ObjectivePhase.Hidden)
+        {
+            var e = GetObjectiveEntry(objectiveId);
+            return e != null ? e.phase : fallback;
+        }
+
+        public int GetObjectiveProgress(string objectiveId, int fallback = 0)
+        {
+            var e = GetObjectiveEntry(objectiveId);
+            return e != null ? e.progress : fallback;
+        }
+
+        public string GetNpcLocation(string npcId, string fallback = "")
+        {
+            return GetEntry(npcLocations, npcId, fallback);
+        }
+
+        public bool HasInteractionUnlock(string unlockKey)
+        {
+            return ContainsKey(interactionUnlocks, unlockKey);
+        }
+
+        public bool IsAreaClosed(string areaId)
+        {
+            return ContainsKey(closedAreas, areaId);
         }
 
         public void CopyAffinitiesFrom(GameState other)

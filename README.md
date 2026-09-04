@@ -24,6 +24,8 @@ First environment delivered (2026-09-03): Fracture Hall — modular kit (13 piec
 
 First playable interaction + decision system delivered (2026-09-03): proximity interaction with mobile [INTERACT] prompt, the data-driven **"The First Light"** encounter in the Fracture Hall (Mara, 3 affinity choices → distinct persisted states + condition-gated aftermath dialogue/re-talk), `DecisionManager`/`EncounterFlow`/`GameState`/`SaveSystem` per GAME_DESIGN §4/§12, runtime uGUI (dialogue sheet, choice cards, state HUD, toast), JSON persistence that survives restart, 115/115 headless flow tests + full compile check; see `DECISION_SYSTEM_REPORT.md`. Runtime Editor verification pending (same hand-off pattern as the prototypes).
 
+World State & Mission/Objective system delivered (2026-09-04): reusable `Gameplay/World/` assembly — data-driven `WorldStateSystem` (open/closed areas, changed objects, NPC locations, story flags, completed objectives, condition-gated interaction unlocks) + `ObjectiveManager` (offer/complete/fail conditions, counters, checklists, consequences + follow-ups — all through `EffectApplier`), event-driven on the `EventBus` (no per-frame polling), `WorldActionInteractable` (ability-gated world actions), `NpcRelocator` (persisted NPC placements), mobile `ObjectiveHUD`, save schema v4 (objective phases, NPC locations, interaction unlocks, re-sealed areas) with v3 migration, 3 decision-dependent path objectives + 3 follow-ups incl. a failable crisis + recovery, 566/566 headless tests + asset/scene regeneration + validation; see `WORLD_OBJECTIVE_REPORT.md`. Runtime Editor verification pending (same hand-off pattern).
+
 ## Tech stack (planned)
 
 - **Unity 6 LTS** (6000.x), **URP** (mobile-optimized)

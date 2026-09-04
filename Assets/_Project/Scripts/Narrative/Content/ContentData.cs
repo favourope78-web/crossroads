@@ -30,7 +30,11 @@ namespace Crossroads.Narrative
         AreaUnlocked,      // unlockAreas contains key
         SkillAtLeast,      // skills[key] >= amount
         EchoesAtLeast,     // echoBank >= amount
-        AbilityLevelBelow  // ability level < amount (upgrade gates)
+        AbilityLevelBelow, // ability level < amount (upgrade gates)
+        ObjectiveActive,   // objective key is being tracked right now
+        ObjectiveCompleted,// objective key was completed (mission history)
+        ObjectiveFailed,   // objective key was failed (recovery paths)
+        WorldStateIs       // worldStates[key] == value (the city remembers)
     }
 
     /// <summary>Effect whitelist (§4.2) - applied by EffectApplier on selection.</summary>
@@ -55,7 +59,11 @@ namespace Crossroads.Narrative
         RemoveItem,        // key = item id
         UnlockArea,        // key = area id
         UpgradeAbility,    // key = ability id, amount = +levels (sets level 1 on first unlock)
-        BlockAbility       // key = ability id (excluded by your choices; wins over unlocked)
+        BlockAbility,      // key = ability id (excluded by your choices; wins over unlocked)
+        MoveNpc,           // key = npc id, value = location key (relocates the NPC, persisted)
+        CloseArea,         // key = area id (re-seals an opened area)
+        ReopenArea,        // key = area id (lifts a seal)
+        UnlockInteraction  // key = world interaction unlock key (marks it available, persisted)
     }
 
     [Serializable]
@@ -357,6 +365,95 @@ namespace Crossroads.Narrative
         }
     }
 
+    // =====================================================================================
+    // Objective / mission definitions (GAME_DESIGN §5-§7: "objectives are authored per
+    // path"; DEVELOPMENT_PLAN M2 systems core). Everything is plain serializable data:
+    // a mission = one ObjectiveDefinitionData row; the ObjectiveManager never hardcodes
+    // a mission. Objectives react to decisions through the same condition whitelist as
+    // dialogue (offerConditions), complete/fail on live state, and deliver consequences
+    // through the same effect whitelist (EffectApplier - single write path).
+    // =====================================================================================
+
+    /// <summary>Mission categories (UI grouping + tone).</summary>
+    public enum ObjectiveType
+    {
+        Main = 0,        // the current chapter's spine (one per path)
+        Side = 1,        // optional content opened by a state change
+        Crisis = 2,      // timed/failable pressure (failure has consequences)
+        Recovery = 3     // offered after a failure to repair the damage
+    }
+
+    /// <summary>
+    /// One checklist step of an objective: a short player-facing line + the state
+    /// conditions that mark it done. Steps that are already true tick themselves
+    /// (the world may have moved ahead of the mission text).
+    /// </summary>
+    [Serializable]
+    public class ObjectiveStepData
+    {
+        public string text = "";
+        public List<DecisionConditionData> conditions = new List<DecisionConditionData>();
+    }
+
+    /// <summary>
+    /// Complete data-driven objective definition. Fields per the mission-system spec:
+    /// unique ID, title, description, type, requirements (offerConditions), completion
+    /// conditions, failure conditions (where appropriate), consequences, follow-up
+    /// objectives. Optional counter (var + target) gives "n/N" progress; steps give a
+    /// checklist. No code changes are needed to add missions - only rows here.
+    /// </summary>
+    [Serializable]
+    public class ObjectiveDefinitionData
+    {
+        public string id = "";
+        public string title = "";
+        public string description = "";
+        public ObjectiveType type = ObjectiveType.Main;
+        public string areaId = "";               // where this plays out (UI flavor)
+        public string giverNpcId = "";           // who it comes from, if anyone ("" = the world)
+
+        // requirements - when the objective becomes available to the player
+        public List<DecisionConditionData> offerConditions = new List<DecisionConditionData>();
+        public bool autoActivate = true;         // main-path objectives track themselves once offered
+
+        // completion - all must hold (plus every step + the counter target)
+        public List<DecisionConditionData> completeConditions = new List<DecisionConditionData>();
+
+        // failure - fires while the objective is Available/Active (leave empty for unfailable)
+        public List<DecisionConditionData> failConditions = new List<DecisionConditionData>();
+
+        // measurable progress (optional): "n/N counterText" + ordered checklist
+        public string counterVar = "";
+        public int counterTarget;
+        public string counterText = "";
+        public List<ObjectiveStepData> steps = new List<ObjectiveStepData>();
+
+        // consequences - applied through EffectApplier on resolution (single write path)
+        public List<DecisionEffectData> consequences = new List<DecisionEffectData>();
+        public List<DecisionEffectData> failureConsequences = new List<DecisionEffectData>();
+
+        // follow-ups - objective ids released for offering once this one resolves
+        public List<string> followUps = new List<string>();
+
+        public string completionNotice = "";     // important toast text
+        public string failureNotice = "";        // important toast text
+
+        public bool UsesCounter { get { return !string.IsNullOrEmpty(counterVar) && counterTarget > 0; } }
+    }
+
+    /// <summary>
+    /// A world interaction whose availability is part of tracked world state: when the
+    /// conditions first pass, the unlock key is persisted (InteractionUnlockedEvent) -
+    /// so "what this player may touch" survives restarts and differs per path.
+    /// </summary>
+    [Serializable]
+    public class WorldInteractionData
+    {
+        public string key = "";
+        public string label = "";
+        public List<DecisionConditionData> conditions = new List<DecisionConditionData>();
+    }
+
     [Serializable]
     public class StoryContentData
     {
@@ -365,6 +462,8 @@ namespace Crossroads.Narrative
         public List<DialogueGraphData> graphs = new List<DialogueGraphData>();
         public ProgressionContentData progression = new ProgressionContentData();
         public List<NpcDefinitionData> npcs = new List<NpcDefinitionData>();
+        public List<ObjectiveDefinitionData> objectives = new List<ObjectiveDefinitionData>();
+        public List<WorldInteractionData> worldInteractions = new List<WorldInteractionData>();
 
         public EncounterDefinitionData FindEncounter(string id)
         {
@@ -385,6 +484,18 @@ namespace Crossroads.Narrative
         {
             if (npcs == null) return null;
             for (int i = 0; i < npcs.Count; i++) if (npcs[i] != null && npcs[i].id == id) return npcs[i];
+            return null;
+        }
+        public ObjectiveDefinitionData FindObjective(string id)
+        {
+            if (objectives == null) return null;
+            for (int i = 0; i < objectives.Count; i++) if (objectives[i] != null && objectives[i].id == id) return objectives[i];
+            return null;
+        }
+        public WorldInteractionData FindWorldInteraction(string key)
+        {
+            if (worldInteractions == null) return null;
+            for (int i = 0; i < worldInteractions.Count; i++) if (worldInteractions[i] != null && worldInteractions[i].key == key) return worldInteractions[i];
             return null;
         }
     }

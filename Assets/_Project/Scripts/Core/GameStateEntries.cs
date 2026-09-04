@@ -50,6 +50,20 @@ namespace Crossroads.Core
         }
     }
 
+    /// <summary>Objective runtime state (persisted). Phase + measurable progress.</summary>
+    [Serializable]
+    public class ObjectiveProgressEntry
+    {
+        public string id = "";
+        public int phase;          // ObjectivePhase (int: JsonUtility-safe)
+        public int progress;       // steps/counter units passed when last persisted
+        public ObjectiveProgressEntry() { }
+        public ObjectiveProgressEntry(string id, int phase, int progress)
+        {
+            this.id = id; this.phase = phase; this.progress = progress;
+        }
+    }
+
     /// <summary>Affinity delta delivered to UI feedback ("Ember +10 -> 25").</summary>
     [Serializable]
     public class AffinityDelta

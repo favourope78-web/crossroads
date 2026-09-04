@@ -74,6 +74,7 @@ namespace Crossroads.Core
             if (e == null) State.vars.Add(new StringIntEntry(key, value));
             else if (e.value == value) return;
             else e.value = value;
+            EventBus.Publish(new VarChangedEvent { key = key, value = value });
             StoryLog.Log("[STATE] var " + key + " = " + value);
         }
 
@@ -288,6 +289,96 @@ namespace Crossroads.Core
             StoryLog.Log("[STATE] area -> " + areaId);
         }
 
+        /// <summary>Re-seals an area (sweep locks it back down). Persists + notifies.</summary>
+        public void CloseArea(string areaId)
+        {
+            if (string.IsNullOrEmpty(areaId) || State.IsAreaClosed(areaId)) return;
+            State.closedAreas.Add(new StringEntry(areaId, "1"));
+            EventBus.Publish(new AreaClosedEvent { areaId = areaId });
+            StoryLog.Log("[STATE] area closed: " + areaId);
+        }
+
+        public void ReopenArea(string areaId)
+        {
+            var e = GameState.FindEntry(State.closedAreas, areaId);
+            if (e == null) return;
+            State.closedAreas.Remove(e);
+            EventBus.Publish(new AreaReopenedEvent { areaId = areaId });
+            StoryLog.Log("[STATE] area reopened: " + areaId);
+        }
+
+        public bool IsAreaClosed(string areaId) { return State.IsAreaClosed(areaId); }
+
+        /// <summary>True when the player can be in the area (opened and not re-sealed).</summary>
+        public bool IsAreaOpen(string areaId) { return State.IsAreaUnlocked(areaId) && !State.IsAreaClosed(areaId); }
+
+        // ------------------------------------------------ objectives (single write path, §4.3)
+        /// <summary>Persists an objective's phase/progress and notifies (ObjectiveChangedEvent).</summary>
+        public void UpdateObjective(string objectiveId, ObjectivePhase phase, int progress)
+        {
+            if (string.IsNullOrEmpty(objectiveId)) return;
+            var e = State.GetObjectiveEntry(objectiveId);
+            int prevPhase = e != null ? e.phase : (int)ObjectivePhase.Hidden;
+            int prevProgress = e != null ? e.progress : 0;
+            if (e == null)
+            {
+                if (phase == ObjectivePhase.Hidden && progress == 0) return; // nothing to store
+                State.objectives.Add(new ObjectiveProgressEntry(objectiveId, (int)phase, progress));
+            }
+            else
+            {
+                if (e.phase == (int)phase && e.progress == progress) return;
+                e.phase = (int)phase;
+                e.progress = progress;
+            }
+            EventBus.Publish(new ObjectiveChangedEvent
+            {
+                objectiveId = objectiveId,
+                phase = phase,
+                previousPhase = (ObjectivePhase)prevPhase,
+                progress = progress
+            });
+            StoryLog.Log("[STATE] objective " + objectiveId + " -> " + phase + " (" + progress + ")");
+        }
+
+        public ObjectivePhase GetObjectivePhase(string objectiveId)
+        {
+            return (ObjectivePhase)State.GetObjectivePhase(objectiveId);
+        }
+
+        public int GetObjectiveProgress(string objectiveId) { return State.GetObjectiveProgress(objectiveId); }
+        public bool ObjectiveWasCompleted(string objectiveId) { return GetObjectivePhase(objectiveId) == ObjectivePhase.Completed; }
+        public bool ObjectiveFailed(string objectiveId) { return GetObjectivePhase(objectiveId) == ObjectivePhase.Failed; }
+        public bool ObjectiveIsActive(string objectiveId) { return GetObjectivePhase(objectiveId) == ObjectivePhase.Active; }
+
+        // ------------------------------------------------ NPC locations (world state)
+        /// <summary>Relocates an NPC by key (MoveNpc effect). Persisted + NpcRelocatedEvent.</summary>
+        public void SetNpcLocation(string npcId, string locationKey)
+        {
+            if (string.IsNullOrEmpty(npcId) || string.IsNullOrEmpty(locationKey)) return;
+            var e = GameState.FindEntry(State.npcLocations, npcId);
+            if (e == null) State.npcLocations.Add(new StringEntry(npcId, locationKey));
+            else if (e.value == locationKey) return;
+            else e.value = locationKey;
+            EventBus.Publish(new NpcRelocatedEvent { npcId = npcId, locationKey = locationKey });
+            StoryLog.Log("[STATE] npc " + npcId + " -> " + locationKey);
+        }
+
+        public string GetNpcLocation(string npcId, string fallback = "") { return State.GetNpcLocation(npcId, fallback); }
+
+        // ------------------------------------------------ world interaction unlocks
+        /// <summary>Records that a world interaction's conditions passed (persisted, once).</summary>
+        public bool UnlockInteraction(string unlockKey, string label = "")
+        {
+            if (string.IsNullOrEmpty(unlockKey) || State.HasInteractionUnlock(unlockKey)) return false;
+            State.interactionUnlocks.Add(new StringEntry(unlockKey, "1"));
+            EventBus.Publish(new InteractionUnlockedEvent { unlockKey = unlockKey, label = label });
+            StoryLog.Log("[STATE] interaction unlocked: " + unlockKey);
+            return true;
+        }
+
+        public bool HasInteractionUnlock(string unlockKey) { return State.HasInteractionUnlock(unlockKey); }
+
         // ------------------------------------------------ echoes currency (§3.3)
         public void GrantEchoes(int amount)
         {
@@ -318,6 +409,10 @@ namespace Crossroads.Core
             State.codex = saved.codex;
             State.ember = saved.ember; State.tide = saved.tide; State.stone = saved.stone; State.hollow = saved.hollow;
             State.echoBank = saved.echoBank;
+            State.objectives = saved.objectives != null ? saved.objectives : new System.Collections.Generic.List<ObjectiveProgressEntry>();
+            State.npcLocations = saved.npcLocations != null ? saved.npcLocations : new System.Collections.Generic.List<StringEntry>();
+            State.interactionUnlocks = saved.interactionUnlocks != null ? saved.interactionUnlocks : new System.Collections.Generic.List<StringEntry>();
+            State.closedAreas = saved.closedAreas != null ? saved.closedAreas : new System.Collections.Generic.List<StringEntry>();
             StoryLog.Log("[STATE] loaded " + saved.decisions.Count + " decision(s) from save");
         }
 

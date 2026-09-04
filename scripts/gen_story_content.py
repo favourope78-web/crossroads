@@ -35,6 +35,14 @@ NEW_GUIDS = {
     "AbilityPulseVFX.cs":  g32(0x96),
     "AbilityHUD.cs":       g32(0x97),
     "AbilitySheetModel.cs": g32(0x98),
+    # world & objective phase (Gameplay/World + Core events + UI)
+    "WorldEvents.cs":      g32(0xa0),
+    "ObjectiveSystem.cs":  g32(0xa1),
+    "WorldStateSystem.cs": g32(0xa2),
+    "WorldActionInteractable.cs": g32(0xa3),
+    "NpcRelocator.cs":     g32(0xa4),
+    "ObjectiveHUD.cs":     g32(0xa5),
+    "WorldServices.cs":    g32(0xa6),
 }
 
 REGISTRY = {}
@@ -95,6 +103,13 @@ SCRIPT_META_PATHS = {
     "AbilityPulseVFX.cs":  "Assets/_Project/Scripts/Gameplay/Abilities",
     "AbilityHUD.cs":       "Assets/_Project/Scripts/UI",
     "AbilitySheetModel.cs": "Assets/_Project/Scripts/UI",
+    "WorldEvents.cs":      "Assets/_Project/Scripts/Core",
+    "ObjectiveSystem.cs":  "Assets/_Project/Scripts/Gameplay/World",
+    "WorldStateSystem.cs": "Assets/_Project/Scripts/Gameplay/World",
+    "WorldActionInteractable.cs": "Assets/_Project/Scripts/Gameplay/World",
+    "NpcRelocator.cs":     "Assets/_Project/Scripts/Gameplay/World",
+    "WorldServices.cs":    "Assets/_Project/Scripts/Gameplay/World",
+    "ObjectiveHUD.cs":     "Assets/_Project/Scripts/UI",
 }
 NPC_DIR = os.path.join(ROOT, "Assets/_Project/Scripts/Gameplay/NPC")
 os.makedirs(NPC_DIR, exist_ok=True)
@@ -106,6 +121,7 @@ if not os.path.exists(npc_folder_meta):
 FOLDER_META_PATHS = [
     os.path.join(ROOT, "Assets/_Project/Scripts/Gameplay/Abilities"),
     os.path.join(ROOT, "Assets/_Project/Scripts/Narrative/Abilities"),
+    os.path.join(ROOT, "Assets/_Project/Scripts/Gameplay/World"),
 ]
 for fd in FOLDER_META_PATHS:
     os.makedirs(fd, exist_ok=True)
@@ -264,6 +280,47 @@ prog_parts = [
 ]
 progression_block = "\n".join(prog_parts)
 
+# ---- objectives (data-driven mission system, Gameplay/World) ----
+def step_block(step):
+    lines = ["        - text: " + yaml_str(step["text"])]
+    lines.append("          conditions:" + ("\n" + cond_lines(step["conditions"], 12, 14) if step["conditions"] else " []"))
+    return "\n".join(lines)
+
+def objective_block(items):
+    out = []
+    for o in items:
+        out.append("      - id: " + yaml_str(o["id"]))
+        out.append("        title: " + yaml_str(o["title"]))
+        out.append("        description: " + yaml_str(o["description"]))
+        out.append("        type: " + str(o["type"]))
+        out.append("        areaId: " + yaml_str(o["areaId"]))
+        out.append("        giverNpcId: " + yaml_str(o["giverNpcId"]))
+        out.append("        offerConditions:" + ("\n" + cond_lines(o["offerConditions"], 10, 12) if o["offerConditions"] else " []"))
+        out.append("        autoActivate: " + ("1" if o.get("autoActivate", True) else "0"))
+        out.append("        completeConditions:" + ("\n" + cond_lines(o["completeConditions"], 10, 12) if o["completeConditions"] else " []"))
+        out.append("        failConditions:" + ("\n" + cond_lines(o["failConditions"], 10, 12) if o["failConditions"] else " []"))
+        out.append("        counterVar: " + yaml_str(o.get("counterVar", "")))
+        out.append("        counterTarget: " + str(o.get("counterTarget", 0)))
+        out.append("        counterText: " + yaml_str(o.get("counterText", "")))
+        out.append("        steps:" + ("\n" + "\n".join(step_block(s) for s in o["steps"]) if o["steps"] else " []"))
+        out.append("        consequences:" + ("\n" + eff_lines(o["consequences"], 10, 12) if o["consequences"] else " []"))
+        out.append("        failureConsequences:" + ("\n" + eff_lines(o["failureConsequences"], 10, 12) if o["failureConsequences"] else " []"))
+        out.append("        followUps:" + ("\n" + "\n".join("        - " + yaml_str(f) for f in o["followUps"]) if o["followUps"] else " []"))
+        out.append("        completionNotice: " + yaml_str(o.get("completionNotice", "")))
+        out.append("        failureNotice: " + yaml_str(o.get("failureNotice", "")))
+    return "\n".join(out)
+
+def world_interaction_block(items):
+    out = []
+    for w in items:
+        out.append("      - key: " + yaml_str(w["key"]))
+        out.append("        label: " + yaml_str(w["label"]))
+        out.append("        conditions:" + ("\n" + cond_lines(w["conditions"], 10, 12) if w["conditions"] else " []"))
+    return "\n".join(out)
+
+objectives_block = ("    objectives:\n" + objective_block(CONTENT["objectives"])) if CONTENT.get("objectives") else "    objectives: []"
+world_interactions_block = ("    worldInteractions:\n" + world_interaction_block(CONTENT.get("worldInteractions", []))) if CONTENT.get("worldInteractions") else "    worldInteractions: []"
+
 ASSET = """%YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
 --- !u!114 &11400000
@@ -288,6 +345,8 @@ MonoBehaviour:
 @PROGRESSION@
     npcs:
 @NPCS@
+@OBJECTIVES@
+@WORLDINTERACTIONS@
 """.replace("@SCRIPT@", REGISTRY["ScriptableObjectAssets.cs"])
 ASSET = ASSET.replace("@NAME@", yaml_str(CONTENT["libraryName"]))
 ASSET = ASSET.replace("@ENCOUNTERS@", enc_block)
@@ -295,6 +354,8 @@ ASSET = ASSET.replace("@DECISIONS@", decisions_block)
 ASSET = ASSET.replace("@GRAPHS@", graphs_block)
 ASSET = ASSET.replace("@PROGRESSION@", progression_block)
 ASSET = ASSET.replace("@NPCS@", npcs_block)
+ASSET = ASSET.replace("@OBJECTIVES@", objectives_block)
+ASSET = ASSET.replace("@WORLDINTERACTIONS@", world_interactions_block)
 
 DATA_DIR = os.path.join(ROOT, "Assets/_Project/Data/Decisions")
 os.makedirs(DATA_DIR, exist_ok=True)

@@ -90,8 +90,9 @@ namespace Crossroads.Gameplay
             }
 
             bool unlocked = !string.IsNullOrEmpty(areaId) && GameServices.Progress.AreaUnlocked(areaId);
+            bool resealed = !string.IsNullOrEmpty(areaId) && GameServices.State.IsAreaClosed(areaId);
             GateRuleData rule = GateRuleEvaluator.FirstMatch(rules, GameServices.State);
-            _open = unlocked || (rule != null && rule.opens);
+            _open = (unlocked || (rule != null && rule.opens)) && !resealed;
             ApplyVisual(rule, _open);
         }
 

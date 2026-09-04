@@ -128,6 +128,10 @@ namespace Crossroads.Core
             if (g.unlockAreas == null) g.unlockAreas = new System.Collections.Generic.List<StringEntry>();
             if (g.decisions == null) g.decisions = new System.Collections.Generic.List<ResolvedDecisionEntry>();
             if (g.codex == null) g.codex = new System.Collections.Generic.List<string>();
+            if (g.objectives == null) g.objectives = new System.Collections.Generic.List<ObjectiveProgressEntry>();
+            if (g.npcLocations == null) g.npcLocations = new System.Collections.Generic.List<StringEntry>();
+            if (g.interactionUnlocks == null) g.interactionUnlocks = new System.Collections.Generic.List<StringEntry>();
+            if (g.closedAreas == null) g.closedAreas = new System.Collections.Generic.List<StringEntry>();
         }
 
         /// <summary>Writes Current atomically (.tmp -> replace) and mirrors an autosave copy.</summary>

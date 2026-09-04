@@ -77,6 +77,19 @@ namespace Crossroads.Narrative
                 case ConditionType.AbilityLevelBelow:
                     return state.State.GetAbilityLevel(c.key, 1) < c.amount;
 
+                case ConditionType.ObjectiveActive:
+                    return state.GetObjectivePhase(c.key) == ObjectivePhase.Active ||
+                           state.GetObjectivePhase(c.key) == ObjectivePhase.Available;
+
+                case ConditionType.ObjectiveCompleted:
+                    return state.ObjectiveWasCompleted(c.key);
+
+                case ConditionType.ObjectiveFailed:
+                    return state.ObjectiveFailed(c.key);
+
+                case ConditionType.WorldStateIs:
+                    return state.GetWorldState(c.key) == c.value;
+
                 default:
                     return true;
             }

@@ -95,6 +95,18 @@ namespace Crossroads.Narrative
                 case EffectType.BlockAbility:
                     state.BlockAbility(e.key);
                     break;
+                case EffectType.MoveNpc:
+                    state.SetNpcLocation(e.key, e.value);
+                    break;
+                case EffectType.CloseArea:
+                    state.CloseArea(e.key);
+                    break;
+                case EffectType.ReopenArea:
+                    state.ReopenArea(e.key);
+                    break;
+                case EffectType.UnlockInteraction:
+                    state.UnlockInteraction(e.key);
+                    break;
             }
         }
 
@@ -132,6 +144,10 @@ namespace Crossroads.Narrative
                     case EffectType.UnlockArea: sb.Append("area +").Append(e.key); break;
                     case EffectType.UpgradeAbility: sb.Append("ability ").Append(e.key).Append(" -> Lv+").Append(e.amount); break;
                     case EffectType.BlockAbility: sb.Append("ability -").Append(e.key).Append(" (sealed)"); break;
+                    case EffectType.MoveNpc: sb.Append("npc ").Append(e.key).Append(" -> ").Append(e.value); break;
+                    case EffectType.CloseArea: sb.Append("area -").Append(e.key).Append(" (sealed)"); break;
+                    case EffectType.ReopenArea: sb.Append("area +").Append(e.key).Append(" (reopened)"); break;
+                    case EffectType.UnlockInteraction: sb.Append("interaction +").Append(e.key); break;
                 }
             }
             return sb.ToString();
