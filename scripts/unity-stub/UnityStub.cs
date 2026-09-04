@@ -75,9 +75,11 @@ namespace UnityEngine
         public GameObject(string name, params Type[] components) { this.name = name; }
         public T GetComponent<T>() { return default(T); }
         public T GetComponentInChildren<T>() { return default(T); }
+        public T GetComponentInParent<T>() { return default(T); }
         public T AddComponent<T>() where T : Component, new() { return new T(); }
         public void SetActive(bool v) { activeSelf = v; }
         public static GameObject FindGameObjectWithTag(string t) { return null; }
+        public static GameObject Find(string name) { return null; }
     }
 
     public class Transform : Component
@@ -100,6 +102,7 @@ namespace UnityEngine
 
     public class RectTransform : Transform
     {
+        public void SetAsLastSibling() { }
         public Vector2 anchorMin, anchorMax, pivot, offsetMin, offsetMax, sizeDelta, anchoredPosition;
         public Rect rect { get { return new Rect(0f, 0f, 460f, 520f); } }
     }
@@ -509,6 +512,22 @@ namespace UnityEngine.UI
         public float alpha = 1f;
         public bool interactable = true;
         public bool blocksRaycasts = true;
+    }
+
+    // world expansion phase: environment application (locations) uses the real Unity APIs
+    // below; the headless stub mirrors just the surface the prototype touches.
+    public class Light : Behaviour
+    {
+        public Color color = new Color(1f, 1f, 1f, 1f);
+        public float intensity = 1f;
+    }
+
+    public static class RenderSettings
+    {
+        public static Color ambientLight = new Color(0.5f, 0.5f, 0.5f, 1f);
+        public static bool fog;
+        public static Color fogColor = new Color(0.5f, 0.5f, 0.5f, 1f);
+        public static float fogDensity;
     }
 
     public class Canvas : UnityEngine.Behaviour

@@ -54,6 +54,9 @@ namespace Crossroads.Gameplay
             // Branching-story runtime: derives the run's route from the same state (v5 saves)
             CampaignServices.Init();
 
+            // World expansion: locations derive unlocks/travel from the same state
+            LocationServices.Init();
+
             // Power system clock: cooldowns run on real time (test rigs inject their own clock).
             if (GameServices.Abilities != null) GameServices.Abilities.Now = () => Time.time;
         }

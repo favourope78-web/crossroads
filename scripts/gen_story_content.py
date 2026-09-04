@@ -67,6 +67,14 @@ NEW_GUIDS = {
     "CampaignManager.cs":  g32(0xb9),
     "CampaignServices.cs": g32(0xba),
     "CampaignHUD.cs":      g32(0xbb),
+    # world expansion phase (Core events + Gameplay/Locations + UI)
+    "LocationEvents.cs":          g32(0xbc),
+    "LocationManager.cs":         g32(0xbd),
+    "LocationServices.cs":        g32(0xbe),
+    "LocationTransitionFader.cs": g32(0xbf),
+    "MapHUD.cs":                  g32(0xc0),
+    "M_Tide_Pool":                g32(0xc1),
+    "M_Tidewell_Stone":           g32(0xc2),
 }
 
 REGISTRY = {}
@@ -155,6 +163,11 @@ SCRIPT_META_PATHS = {
     "CampaignManager.cs":  "Assets/_Project/Scripts/Gameplay/Campaign",
     "CampaignServices.cs": "Assets/_Project/Scripts/Gameplay/Campaign",
     "CampaignHUD.cs":      "Assets/_Project/Scripts/UI",
+    "LocationEvents.cs":   "Assets/_Project/Scripts/Core",
+    "LocationManager.cs":  "Assets/_Project/Scripts/Gameplay/Locations",
+    "LocationServices.cs": "Assets/_Project/Scripts/Gameplay/Locations",
+    "LocationTransitionFader.cs": "Assets/_Project/Scripts/UI",
+    "MapHUD.cs":           "Assets/_Project/Scripts/UI",
 }
 NPC_DIR = os.path.join(ROOT, "Assets/_Project/Scripts/Gameplay/NPC")
 os.makedirs(NPC_DIR, exist_ok=True)
@@ -165,12 +178,17 @@ if not os.path.exists(npc_folder_meta):
 
 FOLDER_META_PATHS = [
     os.path.join(ROOT, "Assets/_Project/Scripts/Gameplay/Campaign"),
+    os.path.join(ROOT, "Assets/_Project/Scripts/Gameplay/Locations"),
     os.path.join(ROOT, "Assets/Editor"),
     os.path.join(ROOT, "Assets/_Project/Scripts/Gameplay/Input"),
     os.path.join(ROOT, "Assets/_Project/Scripts/Gameplay/Combat"),
     os.path.join(ROOT, "Assets/_Project/Scripts/Gameplay/Abilities"),
     os.path.join(ROOT, "Assets/_Project/Scripts/Narrative/Abilities"),
     os.path.join(ROOT, "Assets/_Project/Scripts/Gameplay/World"),
+    os.path.join(ROOT, "Assets/Game/Locations"),
+    os.path.join(ROOT, "Assets/Game/Locations/FractureHall"),
+    os.path.join(ROOT, "Assets/Game/Locations/NorthAnnex"),
+    os.path.join(ROOT, "Assets/Game/Locations/TidewellShrine"),
 ]
 for fd in FOLDER_META_PATHS:
     os.makedirs(fd, exist_ok=True)
@@ -504,6 +522,42 @@ def chapter_block(ch):
 
 chapters_out = ("    chapters:\n" + "\n".join(chapter_block(ch) for ch in CONTENT["chapters"])) if CONTENT.get("chapters") else "  chapters: []"
 
+# ---- locations (world expansion: unlock rules reuse the gate language) ----
+def gate_rule_lines(rules, item_indent, field_indent):
+    lines = []
+    for r in rules:
+        lines.append(" " * item_indent + "- conditions:" + ("\n" + cond_lines(r["conditions"], item_indent + 4, item_indent + 6) if r["conditions"] else " []"))
+        lines.append(" " * field_indent + "opens: " + ("1" if r.get("opens") else "0"))
+        lines.append(" " * field_indent + "text: " + yaml_str(r.get("text", "")))
+    return "\n".join(lines)
+
+def location_block(loc):
+    out = ["    - id: " + yaml_str(loc["id"])]
+    out.append("      name: " + yaml_str(loc["name"]))
+    out.append("      kind: " + str(loc.get("kind", 0)))
+    out.append("      sceneKey: " + yaml_str(loc.get("sceneKey", "")))
+    out.append("      checkpointId: " + yaml_str(loc.get("checkpointId", "")))
+    out.append("      description: " + yaml_str(loc.get("description", "")))
+    out.append("      unlockRules:" + ("\n" + gate_rule_lines(loc["unlockRules"], 6, 8) if loc.get("unlockRules") else " []"))
+    out.append("      lockedHint: " + yaml_str(loc.get("lockedHint", "")))
+    out.append("      entryConditions:" + ("\n" + cond_lines(loc["entryConditions"], 8, 10) if loc.get("entryConditions") else " []"))
+    out.append("      connections:" + ("\n" + "\n".join("      - " + yaml_str(x) for x in loc["connections"]) if loc.get("connections") else " []"))
+    out.append("      npcs:" + ("\n" + "\n".join("      - " + yaml_str(x) for x in loc["npcs"]) if loc.get("npcs") else " []"))
+    out.append("      encounters:" + ("\n" + "\n".join("      - " + yaml_str(x) for x in loc["encounters"]) if loc.get("encounters") else " []"))
+    out.append("      objectives:" + ("\n" + "\n".join("      - " + yaml_str(x) for x in loc["objectives"]) if loc.get("objectives") else " []"))
+    out.append("      worldStateChanges:" + ("\n" + eff_lines(loc["worldStateChanges"], 8, 10) if loc.get("worldStateChanges") else " []"))
+    env = loc.get("environment", {})
+    out.append("      environment:")
+    out.append("        profile: " + yaml_str(env.get("profile", "")))
+    out.append("        ambient: " + yaml_str(env.get("ambient", "")))
+    out.append("        fog: " + yaml_str(env.get("fog", "")))
+    out.append("        fogDensity: " + str(env.get("fogDensity", 0.015)))
+    out.append("        sun: " + yaml_str(env.get("sun", "")))
+    out.append("        sunIntensity: " + str(env.get("sunIntensity", 1)))
+    return "\n".join(out)
+
+locations_out = ("    locations:\n" + "\n".join(location_block(l) for l in CONTENT["locations"])) if CONTENT.get("locations") else "  locations: []"
+
 ASSET = """%YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
 --- !u!114 &11400000
@@ -535,6 +589,7 @@ MonoBehaviour:
 @ENEMIES@
 @COMBAT@
 @CHAPTERS@
+@LOCATIONS@
 """.replace("@SCRIPT@", REGISTRY["ScriptableObjectAssets.cs"])
 ASSET = ASSET.replace("@NAME@", yaml_str(CONTENT["libraryName"]))
 ASSET = ASSET.replace("@ENCOUNTERS@", enc_block)
@@ -549,6 +604,7 @@ ASSET = ASSET.replace("@ABILITYCOMBAT@", ability_combat_out)
 ASSET = ASSET.replace("@ENEMIES@", enemies_out)
 ASSET = ASSET.replace("@COMBAT@", combat_out)
 ASSET = ASSET.replace("@CHAPTERS@", chapters_out)
+ASSET = ASSET.replace("@LOCATIONS@", locations_out)
 
 DATA_DIR = os.path.join(ROOT, "Assets/_Project/Data/Decisions")
 os.makedirs(DATA_DIR, exist_ok=True)

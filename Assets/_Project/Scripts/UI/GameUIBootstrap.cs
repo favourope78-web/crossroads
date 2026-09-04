@@ -16,6 +16,8 @@ namespace Crossroads.UI
         private AbilityHUD _abilities;
         private ObjectiveHUD _objectives;
         private CombatHUD _combat;
+        private MapHUD _map;
+        private LocationTransitionFader _fader;
         private MobileControlsUI _controls;
         private PauseMenuUI _pause;
 
@@ -39,8 +41,10 @@ namespace Crossroads.UI
             _abilities = AbilityHUD.Attach(safe);
             _objectives = ObjectiveHUD.Attach(safe);
             _combat = CombatHUD.Attach(safe);
+            _map = MapHUD.Attach(safe);
+            _fader = LocationTransitionFader.Attach(safe);
 
-            Debug.Log("[CROSSROADS] Game UI ready (canvas + dialogue + HUD + objectives + combat + touch rig + pause + campaign)");
+            Debug.Log("[CROSSROADS] Game UI ready (canvas + dialogue + HUD + objectives + combat + touch rig + pause + campaign + map + transitions)");
         }
 
         private void Start()

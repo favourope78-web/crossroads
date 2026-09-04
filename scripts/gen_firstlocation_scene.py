@@ -37,6 +37,10 @@ ensure("Interactable.cs", g32(81))
 ensure("DoorInteractable.cs", g32(82))
 ensure("FirstLocationBootstrap.cs", g32(84))
 ensure("FirstLocation.unity", g32(90))
+# world expansion: per-location environment kits (Assets/Game/Locations)
+ensure("Env_Hall.prefab", g32(0xc3))
+ensure("Env_Annex.prefab", g32(0xc4))
+ensure("Env_Tidewell.prefab", g32(0xc5))
 # story additions must already exist in the registry (see gen_story_content.py); sanity check:
 for need in ["PlayerInteraction.cs","StoryWorldState.cs","StoryModeBootstrap.cs",
              "GameUIBootstrap.cs","ScriptableObjectAssets.cs","NpcAgent.cs","NpcInteractable.cs",
@@ -79,8 +83,21 @@ for k in kit:
     write_meta_if_missing(os.path.join(KIT_DIR, k + ".fbx"), NATIVE, REG[k])
 MAT_DIR = os.path.join(ENV, "Materials")
 for m in mats + ["M_Seq_Ember", "M_Seq_Tide", "M_Seq_Stone", "M_Npc_Mara", "M_Npc_Civilian",
-                "M_Enemy_Warden", "M_Enemy_Warden_Hit"]:
+                "M_Enemy_Warden", "M_Enemy_Warden_Hit", "M_Tide_Pool", "M_Tidewell_Stone"]:
     write_meta_if_missing(os.path.join(MAT_DIR, m + ".mat"), NATIVE, REG[m])
+
+# tidewell material files (water-tinted pool + damp stone; URP Lit like the seq markers)
+TIDE_MAT = open(os.path.join(MAT_DIR, "M_Seq_Tide.mat")).read()
+def tide_mat(name, base, emit):
+    p = os.path.join(MAT_DIR, name + ".mat")
+    if os.path.exists(p): return
+    txt = TIDE_MAT.replace("m_Name: M_Seq_Tide", "m_Name: " + name)
+    txt = txt.replace("_BaseColor: {r: 0.03, g: 0.16, b: 0.18, a: 1}", "_BaseColor: {r: %s, a: 1}" % base)
+    txt = txt.replace("_EmissionColor: {r: 0.1, g: 0.85, b: 0.95, a: 1}", "_EmissionColor: {r: %s, a: 1}" % emit)
+    open(p, "w").write(txt)
+    print("mat +", name)
+tide_mat("M_Tide_Pool", "0.05, g: 0.30, b: 0.34", "0.2, g: 0.75, b: 0.9")
+tide_mat("M_Tidewell_Stone", "0.10, g: 0.16, b: 0.17", "0.05, g: 0.35, b: 0.4")
 write_meta_if_missing(os.path.join(ROOT, "Assets/Game/Scripts/ThirdPersonCameraController.cs"), MONO, REG["ThirdPersonCameraController.cs"])
 write_meta_if_missing(os.path.join(ROOT, "Assets/Game/Scripts/FirstLocationBootstrap.cs"), MONO, REG["FirstLocationBootstrap.cs"])
 write_meta_if_missing(os.path.join(ROOT, "Assets/_Project/Scripts/Gameplay/Interaction/Interactable.cs"), MONO, REG["Interactable.cs"])
@@ -810,6 +827,85 @@ BoxCollider:
 emit_monobehaviour(trig_hall_ids["area_hall"], trig_hall_gid, REG["AreaTrigger.cs"], "  areaId: hall")
 root_gids.append(trig_hall_gid)
 
+# ================================================================
+# WORLD EXPANSION: location anchors + the Tidewell Shrine (east room)
+# ================================================================
+
+# ---- travel anchors (LocationTransitionFader teleports the player here on arrival;
+# ---- names are the contract: LocationAnchor_<location id>) ----
+for (anchor_name, apos, ayaw) in [("LocationAnchor_Hall", (0, 0, -14), 0),
+                                  ("LocationAnchor_Annex", (0, 0, 23), 0),
+                                  ("LocationAnchor_Tidewell", (25, 0, 0), 90)]:
+    a_gid, a_ids = emit_gameobject(anchor_name, ["transform"])
+    emit_transform(a_ids["transform"], a_gid, apos, (0, ayaw, 0), (1, 1, 1))
+    root_gids.append(a_gid)
+
+# ---- tidewell room (10 x 10, through the east door at x=20) ----
+TIDEWELL = [
+    ("SM_FloorTile", (25, 0.05, 0), 0, "M_Hall_Concrete"),
+    ("SM_FloorTile", (31, 0.05, 0), 0, "M_Tidewell_Stone"),
+    ("SM_WallPanel", (25, 3, -5), 0, "M_Hall_Concrete"),
+    ("SM_WallPanel", (31, 3, -5), 0, "M_Hall_Concrete"),
+    ("SM_WallPanel", (25, 3, 5), 0, "M_Hall_Concrete"),
+    ("SM_WallPanel", (31, 3, 5), 0, "M_Hall_Concrete"),
+    ("SM_WallPanel", (36, 3, 0), 90, "M_Hall_Concrete"),
+    ("SM_Column", (23, 0, -3.5), 0, "M_Hall_Metal"),
+    ("SM_Column", (23, 0, 3.5), 0, "M_Hall_Metal"),
+    ("SM_Truss", (28, 9.2, 0), 0, "M_Hall_Metal"),
+]
+for (piece, pos, yaw, matk) in TIDEWELL:
+    comps = ["transform", "meshfilter", "renderer"]
+    if piece in COLLIDERS: comps.append("collider")
+    gid, ids = emit_gameobject("%s_tide_%s_%s" % (piece, pos[0], pos[2]), comps)
+    emit_transform(ids["transform"], gid, pos, (0, yaw, 0), (1, 1, 1))
+    emit_meshfilter(ids["meshfilter"], gid, REG[piece])
+    emit_renderer(ids["renderer"], gid, REG[matk])
+    if "collider" in ids:
+        c = COLLIDERS[piece]
+        emit_boxcollider(ids["collider"], gid, c[1], c[2])
+    root_gids.append(gid)
+
+# ---- the pool itself (flat water slab, tide-lit) + the lamp Sera keeps ----
+pool_gid, pool_ids = emit_gameobject("TidewellPool", ["transform", "meshfilter", "renderer", "collider"])
+emit_transform(pool_ids["transform"], pool_gid, (30, 0.16, 0), (0, 0, 0), (6.5, 0.32, 6.5))
+emit_meshfilter(pool_ids["meshfilter"], pool_gid, None, builtin_fileid=CUBE)
+emit_renderer(pool_ids["renderer"], pool_gid, REG["M_Tide_Pool"])
+emit_boxcollider(pool_ids["collider"], pool_gid, (6.5, 0.32, 6.5), (0, 0, 0))
+root_gids.append(pool_gid)
+
+lamp_gid, lamp_ids = emit_gameobject("TidewellLamp", ["transform", "meshfilter", "renderer"])
+emit_transform(lamp_ids["transform"], lamp_gid, (34.2, 2.1, 0), (0, 0, 0), (1, 1, 1))
+emit_meshfilter(lamp_ids["meshfilter"], lamp_gid, REG["SM_OrbCore"])
+emit_renderer(lamp_ids["renderer"], lamp_gid, REG["M_Hall_LightColumn"])
+root_gids.append(lamp_gid)
+
+# ---- AreaTrigger for the zone (currentArea -> tidewell when walked) ----
+trig_tide_gid, trig_tide_ids = emit_gameobject("AreaTrigger_Tidewell", ["transform", "col_tide", "area_tide"])
+emit_transform(trig_tide_ids["transform"], trig_tide_gid, (28, 1.5, 0), (0, 0, 0), (1, 1, 1))
+add_block("""--- !u!65 &%d
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: %d}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Material: {fileID: 0}
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 12, y: 3, z: 11}
+  m_Center: {x: 0, y: 0, z: 0}""" % (trig_tide_ids["col_tide"], trig_tide_gid))
+emit_monobehaviour(trig_tide_ids["area_tide"], trig_tide_gid, REG["AreaTrigger.cs"], "  areaId: tidewell")
+root_gids.append(trig_tide_gid)
+
+# ---- Sera's spot at the shrine (NpcRelocator target, binding below) ----
+sera_tide_gid, sera_tide_ids = emit_gameobject("Sera_Tidewell", ["transform"])
+emit_transform(sera_tide_ids["transform"], sera_tide_gid, (31.5, 0, 1.8), (0, 205, 0), (1, 1, 1))
+root_gids.append(sera_tide_gid)
+
 
 # ================================================================
 # WORLD / OBJECTIVE scene additions (data-driven world actions + relocation)
@@ -960,14 +1056,14 @@ emit_monobehaviour(rubble_ids["action"], rubble_gid, REG["WorldActionInteractabl
         "The Rubble", 3.2, 22))
 
 # ================================================================
-# COMBAT test area (west transept): the Choir Warden encounter.
+# COMBAT area (North Annex): the Choir Warden guards the beacon it was sent for.
 # Story-gated by the enemy definition's activationConditions; the hunt
 # objective (obj_warden_hunt) offers/autostarts off the same decision.
 # ================================================================
 
 # ---- Choir Warden (the ONE enemy prototype; EnemyAgent + data-driven FSM) ----
 warden_gid, warden_ids, warden_children = emit_char_root("ChoirWarden", ["collider", "enemy"],
-    (-13.5, 0, 1.5), (0, 90, 0), 1, [
+    (0, 0, 26.5), (0, 180, 0), 1, [
     ("Body", "M_Enemy_Warden", CAPSULE, (0, 1.05, 0), (0.62, 0.88, 0.62)),
     ("Head", "M_Enemy_Warden", SPHERE, (0, 2.18, 0), (0.38, 0.38, 0.38)),
     ("Core", "M_Hall_OrbGold", SPHERE, (0, 1.45, 0.22), (0.16, 0.16, 0.16)),
@@ -984,7 +1080,7 @@ emit_monobehaviour(warden_ids["enemy"], warden_gid, REG["EnemyAgent.cs"],
     (child_renderer_id(warden_children, "Body"), REG["M_Enemy_Warden"], REG["M_Enemy_Warden_Hit"]))
 
 # ---- Warden wreckage (spawned at the encounter spot when the Warden falls) ----
-warden_wreck_gid, _, _ = emit_char_root("WardenWreckage", [], (-13.5, 0, 1.5), (0, 35, 0), 0, [
+warden_wreck_gid, _, _ = emit_char_root("WardenWreckage", [], (0, 0, 26.5), (0, 35, 0), 0, [
     ("Husk", "M_Enemy_Warden", CUBE, (0, 0.22, 0), (1.5, 0.42, 0.9)),
     ("Shell_Bit", "M_Enemy_Warden", CUBE, (0.7, 0.5, -0.3), (0.5, 0.34, 0.4)),
     ("Dead_Core", "M_Hall_Metal", SPHERE, (-0.45, 0.32, 0.35), (0.22, 0.22, 0.22)),
@@ -1007,7 +1103,11 @@ emit_monobehaviour(reloc_ids["relocator"], reloc_gid, REG["NpcRelocator.cs"],
     "    locationKey: annex_gate\n"
     "    target: {fileID: %d}\n"
     "    notice: Sera takes her watch by the annex gate.\n"
-    "  toastOnLiveMove: 1" % loc_ids["transform"])
+    "  - npcId: sera\n"
+    "    locationKey: tidewell\n"
+    "    target: {fileID: %d}\n"
+    "    notice: Sera is waiting by the tidewell, lamp already lit.\n"
+    "  toastOnLiveMove: 1" % (loc_ids["transform"], sera_tide_ids["transform"]))
 
 # ---- world-state applier: replays persisted consequences on every load ----
 # ---- world-state applier: replays persisted consequences on every load ----
@@ -1044,6 +1144,84 @@ SceneRoots:
 scene = "\n".join(out + blocks) + "\n"
 open(os.path.join(SCN, "FirstLocation.unity"), "w").write(scene)
 write_meta_if_missing(os.path.join(SCN, "FirstLocation.unity"), NATIVE, REG["FirstLocation.unity"])
+
+# ================================================================
+# WORLD EXPANSION: per-location environment kit prefabs
+# (Assets/Game/Locations/<Location>/Env_<Loc>.prefab - a sun preset per
+# location, values mirroring story_content.json's environment blocks)
+# ================================================================
+def env_prefab(kit_dir, prefab_name, go_name, light_rgb, intensity):
+    kd = os.path.join(ROOT, "Assets/Game/Locations", kit_dir)
+    os.makedirs(kd, exist_ok=True)
+    p = os.path.join(kd, prefab_name)
+    r, g, b = light_rgb
+    txt = """%%YAML 1.1
+%%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &100000
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 400000}
+  - component: {fileID: 10800000}
+  m_Layer: 0
+  m_Name: %s
+  m_Tag: Untagged
+  m_IsActive: 1
+--- !u!4 &400000
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 100000}
+  m_LocalRotation: {x: 0.40821788, y: -0.25881905, z: 0.15038373, w: 0.86272992}
+  m_LocalPosition: {x: 0, y: 12, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 55, y: -30, z: 0}
+--- !u!108 &10800000
+Light:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 100000}
+  m_Enabled: 1
+  serializedVersion: 10
+  m_Type: 1
+  m_Shape: 0
+  m_Color: {r: %s, g: %s, b: %s, a: 1}
+  m_Intensity: %s
+  m_Range: 10
+  m_SpotAngle: 30
+  m_InnerSpotAngle: 21.80208
+  m_CookieSize: 10
+  m_Shadows:
+    m_Type: 0
+    m_Resolution: -1
+    m_CustomResolution: -1
+    m_Strength: 1
+    m_Bias: 0.05
+    m_NormalBias: 0.4
+    m_NearPlane: 0.2
+    m_UseViewFrustumForShadowCullTest: 1
+  m_BakedOutput: {fileID: 0}
+""" % (go_name, r, g, b, intensity)
+    open(p, "w").write(txt)
+    write_meta_if_missing(p, NATIVE, REG[prefab_name])
+    print("prefab +", os.path.relpath(p, ROOT))
+
+env_prefab("FractureHall", "Env_Hall.prefab", "Env_Hall_Dawn", ("0.812", "0.902", "0.949"), "1.05")
+env_prefab("NorthAnnex", "Env_Annex.prefab", "Env_Annex_Ember", ("1.0", "0.698", "0.478"), "0.85")
+env_prefab("TidewellShrine", "Env_Tidewell.prefab", "Env_Tidewell_Glass", ("0.749", "0.918", "0.949"), "0.9")
+
 json.dump(REG, open(REG_PATH, "w"), indent=1)
 print("scene objects:", len(LAY['pieces']) + 3 + 4 + 7, "| fileID high:", fid[0])
 print("SCENE GENERATED")

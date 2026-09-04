@@ -397,6 +397,77 @@ else:
                     if rb not in beat_ids:
                         errors.append("beat %s: requiredBeatId %r is not a beat" % (bb.get("id"), rb))
 
+        # locations (world expansion): full parity + reference integrity
+        if len(data.get("locations", [])) != len(content.get("locations", [])):
+            errors.append("location count mismatch")
+        loc_ids, seen_kinds = set(), set()
+        enc_ids = set(e["id"] for e in content["encounters"])
+        obj_ids = set(o["id"] for o in content["objectives"])
+        npc_ids = set(n["id"] for n in content["npcs"])
+        for la, lb in zip(data.get("locations", []), content.get("locations", [])):
+            for k in ("id", "name", "kind", "sceneKey", "checkpointId", "description", "lockedHint"):
+                if str(la.get(k)) != str(lb.get(k)):
+                    errors.append("location %s: %s asset=%r json=%r" % (lb.get("id"), k, la.get(k), lb.get(k)))
+            loc_ids.add(lb.get("id", ""))
+            seen_kinds.add(lb.get("kind"))
+            if not lb.get("sceneKey") or not lb.get("checkpointId"):
+                errors.append("location %s: empty sceneKey/checkpointId" % lb.get("id"))
+            ra_, rb_ = la.get("unlockRules", []), lb.get("unlockRules", [])
+            if len(ra_) != len(rb_):
+                errors.append("location %s unlockRules count mismatch" % lb.get("id"))
+            else:
+                for xa, xb in zip(ra_, rb_):
+                    if bool(xa.get("opens")) != bool(xb.get("opens")):
+                        errors.append("location %s unlockRules.opens: asset=%r json=%r" % (lb.get("id"), xa.get("opens"), xb.get("opens")))
+                    if (xa.get("text") or "") != (xb.get("text") or ""):
+                        errors.append("location %s unlockRules.text: asset=%r json=%r" % (lb.get("id"), xa.get("text"), xb.get("text")))
+                    if len(xa.get("conditions", [])) != len(xb.get("conditions", [])):
+                        errors.append("location %s unlock rule conditions count mismatch" % lb.get("id"))
+                        continue
+                    for x, y in zip(xa.get("conditions", []), xb.get("conditions", [])):
+                        for k in ("type", "key", "value", "amount"):
+                            if not _same(x.get(k), y.get(k)):
+                                errors.append("location %s unlock rule cond.%s: asset=%r json=%r" % (lb.get("id"), k, x.get(k), y.get(k)))
+            for lst_a, lst_b, lbl in ((la.get("entryConditions", []), lb.get("entryConditions", []), "entryConditions"),):
+                if len(lst_a) != len(lst_b):
+                    errors.append("location %s %s count mismatch" % (lb.get("id"), lbl))
+                else:
+                    for x, y in zip(lst_a, lst_b):
+                        for k in ("type", "key", "value", "amount"):
+                            if not _same(x.get(k), y.get(k)):
+                                errors.append("location %s %s.%s: asset=%r json=%r" % (lb.get("id"), lbl, k, x.get(k), y.get(k)))
+            for k in ("connections", "npcs", "encounters", "objectives"):
+                if [str(v) for v in la.get(k, [])] != [str(v) for v in lb.get(k, [])]:
+                    errors.append("location %s %s list mismatch: asset=%r json=%r" % (lb.get("id"), k, la.get(k), lb.get(k)))
+            ca_, cb_ = la.get("worldStateChanges", []), lb.get("worldStateChanges", [])
+            if len(ca_) != len(cb_):
+                errors.append("location %s worldStateChanges count mismatch" % lb.get("id"))
+            else:
+                for x, y in zip(ca_, cb_):
+                    for k in ("type", "key", "value", "amount"):
+                        if not _same(x.get(k), y.get(k)):
+                            errors.append("location %s worldStateChanges.%s: asset=%r json=%r" % (lb.get("id"), k, x.get(k), y.get(k)))
+            ea, eb = la.get("environment", {}), lb.get("environment", {})
+            for k in ("profile", "ambient", "fog", "fogDensity", "sun", "sunIntensity"):
+                if str(ea.get(k)) != str(eb.get(k)):
+                    errors.append("location %s environment.%s: asset=%r json=%r" % (lb.get("id"), k, ea.get(k), eb.get(k)))
+            for ref in lb.get("npcs", []):
+                if ref not in npc_ids: errors.append("location %s references unknown npc %r" % (lb.get("id"), ref))
+            for ref in lb.get("encounters", []):
+                if ref not in enc_ids: errors.append("location %s references unknown encounter %r" % (lb.get("id"), ref))
+            for ref in lb.get("objectives", []):
+                if ref not in obj_ids: errors.append("location %s references unknown objective %r" % (lb.get("id"), ref))
+        for lb in content.get("locations", []):
+            for conn in lb.get("connections", []):
+                if conn not in loc_ids:
+                    errors.append("location %s connects to unknown location %r" % (lb.get("id"), conn))
+                back = next((l for l in content["locations"] if l["id"] == conn), None)
+                if back is not None and lb["id"] not in back.get("connections", []):
+                    errors.append("location connection %s->%s is one-way (must be symmetric)" % (lb.get("id"), conn))
+        for need_kind in (0, 2, 3):  # hub + npc + combat purposes must exist
+            if need_kind not in seen_kinds:
+                errors.append("no location of kind %d (hub/npc/combat coverage)" % need_kind)
+
         # npcs (data-driven NPC definitions)
         def _n(v):
             if isinstance(v, bool): return str(int(v))
@@ -514,7 +585,11 @@ for needle in ["Mara_NPC", "Sera_NPC", "EchoShard", "EnergySeal",
                "key: barricade", "key: barricade_rubble", "key: tide_calm",
                "ChoirWarden", "WardenWreckage", "CombatDirector",
                "enemyId: choir_warden", "key: choir_warden", "key: warden_wreckage",
-               "areaId: annex", "defaultActive: 1", "m_IsTrigger: 1"]:
+               "areaId: annex", "defaultActive: 1", "m_IsTrigger: 1",
+               # world expansion: three locations - anchors, tidewell zone + sera binding
+               "LocationAnchor_Hall", "LocationAnchor_Annex", "LocationAnchor_Tidewell",
+               "AreaTrigger_Tidewell", "areaId: tidewell", "TidewellPool", "Sera_Tidewell",
+               "locationKey: tidewell", "TidewellLamp"]:
     if needle not in scene_txt:
         errors.append("scene missing: " + needle)
 
@@ -524,6 +599,20 @@ for script_key in ["NpcAgent.cs", "NpcInteractable.cs", "StoryWorldState.cs", "S
                    "EnemyAgent.cs", "CombatDirector.cs"]:
     if scene_txt.count(registry[script_key]) == 0:
         errors.append("scene does not reference %s" % script_key)
+
+# ---------------------------------------------------------------- 5. location kits
+# Assets/Game/Locations/<Location>/ must carry one environment prefab each (guid-valid).
+LOC_KITS = {"FractureHall": "hall", "NorthAnnex": "annex", "TidewellShrine": "tidewell"}
+for kit_dir, loc_id in LOC_KITS.items():
+    kit_path = os.path.join(ROOT, "Assets/Game/Locations", kit_dir)
+    if not os.path.isdir(kit_path):
+        errors.append("location kit folder missing: " + kit_path)
+        continue
+    prefabs = [f for f in os.listdir(kit_path) if f.endswith(".prefab")]
+    if not prefabs:
+        errors.append("location kit %s has no prefab" % kit_dir)
+    for f in prefabs:
+        check_text_refs(os.path.join(kit_path, f), "location kit " + kit_dir)
 
 print("=" * 60)
 if errors:

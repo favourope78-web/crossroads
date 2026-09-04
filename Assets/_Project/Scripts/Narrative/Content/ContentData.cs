@@ -252,6 +252,70 @@ namespace Crossroads.Narrative
         public string name = "";
     }
 
+    // =====================================================================================
+    // LOCATIONS (world expansion). A location is a authored PLACE: which scene/checkpoint
+    // hosts it, when it unlocks (rules reuse the gate-rule language), how it connects to
+    // other locations (the travel graph), who/what lives there (npcs/encounters/objectives),
+    // what world-state changes the first arrival applies, and its environment profile.
+    // LocationManager only evaluates this data - a designer adds locations through
+    // content, never through code.
+    // =====================================================================================
+
+    /// <summary>Gameplay purpose of a location (map icon/filter + tests).</summary>
+    public enum LocationKind
+    {
+        Hub = 0,     // central, explorable story hub (usually the start)
+        Story = 1,   // exploration/story focus
+        Npc = 2,     // NPC interaction focus
+        Combat = 3   // action/combat challenge
+    }
+
+    /// <summary>Environment/lighting profile applied on arrival (hex "rrggbb").</summary>
+    [Serializable]
+    public class LocationEnvironmentData
+    {
+        public string profile = "";                    // label, e.g. "ember_low"
+        public string ambient = "3a4450";              // ambient light color
+        public string fog = "2b333d";                  // fog color
+        public float fogDensity = 0.015f;
+        public string sun = "cfe6f2";                  // key light color
+        public float sunIntensity = 1f;
+    }
+
+    /// <summary>One authored location (see LocationKind above for the kinds).</summary>
+    [Serializable]
+    public class LocationDefinitionData
+    {
+        public string id = "";
+        public string name = "";
+        public int kind = (int)LocationKind.Hub;
+        public string sceneKey = "";                   // scene that hosts the location
+        public string checkpointId = "";               // spawn anchor inside that scene
+        public string description = "";
+
+        /// <summary>Unlock rules (gate language: first passing opens-rule unlocks; AND within a rule, OR across). Empty = open from the start.</summary>
+        public List<GateRuleData> unlockRules = new List<GateRuleData>();
+
+        /// <summary>Requirement text the map shows while every rule fails.</summary>
+        public string lockedHint = "";
+
+        /// <summary>Extra conditions to ENTER even when unlocked (sealed doors, hidden thresholds).</summary>
+        public List<DecisionConditionData> entryConditions = new List<DecisionConditionData>();
+
+        /// <summary>Connected location ids - the travel graph (transitions and returns follow edges).</summary>
+        public List<string> connections = new List<string>();
+
+        public List<string> npcs = new List<string>();        // npc ids present here
+        public List<string> encounters = new List<string>();  // encounters offered here
+        public List<string> objectives = new List<string>();  // objectives that belong here
+
+        /// <summary>Effects applied on FIRST arrival only (SpawnEntity/SetWorldState/MoveNpc/...).</summary>
+        public List<DecisionEffectData> worldStateChanges = new List<DecisionEffectData>();
+
+        public LocationEnvironmentData environment = new LocationEnvironmentData();
+    }
+
+
     [Serializable]
     public class ProgressionContentData
     {
@@ -670,6 +734,9 @@ namespace Crossroads.Narrative
         public List<EnemyDefinitionData> enemies = new List<EnemyDefinitionData>();
         public CombatSettingsData combat = new CombatSettingsData();
 
+        // ---- world expansion (locations) ----
+        public List<LocationDefinitionData> locations = new List<LocationDefinitionData>();
+
         public EncounterDefinitionData FindEncounter(string id)
         {
             for (int i = 0; i < encounters.Count; i++) if (encounters[i] != null && encounters[i].id == id) return encounters[i];
@@ -708,6 +775,14 @@ namespace Crossroads.Narrative
             if (chapters == null) return null;
             for (int i = 0; i < chapters.Count; i++)
                 if (chapters[i] != null && chapters[i].id == id) return chapters[i];
+            return null;
+        }
+
+        public LocationDefinitionData FindLocation(string id)
+        {
+            if (locations == null) return null;
+            for (int i = 0; i < locations.Count; i++)
+                if (locations[i] != null && locations[i].id == id) return locations[i];
             return null;
         }
 

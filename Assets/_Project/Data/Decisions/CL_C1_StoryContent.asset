@@ -155,6 +155,10 @@ MonoBehaviour:
           key: ""
           value: ""
           amount: 20
+        - type: 20
+          key: "sera"
+          value: "tidewell"
+          amount: 0
       - id: "stone_still"
         text: "Stay still. Watch. Don't let the Choir see you move."
         afterText: "You go quiet as the wall. The light circles once - and passes. It remembers patience."
@@ -935,6 +939,18 @@ MonoBehaviour:
         decisionId: ""
         conditions: []
         end: 0
+      - id: "confide_line_quiet"
+        speaker: "Mara"
+        text: "The north went quiet an hour ago - the whole hall felt it exhale. Whatever you did up there, it stays done."
+        nextId: "confide_promise"
+        branchPrefix: ""
+        decisionId: ""
+        conditions:
+        - type: 0
+          key: "beacon_silenced"
+          value: "1"
+          amount: 0
+        end: 0
       - id: "confide_line_tide"
         speaker: "Mara"
         text: "You got the twins out. Everyone saw it. I used to think this hall only makes people harder - then you showed up still soft."
@@ -1487,6 +1503,8 @@ MonoBehaviour:
           name: "Fracture Hall"
         - id: "annex"
           name: "North Annex"
+        - id: "tidewell"
+          name: "Tidewell Shrine"
     npcs:
     - id: "mara"
       displayName: "Mara"
@@ -2076,6 +2094,10 @@ MonoBehaviour:
             key: "beacon_silenced"
             value: "1"
             amount: 0
+          - type: 11
+            key: "ember_pulse"
+            value: ""
+            amount: 0
       - key: "keepsake_search"
         label: "Search the crate"
         conditions:
@@ -2618,3 +2640,123 @@ MonoBehaviour:
           value: ""
           amount: 0
       completionJournal: "To be continued."
+    locations:
+    - id: "hall"
+      name: "Fracture Hall"
+      kind: 0
+      sceneKey: "FirstLocation"
+      checkpointId: "hall_spawn"
+      description: "The great central hall where the Trode asks its question. Story trunk, camp, the way to everywhere else."
+      unlockRules: []
+      lockedHint: ""
+      entryConditions: []
+      connections:
+      - "annex"
+      - "tidewell"
+      npcs:
+      - "mara"
+      - "sera"
+      encounters:
+      - "c1_hall_first_light"
+      - "c1_hall_sera"
+      - "c1_hall_mara_confide"
+      - "camp_sera_echo"
+      objectives: []
+      worldStateChanges: []
+      environment:
+        profile: "hall_dawn"
+        ambient: "3a4450"
+        fog: "2b333d"
+        fogDensity: 0.015
+        sun: "cfe6f2"
+        sunIntensity: 1.05
+    - id: "annex"
+      name: "North Annex"
+      kind: 3
+      sceneKey: "FirstLocation"
+      checkpointId: "annex_spawn"
+      description: "Beyond the energy seal: the choir beacon, the Warden the Choir sent for it, and a cache that only answers ember."
+      unlockRules:
+      - conditions:
+          - type: 11
+            key: "ember_pulse"
+            value: ""
+            amount: 0
+        opens: 1
+        text: "The seal drinks the echo and parts. The North Annex lies open."
+      - conditions:
+          - type: 11
+            key: "tide_mend"
+            value: ""
+            amount: 0
+        opens: 1
+        text: "The seal softens like water around your hand. The North Annex lies open."
+      - conditions:
+          - type: 11
+            key: "stone_ward"
+            value: ""
+            amount: 0
+        opens: 1
+        text: "The seal holds, then yields - unhurried, the way you asked it. The North Annex lies open."
+      lockedHint: "A seal of the hall's own light. It only parts for an echoed voice."
+      entryConditions: []
+      connections:
+      - "hall"
+      npcs: []
+      encounters:
+      - "c1_hall_shard"
+      - "c1_east_shrine"
+      objectives:
+      - "obj_ember_beacon"
+      - "obj_ember_cache"
+      - "obj_warden_hunt"
+      worldStateChanges:
+        - type: 7
+          key: "annex"
+          value: "reached"
+          amount: 0
+      environment:
+        profile: "ember_low"
+        ambient: "46372e"
+        fog: "31241d"
+        fogDensity: 0.03
+        sun: "ffb27a"
+        sunIntensity: 0.85
+    - id: "tidewell"
+      name: "Tidewell Shrine"
+      kind: 2
+      sceneKey: "FirstLocation"
+      checkpointId: "tidewell_spawn"
+      description: "A drowned shrine east of the hall. Sera keeps its lamp now, and the water remembers what you carried out of it."
+      unlockRules:
+      - conditions:
+          - type: 6
+            key: "dec_c1_hall_first_light"
+            value: "tide_clear"
+            amount: 0
+        opens: 1
+        text: "The trapped water in the east passage recedes around your feet. The Tidewell Shrine lies open."
+      lockedHint: "The east passage hisses with trapped water. It answers only one who has already answered the tide."
+      entryConditions: []
+      connections:
+      - "hall"
+      npcs:
+      - "sera"
+      encounters:
+      - "c1_hall_mara_report"
+      - "camp_sera_echo"
+      objectives:
+      - "obj_tide_keepsake"
+      - "obj_tide_report"
+      worldStateChanges:
+        - type: 7
+          key: "tidewell"
+          value: "lit"
+          amount: 0
+      environment:
+        profile: "tide_glass"
+        ambient: "2e4a52"
+        fog: "22383f"
+        fogDensity: 0.045
+        sun: "bfeaf2"
+        sunIntensity: 0.9

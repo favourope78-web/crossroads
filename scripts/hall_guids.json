@@ -109,5 +109,15 @@
  "CampaignEvents.cs": "c0a1fed20000000000000000000000b8",
  "CampaignManager.cs": "c0a1fed20000000000000000000000b9",
  "CampaignServices.cs": "c0a1fed20000000000000000000000ba",
- "CampaignHUD.cs": "c0a1fed20000000000000000000000bb"
+ "CampaignHUD.cs": "c0a1fed20000000000000000000000bb",
+ "LocationEvents.cs": "c0a1fed20000000000000000000000bc",
+ "LocationManager.cs": "c0a1fed20000000000000000000000bd",
+ "LocationServices.cs": "c0a1fed20000000000000000000000be",
+ "LocationTransitionFader.cs": "c0a1fed20000000000000000000000bf",
+ "MapHUD.cs": "c0a1fed20000000000000000000000c0",
+ "M_Tide_Pool": "c0a1fed20000000000000000000000c1",
+ "M_Tidewell_Stone": "c0a1fed20000000000000000000000c2",
+ "Env_Hall.prefab": "c0a1fed20000000000000000000000c3",
+ "Env_Annex.prefab": "c0a1fed20000000000000000000000c4",
+ "Env_Tidewell.prefab": "c0a1fed20000000000000000000000c5"
 }

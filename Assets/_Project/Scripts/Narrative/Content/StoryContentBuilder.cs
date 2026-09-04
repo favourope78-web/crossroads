@@ -96,6 +96,18 @@ namespace Crossroads.Narrative
         public const string VarTimesFelled = "times_felled";
         public const string VarPlayerHp = "player_hp";
 
+        // world expansion (locations) -------------------------------------------
+        // Location ids SHARE the area-id namespace (GameState.currentArea/unlockAreas):
+        // the scene's AreaTriggers write the same keys, so physical position and the
+        // location graph can never desync.
+        public const string LocationHall = AreaHall;
+        public const string LocationAnnex = AreaAnnex;
+        public const string LocationTidewell = AreaTidewell;
+        public const string CheckpointHall = "hall_spawn";
+        public const string CheckpointAnnex = "annex_spawn";
+        public const string CheckpointTidewell = "tidewell_spawn";
+        public const string AreaTidewell = "tidewell"; // matches the scene trigger id + story_content.json
+
         public static StoryContentData CreateFirstLightContent()
         {
             var content = new StoryContentData();
@@ -171,7 +183,8 @@ namespace Crossroads.Narrative
             content.progression.areas.AddRange(new List<AreaDefinitionData>
             {
                 new AreaDefinitionData { id = AreaHall, name = "Fracture Hall" },
-                new AreaDefinitionData { id = AreaAnnex, name = "North Annex" }
+                new AreaDefinitionData { id = AreaAnnex, name = "North Annex" },
+                new AreaDefinitionData { id = AreaTidewell, name = "Tidewell Shrine" }
             });
 
             // ---------------------------------------------------------------- decision 1 (the branch)
@@ -220,7 +233,8 @@ namespace Crossroads.Narrative
                             new DecisionEffectData { type = EffectType.UnlockAbility, key = AbilityTide },
                             new DecisionEffectData { type = EffectType.AddSkillLevel, key = SkillAttunement, amount = 1 },
                             new DecisionEffectData { type = EffectType.AddCodex, key = "c1_echo_tide" },
-                            new DecisionEffectData { type = EffectType.GrantEchoes, amount = 20 }
+                            new DecisionEffectData { type = EffectType.GrantEchoes, amount = 20 },
+                            new DecisionEffectData { type = EffectType.MoveNpc, key = NpcSera, value = AreaTidewell } // she keeps the shrine now
                         }
                     },
                     new DecisionOptionData
@@ -604,6 +618,10 @@ namespace Crossroads.Narrative
                 nodes = new List<DialogueNodeData>
                 {
                     new DialogueNodeData { id = "start", branchPrefix = "confide_line" },
+                    new DialogueNodeData { id = "confide_line_quiet", speaker = "Mara",
+                        text = "The north went quiet an hour ago - the whole hall felt it exhale. Whatever you did up there, it stays done.",
+                        nextId = "confide_promise",
+                        conditions = new List<DecisionConditionData> { new DecisionConditionData { type = ConditionType.FlagIs, key = FlagBeaconSilenced, value = "1" } } },
                     new DialogueNodeData { id = "confide_line_tide", speaker = "Mara",
                         text = "You got the twins out. Everyone saw it. I used to think this hall only makes people harder - then you showed up still soft.",
                         nextId = "confide_promise",
@@ -989,7 +1007,9 @@ namespace Crossroads.Narrative
                 new WorldInteractionData { key = "choir_beacon_channel", label = "Channel ember into the beacon",
                     conditions = new List<DecisionConditionData> { new DecisionConditionData { type = ConditionType.AbilityOwned, key = AbilityEmber } } },
                 new WorldInteractionData { key = "ember_cache_open", label = "Open the ember cache",
-                    conditions = new List<DecisionConditionData> { new DecisionConditionData { type = ConditionType.FlagIs, key = FlagBeaconSilenced, value = "1" } } },
+                    conditions = new List<DecisionConditionData> {
+                        new DecisionConditionData { type = ConditionType.FlagIs, key = FlagBeaconSilenced, value = "1" },
+                        new DecisionConditionData { type = ConditionType.AbilityOwned, key = AbilityEmber } } }, // hidden: needs the route ability too
                 new WorldInteractionData { key = "keepsake_search", label = "Search the crate",
                     conditions = new List<DecisionConditionData> { new DecisionConditionData { type = ConditionType.FlagIs, key = DriveFlag, value = "tide" } } },
                 new WorldInteractionData { key = "keepsake_return", label = "Return the keepsake",
@@ -1456,6 +1476,77 @@ namespace Crossroads.Narrative
                 },
                 completionEffects = new List<DecisionEffectData> { new DecisionEffectData { type = EffectType.AddCodex, key = "c1_ch2_teaser" } },
                 completionJournal = "To be continued."
+            });
+
+            // ---------------------------------------------------------------- world expansion (locations)
+            // Three prototype locations, all data: the Fracture Hall hub (story/exploration),
+            // the North Annex (combat challenge - gated by any route ability, like the scene's
+            // energy seal) and the Tidewell Shrine (NPC focus - gated by the tide decision,
+            // Sera relocates there). LocationManager only evaluates this data.
+            content.locations.AddRange(new List<LocationDefinitionData>
+            {
+                new LocationDefinitionData
+                {
+                    id = LocationHall, name = "Fracture Hall", kind = (int)LocationKind.Hub,
+                    sceneKey = "FirstLocation", checkpointId = CheckpointHall,
+                    description = "The great central hall where the Trode asks its question. Story trunk, camp, the way to everywhere else.",
+                    unlockRules = new List<GateRuleData>(), lockedHint = "",
+                    entryConditions = new List<DecisionConditionData>(),
+                    connections = new List<string> { LocationAnnex, LocationTidewell },
+                    npcs = new List<string> { NpcMara, NpcSera },
+                    encounters = new List<string> { EncounterFirstLight, EncounterSera, EncounterMaraConfide, EncounterSeraEcho },
+                    objectives = new List<string>(),
+                    worldStateChanges = new List<DecisionEffectData>(),
+                    environment = new LocationEnvironmentData { profile = "hall_dawn", ambient = "3a4450", fog = "2b333d", fogDensity = 0.015f, sun = "cfe6f2", sunIntensity = 1.05f }
+                },
+                new LocationDefinitionData
+                {
+                    id = LocationAnnex, name = "North Annex", kind = (int)LocationKind.Combat,
+                    sceneKey = "FirstLocation", checkpointId = CheckpointAnnex,
+                    description = "Beyond the energy seal: the choir beacon, the Warden the Choir sent for it, and a cache that only answers ember.",
+                    unlockRules = new List<GateRuleData>
+                    {
+                        new GateRuleData { opens = true, text = "The seal drinks the echo and parts. The North Annex lies open.",
+                            conditions = new List<DecisionConditionData> { new DecisionConditionData { type = ConditionType.AbilityOwned, key = AbilityEmber } } },
+                        new GateRuleData { opens = true, text = "The seal softens like water around your hand. The North Annex lies open.",
+                            conditions = new List<DecisionConditionData> { new DecisionConditionData { type = ConditionType.AbilityOwned, key = AbilityTide } } },
+                        new GateRuleData { opens = true, text = "The seal holds, then yields - unhurried, the way you asked it. The North Annex lies open.",
+                            conditions = new List<DecisionConditionData> { new DecisionConditionData { type = ConditionType.AbilityOwned, key = AbilityStone } } }
+                    },
+                    lockedHint = "A seal of the hall's own light. It only parts for an echoed voice.",
+                    entryConditions = new List<DecisionConditionData>(),
+                    connections = new List<string> { LocationHall },
+                    npcs = new List<string>(),
+                    encounters = new List<string> { EncounterShard, EncounterShrine },
+                    objectives = new List<string> { ObjectiveEmberBeacon, ObjectiveEmberCache, ObjectiveWardenHunt },
+                    worldStateChanges = new List<DecisionEffectData>
+                    {
+                        new DecisionEffectData { type = EffectType.SetWorldState, key = AreaAnnex, value = "reached" }
+                    },
+                    environment = new LocationEnvironmentData { profile = "ember_low", ambient = "46372e", fog = "31241d", fogDensity = 0.03f, sun = "ffb27a", sunIntensity = 0.85f }
+                },
+                new LocationDefinitionData
+                {
+                    id = LocationTidewell, name = "Tidewell Shrine", kind = (int)LocationKind.Npc,
+                    sceneKey = "FirstLocation", checkpointId = CheckpointTidewell,
+                    description = "A drowned shrine east of the hall. Sera keeps its lamp now, and the water remembers what you carried out of it.",
+                    unlockRules = new List<GateRuleData>
+                    {
+                        new GateRuleData { opens = true, text = "The trapped water in the east passage recedes around your feet. The Tidewell Shrine lies open.",
+                            conditions = new List<DecisionConditionData> { new DecisionConditionData { type = ConditionType.DecisionWas, key = DecisionFirstLight, value = "tide_clear" } } }
+                    },
+                    lockedHint = "The east passage hisses with trapped water. It answers only one who has already answered the tide.",
+                    entryConditions = new List<DecisionConditionData>(),
+                    connections = new List<string> { LocationHall },
+                    npcs = new List<string> { NpcSera },
+                    encounters = new List<string> { EncounterMaraReport, EncounterSeraEcho },
+                    objectives = new List<string> { ObjectiveTideKeepsake, ObjectiveTideReport },
+                    worldStateChanges = new List<DecisionEffectData>
+                    {
+                        new DecisionEffectData { type = EffectType.SetWorldState, key = AreaTidewell, value = "lit" }
+                    },
+                    environment = new LocationEnvironmentData { profile = "tide_glass", ambient = "2e4a52", fog = "22383f", fogDensity = 0.045f, sun = "bfeaf2", sunIntensity = 0.9f }
+                }
             });
 
             return content;

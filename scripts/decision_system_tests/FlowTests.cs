@@ -1473,12 +1473,19 @@ namespace Crossroads.Tests
             _passed += campaignPassed;
             _failed += campaignFailed;
 
+            // world expansion (Gameplay/Locations)
+            int locationPassed, locationFailed;
+            LocationTests.RunAll(out locationPassed, out locationFailed);
+            _passed += locationPassed;
+            _failed += locationFailed;
+
             Console.WriteLine("======================================");
             foreach (var line in Log) Console.WriteLine(line);
             foreach (var line in WorldTests.GetLog()) Console.WriteLine(line);
             foreach (var line in CombatTests.GetLog()) Console.WriteLine(line);
             foreach (var line in MobileExperienceTests.GetLog()) Console.WriteLine(line);
             foreach (var line in CampaignTests.GetLog()) Console.WriteLine(line);
+            foreach (var line in LocationTests.GetLog()) Console.WriteLine(line);
             Console.WriteLine("======================================");
             Console.WriteLine("RESULT: {0} passed, {1} failed", _passed, _failed);
             return _failed == 0 ? 0 : 1;
