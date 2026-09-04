@@ -75,6 +75,17 @@ namespace Crossroads.Narrative
         public const string GraphMaraReport = "g_c1_hall_mara_report";
         public const string DecisionTideReport = "dec_tide_report";
 
+        // combat phase -----------------------------------------------------------
+        public const string ObjectiveWardenHunt = "obj_warden_hunt";
+        public const string EnemyChoirWarden = "choir_warden";
+        public const string StatusEchoBurn = "echo_burn";
+        public const string StatusSuppression = "suppression";
+        public const string StatusDodgeGuard = "dodge_guard";
+        public const string StatusTideSoothe = "tide_soothe";
+        public const string VarWardenDrivenOff = "warden_driven_off";
+        public const string VarTimesFelled = "times_felled";
+        public const string VarPlayerHp = "player_hp";
+
         public static StoryContentData CreateFirstLightContent()
         {
             var content = new StoryContentData();
@@ -756,6 +767,13 @@ namespace Crossroads.Narrative
                     {
                         new NpcStateData
                         {
+                            conditions = new List<DecisionConditionData> { new DecisionConditionData { type = ConditionType.ObjectiveCompleted, key = ObjectiveWardenHunt } },
+                            title = "Sera · Shieldmate",
+                            moodLine = "'You put the Warden down.' Sera looks at you like the hall just changed its mind about you.",
+                            approachDistance = 1.3f, avoidDistance = 0f, moveSpeed = 1.0f, reactRadius = -1f
+                        },
+                        new NpcStateData
+                        {
                             conditions = new List<DecisionConditionData> { new DecisionConditionData { type = ConditionType.ObjectiveCompleted, key = ObjectiveEmberBeacon } },
                             title = "Sera · Vanguard",
                             moodLine = "'The beacon's quiet. First time in days I can hear myself think.' Sera takes her watch by the annex gate.",
@@ -1037,6 +1055,153 @@ namespace Crossroads.Narrative
                         conditions = new List<DecisionConditionData> { new DecisionConditionData { type = ConditionType.DecisionWas, key = DecisionTideReport, value = "keep_light" } } },
                     new DialogueNodeData { id = "end", speaker = "", text = "", end = true }
                 }
+            });
+
+            // ================================================================ COMBAT SYSTEM CONTENT
+            // Damage types/attack shapes/health/defense/statuses/ability attacks/enemy
+            // archetypes - all data (Gameplay/Combat runtime reads these rows only).
+
+            // ---- status effects ----
+            content.statusEffects.AddRange(new List<StatusEffectDefinitionData>
+            {
+                new StatusEffectDefinitionData
+                {
+                    id = StatusEchoBurn, name = "Echo Burn",
+                    description = "The ember keeps burning after the pulse - heat gnawing at the Fracture's shell.",
+                    durationSeconds = 4f, tickIntervalSeconds = 1f, healthPerTick = -4,
+                    moveSpeedMultiplier = 1f, attackRateMultiplier = 1f
+                },
+                new StatusEffectDefinitionData
+                {
+                    id = StatusSuppression, name = "Suppression",
+                    description = "The Choir's discipline drags at your limbs - everything feels heavier.",
+                    durationSeconds = 2.5f, tickIntervalSeconds = 0f, healthPerTick = 0,
+                    moveSpeedMultiplier = 0.65f, attackRateMultiplier = 1f
+                },
+                new StatusEffectDefinitionData
+                {
+                    id = StatusDodgeGuard, name = "Flowing Aside",
+                    description = "You are already somewhere else. Incoming strikes miss.",
+                    durationSeconds = 0.45f, tickIntervalSeconds = 0f, healthPerTick = 0,
+                    moveSpeedMultiplier = 1f, attackRateMultiplier = 1f, grantsImmunity = true
+                },
+                new StatusEffectDefinitionData
+                {
+                    id = StatusTideSoothe, name = "Soothing Tide",
+                    description = "The cool wash keeps mending what the fight bruises.",
+                    durationSeconds = 3f, tickIntervalSeconds = 1f, healthPerTick = 6,
+                    moveSpeedMultiplier = 1f, attackRateMultiplier = 1f
+                }
+            });
+
+            // ---- ability combat payloads (existing abilities gain combat meaning;
+            //      damage/heal scale with the CURRENT level row's power) ----
+            content.abilityCombat.AddRange(new List<AbilityCombatData>
+            {
+                new AbilityCombatData
+                {
+                    abilityId = AbilityEmber, damageType = DamageType.Ember, damagePerPower = 10f,
+                    applyStatusToTargets = new List<string> { StatusEchoBurn }
+                },
+                new AbilityCombatData
+                {
+                    abilityId = AbilityTide, damageType = DamageType.Tide, damagePerPower = 3f, healPlayerPerPower = 12f,
+                    applyStatusToPlayer = new List<string> { StatusTideSoothe }
+                },
+                new AbilityCombatData
+                {
+                    abilityId = AbilityStone, damageType = DamageType.Stone, damagePerPower = 8f,
+                    applyStatusToTargets = new List<string> { StatusSuppression }
+                }
+            });
+
+            // ---- enemy archetypes (ONE prototype: the Choir Warden tracker) ----
+            content.enemies.Add(new EnemyDefinitionData
+            {
+                id = EnemyChoirWarden, displayName = "Choir Warden",
+                description = "A tracker-construct of the Choir: tall, patient, humming with hollow light. It marks who the Fracture touched - and collects them.",
+                sheetRef = "REF-06",
+                maxHealth = 60f, defense = 3f,
+                resistances = new List<DamageResistEntry>
+                {
+                    new DamageResistEntry { type = DamageType.Kinetic, multiplier = 1f },
+                    new DamageResistEntry { type = DamageType.Ember, multiplier = 1.25f },  // vulnerable: heat warps its shell
+                    new DamageResistEntry { type = DamageType.Tide, multiplier = 0.8f },
+                    new DamageResistEntry { type = DamageType.Stone, multiplier = 1f },
+                    new DamageResistEntry { type = DamageType.Hollow, multiplier = 0.5f }   // shrugs off its own channel
+                },
+                moveSpeed = 1.55f, turnSpeed = 5f,
+                detectionRadius = 9f, leashRadius = 15f, attackRange = 2.3f, staggerSeconds = 0.35f,
+                attack = new AttackDefinitionData
+                {
+                    id = "warden_smite", name = "Hollow Smite", damageType = DamageType.Hollow,
+                    delivery = AttackDelivery.MeleeArc, baseDamage = 12f,
+                    range = 2.3f, arcDegrees = 70f, windupSeconds = 0.7f, cooldownSeconds = 2.2f,
+                    applyStatusIds = new List<string> { StatusSuppression }
+                },
+                activationConditions = new List<DecisionConditionData>
+                {
+                    // the hunt starts because of the player's first decision (story-gated combat)
+                    new DecisionConditionData { type = ConditionType.DecisionWas, key = DecisionFirstLight, value = "" }
+                },
+                onDefeatEffects = new List<DecisionEffectData>
+                {
+                    new DecisionEffectData { type = EffectType.AddVar, key = VarWardenDrivenOff, amount = 1 },
+                    new DecisionEffectData { type = EffectType.SpawnEntity, key = "choir_warden", value = "0" },
+                    new DecisionEffectData { type = EffectType.SpawnEntity, key = "warden_wreckage", value = "1" },
+                    new DecisionEffectData { type = EffectType.GrantEchoes, amount = 15 },
+                    new DecisionEffectData { type = EffectType.AddCodex, key = "c1_warden_felled" }
+                }
+            });
+
+            // ---- player combat settings (health/defense/basic strike/dodge/defeat policy) ----
+            content.combat = new CombatSettingsData
+            {
+                playerMaxHealth = 100f, playerDefense = 2f,
+                playerResistances = new List<DamageResistEntry>
+                {
+                    new DamageResistEntry { type = DamageType.Hollow, multiplier = 0.9f } // Ari carries the echo: it shields a little
+                },
+                basicAttack = new AttackDefinitionData
+                {
+                    id = "player_strike", name = "Strike", damageType = DamageType.Kinetic,
+                    delivery = AttackDelivery.MeleeArc, baseDamage = 10f,
+                    range = 2.8f, arcDegrees = 110f, windupSeconds = 0f, cooldownSeconds = 0.9f
+                },
+                dodgeDistance = 3.6f, dodgeDurationSeconds = 0.28f, dodgeCooldownSeconds = 1.6f,
+                dodgeStatusId = StatusDodgeGuard,
+                healthVarKey = VarPlayerHp,
+                onPlayerDefeat = new List<DecisionEffectData>
+                {
+                    // a defeat NEVER destroys the save: it costs a count, worries Mara, and the hall sets you back on your feet
+                    new DecisionEffectData { type = EffectType.AddVar, key = VarTimesFelled, amount = 1 },
+                    new DecisionEffectData { type = EffectType.AddBond, key = "mara", amount = 1 },
+                    new DecisionEffectData { type = EffectType.AddCodex, key = "c1_felled_once" }
+                }
+            };
+
+            // ---- combat objective: encounter -> fight -> world/NPC state change ----
+            content.objectives.Add(new ObjectiveDefinitionData
+            {
+                id = ObjectiveWardenHunt, title = "Drive Off the Choir Warden", type = ObjectiveType.Crisis,
+                areaId = AreaHall, description = "The Choir sent a Warden to collect whoever the Fracture touched. That is you. It waits in the west transept - put it down before it reports.",
+                offerConditions = new List<DecisionConditionData>
+                {
+                    new DecisionConditionData { type = ConditionType.DecisionWas, key = DecisionFirstLight, value = "" }
+                },
+                completeConditions = new List<DecisionConditionData>
+                {
+                    new DecisionConditionData { type = ConditionType.VarAtLeast, key = VarWardenDrivenOff, amount = 1 }
+                },
+                consequences = new List<DecisionEffectData>
+                {
+                    new DecisionEffectData { type = EffectType.AddReputation, key = "choir", amount = -5 },
+                    new DecisionEffectData { type = EffectType.AddReputation, key = "folk", amount = 4 },
+                    new DecisionEffectData { type = EffectType.AddBond, key = "sera", amount = 5 },
+                    new DecisionEffectData { type = EffectType.GrantEchoes, amount = 10 },
+                    new DecisionEffectData { type = EffectType.AddCodex, key = "c1_warden_driven_off" }
+                },
+                completionNotice = "Objective complete - the Warden will not report you. Sera saw all of it."
             });
 
             return content;

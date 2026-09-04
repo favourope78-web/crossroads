@@ -43,6 +43,15 @@ NEW_GUIDS = {
     "NpcRelocator.cs":     g32(0xa4),
     "ObjectiveHUD.cs":     g32(0xa5),
     "WorldServices.cs":    g32(0xa6),
+    # combat phase (Gameplay/Combat + UI)
+    "CombatEvents.cs":     g32(0xa7),
+    "Combatant.cs":        g32(0xa8),
+    "EnemyBrain.cs":       g32(0xa9),
+    "CombatResolution.cs": g32(0xaa),
+    "EnemyAgent.cs":       g32(0xab),
+    "PlayerCombatController.cs": g32(0xac),
+    "CombatDirector.cs":   g32(0xad),
+    "CombatHUD.cs":        g32(0xae),
 }
 
 REGISTRY = {}
@@ -110,6 +119,14 @@ SCRIPT_META_PATHS = {
     "NpcRelocator.cs":     "Assets/_Project/Scripts/Gameplay/World",
     "WorldServices.cs":    "Assets/_Project/Scripts/Gameplay/World",
     "ObjectiveHUD.cs":     "Assets/_Project/Scripts/UI",
+    "CombatEvents.cs":     "Assets/_Project/Scripts/Gameplay/Combat",
+    "Combatant.cs":        "Assets/_Project/Scripts/Gameplay/Combat",
+    "EnemyBrain.cs":       "Assets/_Project/Scripts/Gameplay/Combat",
+    "CombatResolution.cs": "Assets/_Project/Scripts/Gameplay/Combat",
+    "EnemyAgent.cs":       "Assets/_Project/Scripts/Gameplay/Combat",
+    "PlayerCombatController.cs": "Assets/_Project/Scripts/Gameplay/Combat",
+    "CombatDirector.cs":   "Assets/_Project/Scripts/Gameplay/Combat",
+    "CombatHUD.cs":        "Assets/_Project/Scripts/UI",
 }
 NPC_DIR = os.path.join(ROOT, "Assets/_Project/Scripts/Gameplay/NPC")
 os.makedirs(NPC_DIR, exist_ok=True)
@@ -119,6 +136,7 @@ if not os.path.exists(npc_folder_meta):
     print("meta +", os.path.relpath(npc_folder_meta, ROOT))
 
 FOLDER_META_PATHS = [
+    os.path.join(ROOT, "Assets/_Project/Scripts/Gameplay/Combat"),
     os.path.join(ROOT, "Assets/_Project/Scripts/Gameplay/Abilities"),
     os.path.join(ROOT, "Assets/_Project/Scripts/Narrative/Abilities"),
     os.path.join(ROOT, "Assets/_Project/Scripts/Gameplay/World"),
@@ -319,6 +337,102 @@ def world_interaction_block(items):
     return "\n".join(out)
 
 objectives_block = ("    objectives:\n" + objective_block(CONTENT["objectives"])) if CONTENT.get("objectives") else "    objectives: []"
+
+# ---- combat content (status effects / ability payloads / enemies / settings) ----
+def str_list(items, indent):
+    if not items:
+        return " " * indent + "[]"
+    return "\n".join(" " * indent + "- " + yaml_str(s) for s in items)
+
+def status_effect_block(items):
+    out = []
+    for s in items:
+        out.append("      - id: " + yaml_str(s["id"]))
+        out.append("        name: " + yaml_str(s["name"]))
+        out.append("        description: " + yaml_str(s["description"]))
+        out.append("        durationSeconds: " + num(s["durationSeconds"]))
+        out.append("        tickIntervalSeconds: " + num(s["tickIntervalSeconds"]))
+        out.append("        healthPerTick: " + str(s["healthPerTick"]))
+        out.append("        moveSpeedMultiplier: " + num(s["moveSpeedMultiplier"]))
+        out.append("        attackRateMultiplier: " + num(s["attackRateMultiplier"]))
+        out.append("        grantsImmunity: " + ("1" if s["grantsImmunity"] else "0"))
+    return "\n".join(out)
+
+def ability_combat_block(items):
+    out = []
+    for a in items:
+        out.append("      - abilityId: " + yaml_str(a["abilityId"]))
+        out.append("        damageType: " + str(a["damageType"]))
+        out.append("        damagePerPower: " + num(a["damagePerPower"]))
+        out.append("        healPlayerPerPower: " + num(a["healPlayerPerPower"]))
+        out.append("        applyStatusToTargets:\n" + str_list(a["applyStatusToTargets"], 10) if a["applyStatusToTargets"] else "        applyStatusToTargets: []")
+        out.append("        applyStatusToPlayer:\n" + str_list(a["applyStatusToPlayer"], 10) if a["applyStatusToPlayer"] else "        applyStatusToPlayer: []")
+    return "\n".join(out)
+
+def attack_fields(a, indent):
+    pad = " " * indent
+    lines = [
+        pad + "id: " + yaml_str(a["id"]),
+        pad + "name: " + yaml_str(a["name"]),
+        pad + "damageType: " + str(a["damageType"]),
+        pad + "delivery: " + str(a["delivery"]),
+        pad + "baseDamage: " + num(a["baseDamage"]),
+        pad + "range: " + num(a["range"]),
+        pad + "arcDegrees: " + num(a["arcDegrees"]),
+        pad + "radius: " + num(a["radius"]),
+        pad + "windupSeconds: " + num(a["windupSeconds"]),
+        pad + "cooldownSeconds: " + num(a["cooldownSeconds"]),
+    ]
+    lines.append(pad + "applyStatusIds:\n" + str_list(a["applyStatusIds"], indent) if a["applyStatusIds"] else pad + "applyStatusIds: []")
+    return "\n".join(lines)
+
+def enemy_block(items):
+    out = []
+    for e in items:
+        out.append("      - id: " + yaml_str(e["id"]))
+        out.append("        displayName: " + yaml_str(e["displayName"]))
+        out.append("        description: " + yaml_str(e["description"]))
+        out.append("        sheetRef: " + yaml_str(e["sheetRef"]))
+        out.append("        maxHealth: " + num(e["maxHealth"]))
+        out.append("        defense: " + num(e["defense"]))
+        out.append("        resistances:")
+        for r in e["resistances"]:
+            out.append("        - type: " + str(r["type"]))
+            out.append("          multiplier: " + num(r["multiplier"]))
+        out.append("        moveSpeed: " + num(e["moveSpeed"]))
+        out.append("        turnSpeed: " + num(e["turnSpeed"]))
+        out.append("        detectionRadius: " + num(e["detectionRadius"]))
+        out.append("        leashRadius: " + num(e["leashRadius"]))
+        out.append("        attackRange: " + num(e["attackRange"]))
+        out.append("        staggerSeconds: " + num(e["staggerSeconds"]))
+        out.append("        attack:\n" + attack_fields(e["attack"], 10))
+        out.append("        activationConditions:" + ("\n" + cond_lines(e["activationConditions"], 10, 12) if e["activationConditions"] else " []"))
+        out.append("        onDefeatEffects:" + ("\n" + eff_lines(e["onDefeatEffects"], 10, 12) if e["onDefeatEffects"] else " []"))
+    return "\n".join(out)
+
+def combat_settings_block(cs):
+    out = [
+        "    combat:",
+        "      playerMaxHealth: " + num(cs["playerMaxHealth"]),
+        "      playerDefense: " + num(cs["playerDefense"]),
+        "      playerResistances:",
+    ]
+    for r in cs["playerResistances"]:
+        out.append("      - type: " + str(r["type"]))
+        out.append("        multiplier: " + num(r["multiplier"]))
+    out.append("      basicAttack:\n" + attack_fields(cs["basicAttack"], 8))
+    out.append("      dodgeDistance: " + num(cs["dodgeDistance"]))
+    out.append("      dodgeDurationSeconds: " + num(cs["dodgeDurationSeconds"]))
+    out.append("      dodgeCooldownSeconds: " + num(cs["dodgeCooldownSeconds"]))
+    out.append("      dodgeStatusId: " + yaml_str(cs["dodgeStatusId"]))
+    out.append("      healthVarKey: " + yaml_str(cs["healthVarKey"]))
+    out.append("      onPlayerDefeat:" + ("\n" + eff_lines(cs["onPlayerDefeat"], 8, 10) if cs["onPlayerDefeat"] else " []"))
+    return "\n".join(out)
+
+status_effects_block = ("    statusEffects:\n" + status_effect_block(CONTENT["statusEffects"])) if CONTENT.get("statusEffects") else "    statusEffects: []"
+ability_combat_out = ("    abilityCombat:\n" + ability_combat_block(CONTENT["abilityCombat"])) if CONTENT.get("abilityCombat") else "    abilityCombat: []"
+enemies_out = ("    enemies:\n" + enemy_block(CONTENT["enemies"])) if CONTENT.get("enemies") else "    enemies: []"
+combat_out = combat_settings_block(CONTENT["combat"]) if CONTENT.get("combat") else "    combat:\n      playerMaxHealth: 100"
 world_interactions_block = ("    worldInteractions:\n" + world_interaction_block(CONTENT.get("worldInteractions", []))) if CONTENT.get("worldInteractions") else "    worldInteractions: []"
 
 ASSET = """%YAML 1.1
@@ -347,6 +461,10 @@ MonoBehaviour:
 @NPCS@
 @OBJECTIVES@
 @WORLDINTERACTIONS@
+@STATUSEFFECTS@
+@ABILITYCOMBAT@
+@ENEMIES@
+@COMBAT@
 """.replace("@SCRIPT@", REGISTRY["ScriptableObjectAssets.cs"])
 ASSET = ASSET.replace("@NAME@", yaml_str(CONTENT["libraryName"]))
 ASSET = ASSET.replace("@ENCOUNTERS@", enc_block)
@@ -356,6 +474,10 @@ ASSET = ASSET.replace("@PROGRESSION@", progression_block)
 ASSET = ASSET.replace("@NPCS@", npcs_block)
 ASSET = ASSET.replace("@OBJECTIVES@", objectives_block)
 ASSET = ASSET.replace("@WORLDINTERACTIONS@", world_interactions_block)
+ASSET = ASSET.replace("@STATUSEFFECTS@", status_effects_block)
+ASSET = ASSET.replace("@ABILITYCOMBAT@", ability_combat_out)
+ASSET = ASSET.replace("@ENEMIES@", enemies_out)
+ASSET = ASSET.replace("@COMBAT@", combat_out)
 
 DATA_DIR = os.path.join(ROOT, "Assets/_Project/Data/Decisions")
 os.makedirs(DATA_DIR, exist_ok=True)

@@ -18,6 +18,13 @@ namespace Crossroads.Gameplay
         [SerializeField] private float gravity = -9.81f;
         [SerializeField] private float pivotAngleThreshold = 50f;
 
+        /// <summary>
+        /// Combat hook (additive): the PlayerCombatController feeds status-driven speed
+        /// modifiers here (suppression slows, future haste). 1 = normal. The locomotion
+        /// itself is untouched - combat only ever scales it.
+        /// </summary>
+        public static float ExternalSpeedMultiplier = 1f;
+
         private CharacterController _cc;
         private Animator _animator;
         private float _turnVel;
@@ -58,7 +65,7 @@ namespace Crossroads.Gameplay
                 float targetAngle = Mathf.Atan2(moveDir.x, moveDir.z) * Mathf.Rad2Deg;
                 float angle = Mathf.SmoothDampAngle(transform.eulerAngles.y, targetAngle, ref _turnVel, turnSmoothTime);
                 transform.rotation = Quaternion.Euler(0f, angle, 0f);
-                _cc.Move(moveDir * walkSpeed * Time.deltaTime);
+                _cc.Move(moveDir * (walkSpeed * ExternalSpeedMultiplier) * Time.deltaTime);
             }
 
             // gravity

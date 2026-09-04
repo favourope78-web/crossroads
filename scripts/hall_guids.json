@@ -86,5 +86,15 @@
  "WorldActionInteractable.cs": "c0a1fed20000000000000000000000a3",
  "NpcRelocator.cs": "c0a1fed20000000000000000000000a4",
  "ObjectiveHUD.cs": "c0a1fed20000000000000000000000a5",
- "WorldServices.cs": "c0a1fed20000000000000000000000a6"
+ "WorldServices.cs": "c0a1fed20000000000000000000000a6",
+ "CombatEvents.cs": "c0a1fed20000000000000000000000a7",
+ "Combatant.cs": "c0a1fed20000000000000000000000a8",
+ "EnemyBrain.cs": "c0a1fed20000000000000000000000a9",
+ "CombatResolution.cs": "c0a1fed20000000000000000000000aa",
+ "EnemyAgent.cs": "c0a1fed20000000000000000000000ab",
+ "PlayerCombatController.cs": "c0a1fed20000000000000000000000ac",
+ "CombatDirector.cs": "c0a1fed20000000000000000000000ad",
+ "CombatHUD.cs": "c0a1fed20000000000000000000000ae",
+ "M_Enemy_Warden": "c0a1fed2000000000000000000000036",
+ "M_Enemy_Warden_Hit": "c0a1fed2000000000000000000000037"
 }

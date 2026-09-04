@@ -148,7 +148,7 @@ namespace Crossroads.Tests
         {
             Log.Add("[30] Objectives: data-driven definitions satisfy the manager contracts");
             var content = StoryContentBuilder.CreateFirstLightContent();
-            CheckEq(content.objectives.Count, 6, "six authored objectives (3 paths + 3 follow-ups)");
+            CheckEq(content.objectives.Count, 7, "seven authored objectives (3 paths + 3 follow-ups + 1 combat crisis)");
             Check(content.FindObjective(StoryContentBuilder.ObjectiveEmberBeacon) != null, "ember path objective present");
             Check(content.FindObjective(StoryContentBuilder.ObjectiveTideKeepsake) != null, "tide path objective present");
             Check(content.FindObjective(StoryContentBuilder.ObjectiveStoneBarricade) != null, "stone path objective present");
@@ -188,8 +188,8 @@ namespace Crossroads.Tests
             string dir = TempDir("content");
             IEncounterSource src;
             NewRun(dir, out src);
-            Check(WorldServices.IsInitialized && WorldServices.Objectives.RegisteredCount == 6,
-                  "booted manager sees the six authored objectives");
+            Check(WorldServices.IsInitialized && WorldServices.Objectives.RegisteredCount == 7,
+                  "booted manager sees the seven authored objectives");
             Check(WorldServices.World != null, "world-state system bootstrapped");
             Shutdown();
             Directory.Delete(dir, true);
@@ -218,7 +218,8 @@ namespace Crossroads.Tests
                   "Decision A does NOT unlock Objective B (tide)");
             CheckEq(WorldServices.Objectives.PhaseOf(StoryContentBuilder.ObjectiveStoneBarricade), ObjectivePhase.Hidden,
                   "Decision A does NOT unlock Objective C (stone)");
-            CheckEq(WorldServices.Objectives.ActiveObjectives().Count, 1, "exactly one tracked objective");
+            CheckEq(WorldServices.Objectives.ActiveObjectives().Count, 2,
+                  "two tracked objectives after Decision A (path objective + combat crisis)");
 
             bool sawOffer = false, sawActivate = false;
             for (int i = 0; i < ObjectiveEvents.Count; i++)
@@ -711,9 +712,10 @@ namespace Crossroads.Tests
             // v3 file had no objectives field: it normalized to empty, then the live systems
             // evaluated against the restored decision and offered exactly the ember objective
             Check(GameServices.State.State.objectives != null
-                  && GameServices.State.State.objectives.Count == 1
-                  && GameServices.State.State.objectives[0].id == StoryContentBuilder.ObjectiveEmberBeacon,
-                  "v3 objectives normalized empty, then live-upgraded by evaluation");
+                  && GameServices.State.State.objectives.Count == 2
+                  && (int)GameServices.State.GetObjectivePhase(StoryContentBuilder.ObjectiveEmberBeacon) == (int)Crossroads.Core.ObjectivePhase.Active
+                  && (int)GameServices.State.GetObjectivePhase(StoryContentBuilder.ObjectiveWardenHunt) == (int)Crossroads.Core.ObjectivePhase.Active,
+                  "v3 objectives normalized empty, then live-upgraded by evaluation (path + combat)");
             // the objective system then offers against the restored decision - live upgrade
             CheckEq(WorldServices.Objectives.PhaseOf(StoryContentBuilder.ObjectiveEmberBeacon), ObjectivePhase.Active,
                   "v3 save upgraded in-memory: objectives evaluate against restored decisions");

@@ -1086,7 +1086,7 @@ namespace Crossroads.Tests
                   && mara.FindInteraction("report").conditions[0].type == ConditionType.ObjectiveCompleted,
                   "mara 'report' interaction is objective-gated");
             Check(sera.behaviour.personality == NpcPersonality.Wary, "sera personality: Wary (keeps distance)");
-            CheckEq(sera.states.Count, 7, "sera has drive + ability + objective-reaction states");
+            CheckEq(sera.states.Count, 8, "sera has drive + ability + objective + combat-reaction states");
             Check(sera.FindInteraction("show_shard").conditions[0].type == ConditionType.ItemHeld, "sera shard interaction is item-gated");
 
             bool allResolve = true;
@@ -1451,9 +1451,16 @@ namespace Crossroads.Tests
             _passed += worldPassed;
             _failed += worldFailed;
 
+            // core action & combat system (Gameplay/Combat)
+            int combatPassed, combatFailed;
+            CombatTests.RunAll(out combatPassed, out combatFailed);
+            _passed += combatPassed;
+            _failed += combatFailed;
+
             Console.WriteLine("======================================");
             foreach (var line in Log) Console.WriteLine(line);
             foreach (var line in WorldTests.GetLog()) Console.WriteLine(line);
+            foreach (var line in CombatTests.GetLog()) Console.WriteLine(line);
             Console.WriteLine("======================================");
             Console.WriteLine("RESULT: {0} passed, {1} failed", _passed, _failed);
             return _failed == 0 ? 0 : 1;

@@ -78,6 +78,9 @@ namespace Crossroads.Gameplay
             // Power feedback: world-side effect (pulse burst) listens to AbilityUsedEvent.
             if (player.GetComponent<AbilityPulseVFX>() == null)
                 player.AddComponent<AbilityPulseVFX>();
+            // Combat layer: health/basic attack/dodge (locomotion stays in the prototype controller)
+            if (player.GetComponent<PlayerCombatController>() == null)
+                player.AddComponent<PlayerCombatController>();
             Debug.Log("[CROSSROADS] PlayerInteraction ready on " + player.name);
         }
 

@@ -38,7 +38,10 @@ namespace UnityEngine
         public T[] GetComponentsInChildren<T>(bool includeInactive) { return new T[0]; }
     }
 
-    public class Behaviour : Component { }
+    public class Behaviour : Component
+    {
+        public bool isActiveAndEnabled { get { return enabled; } set { enabled = value; } }
+    }
 
     public class ScriptableObject : Object { }
 
@@ -125,6 +128,7 @@ namespace UnityEngine
         public static readonly Vector3 one = new Vector3(1, 1, 1);
         public static readonly Vector3 forward = new Vector3(0, 0, 1);
         public static readonly Vector3 up = new Vector3(0, 1, 0);
+        public static readonly Vector3 down = new Vector3(0, -1, 0);
         public static readonly Vector3 right = new Vector3(1, 0, 0);
         public Vector3 normalized { get { return this; } }
         public float sqrMagnitude { get { return x * x + y * y + z * z; } }
@@ -208,6 +212,7 @@ namespace UnityEngine
         public static float time { get { return 0f; } }
         public static float deltaTime { get { return 0.016f; } }
         public static float unscaledTime { get { return 0f; } }
+        public static float unscaledDeltaTime { get { return 0.016f; } }
     }
 
     public static class Mathf
@@ -228,10 +233,13 @@ namespace UnityEngine
         public static int RoundToInt(float a) { return (int)Math.Round(a); }
         public static float Rad2Deg { get { return 57.29578f; } }
         public static float Clamp01(float v) { return v < 0f ? 0f : (v > 1f ? 1f : v); }
+        public static float Clamp(float v, float min, float max) { return v < min ? min : (v > max ? max : v); }
+        public static int Clamp(int v, int min, int max) { return v < min ? min : (v > max ? max : v); }
+        public static int CeilToInt(float a) { return (int)Math.Ceiling(a); }
         public static float Lerp(float a, float b, float t) { return a + (b - a) * t; }
     }
 
-    public enum KeyCode { E = 101, Space = 32 }
+    public enum KeyCode { E = 101, Space = 32, F = 102, LeftShift = 303 }
 
     public static class Input
     {
@@ -488,6 +496,8 @@ namespace UnityEngine.InputSystem
         public static Keyboard current;
         public class EKey { public bool wasPressedThisFrame { get { return false; } } }
         public EKey eKey = new EKey();
+        public EKey fKey = new EKey();
+        public EKey leftShiftKey = new EKey();
     }
 }
 

@@ -14,6 +14,7 @@ for MODE in ENABLE_LEGACY_INPUT_MANAGER ENABLE_INPUT_SYSTEM; do
     ../../Assets/_Project/Scripts/Gameplay/Abilities/*.cs \
     ../../Assets/_Project/Scripts/Gameplay/WorldState/*.cs \
     ../../Assets/_Project/Scripts/Gameplay/World/*.cs \
+    ../../Assets/_Project/Scripts/Gameplay/Combat/*.cs \
     ../../Assets/_Project/Scripts/Gameplay/NPC/*.cs \
     ../../Assets/_Project/Scripts/UI/*.cs \
     ../../Assets/Game/Scripts/FirstLocationBootstrap.cs \

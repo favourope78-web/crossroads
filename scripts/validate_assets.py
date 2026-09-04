@@ -231,6 +231,100 @@ else:
                     if not _same(x.get(k), y.get(k)):
                         errors.append("worldInteraction %s cond.%s: asset=%r json=%r" % (wb.get("key"), k, x.get(k), y.get(k)))
 
+        # combat: status effects
+        if len(data.get("statusEffects", [])) != len(content.get("statusEffects", [])):
+            errors.append("statusEffect count mismatch")
+        for sa, sb in zip(data.get("statusEffects", []), content.get("statusEffects", [])):
+            for k in ("id", "name", "description"):
+                if sa.get(k) != sb.get(k):
+                    errors.append("statusEffect %s: %s asset=%r json=%r" % (sb.get("id"), k, sa.get(k), sb.get(k)))
+            for k in ("durationSeconds", "tickIntervalSeconds", "healthPerTick",
+                      "moveSpeedMultiplier", "attackRateMultiplier"):
+                if not _same(sa.get(k), sb.get(k)):
+                    errors.append("statusEffect %s: %s asset=%r json=%r" % (sb.get("id"), k, sa.get(k), sb.get(k)))
+            if int(bool(sa.get("grantsImmunity"))) != int(bool(sb.get("grantsImmunity"))):
+                errors.append("statusEffect %s grantsImmunity mismatch" % sb.get("id"))
+
+        # combat: ability combat payloads
+        if len(data.get("abilityCombat", [])) != len(content.get("abilityCombat", [])):
+            errors.append("abilityCombat count mismatch")
+        for aa, ab in zip(data.get("abilityCombat", []), content.get("abilityCombat", [])):
+            for k in ("abilityId", "damageType"):
+                if not _same(aa.get(k), ab.get(k)):
+                    errors.append("abilityCombat %s: %s asset=%r json=%r" % (ab.get("abilityId"), k, aa.get(k), ab.get(k)))
+            for k in ("damagePerPower", "healPlayerPerPower"):
+                if not _same(aa.get(k), ab.get(k)):
+                    errors.append("abilityCombat %s: %s asset=%r json=%r" % (ab.get("abilityId"), k, aa.get(k), ab.get(k)))
+            for lst_a, lst_b, lbl in ((aa.get("applyStatusToTargets", []), ab.get("applyStatusToTargets", []), "applyStatusToTargets"),
+                                      (aa.get("applyStatusToPlayer", []), ab.get("applyStatusToPlayer", []), "applyStatusToPlayer")):
+                if [str(x) for x in lst_a] != [str(x) for x in lst_b]:
+                    errors.append("abilityCombat %s %s mismatch" % (ab.get("abilityId"), lbl))
+
+        # combat: enemy archetypes (nested attack + resistances + conditions/effects)
+        if len(data.get("enemies", [])) != len(content.get("enemies", [])):
+            errors.append("enemy count mismatch")
+        for ea, eb in zip(data.get("enemies", []), content.get("enemies", [])):
+            for k in ("id", "displayName", "description", "sheetRef"):
+                if ea.get(k) != eb.get(k):
+                    errors.append("enemy %s: %s asset=%r json=%r" % (eb.get("id"), k, ea.get(k), eb.get(k)))
+            for k in ("maxHealth", "defense", "moveSpeed", "turnSpeed", "detectionRadius",
+                      "leashRadius", "attackRange", "staggerSeconds"):
+                if not _same(ea.get(k), eb.get(k)):
+                    errors.append("enemy %s: %s asset=%r json=%r" % (eb.get("id"), k, ea.get(k), eb.get(k)))
+            ra_, rb_ = ea.get("resistances", []), eb.get("resistances", [])
+            if len(ra_) != len(rb_):
+                errors.append("enemy %s resistance count mismatch" % eb.get("id"))
+            else:
+                for x, y in zip(ra_, rb_):
+                    if not _same(x.get("type"), y.get("type")) or not _same(x.get("multiplier"), y.get("multiplier")):
+                        errors.append("enemy %s resistance row mismatch" % eb.get("id"))
+            ka_, kb_ = ea.get("attack", {}), eb.get("attack", {})
+            for k in ("id", "name", "damageType", "delivery", "baseDamage", "range", "arcDegrees",
+                      "radius", "windupSeconds", "cooldownSeconds"):
+                if not _same(ka_.get(k), kb_.get(k)):
+                    errors.append("enemy %s attack.%s: asset=%r json=%r" % (eb.get("id"), k, ka_.get(k), kb_.get(k)))
+            if [str(x) for x in ka_.get("applyStatusIds", [])] != [str(x) for x in kb_.get("applyStatusIds", [])]:
+                errors.append("enemy %s attack.applyStatusIds mismatch" % eb.get("id"))
+            for lst_a, lst_b, lbl in ((ea.get("activationConditions", []), eb.get("activationConditions", []), "activationConditions"),
+                                      (ea.get("onDefeatEffects", []), eb.get("onDefeatEffects", []), "onDefeatEffects")):
+                if len(lst_a) != len(lst_b):
+                    errors.append("enemy %s %s count mismatch" % (eb.get("id"), lbl))
+                    continue
+                for x, y in zip(lst_a, lst_b):
+                    for k in ("type", "key", "value", "amount"):
+                        if not _same(x.get(k), y.get(k)):
+                            errors.append("enemy %s %s.%s: asset=%r json=%r" % (eb.get("id"), lbl, k, x.get(k), y.get(k)))
+
+        # combat: player settings (basic attack + dodge + defeat policy)
+        ca, cb = data.get("combat"), content.get("combat")
+        if ca is None or cb is None:
+            errors.append("combat settings missing from asset or json")
+        else:
+            for k in ("playerMaxHealth", "playerDefense", "dodgeDistance", "dodgeDurationSeconds",
+                      "dodgeCooldownSeconds", "dodgeStatusId", "healthVarKey"):
+                if not _same(ca.get(k), cb.get(k)):
+                    errors.append("combat settings %s: asset=%r json=%r" % (k, ca.get(k), cb.get(k)))
+            pra, prb = ca.get("playerResistances", []), cb.get("playerResistances", [])
+            if len(pra) != len(prb):
+                errors.append("combat playerResistances count mismatch")
+            else:
+                for x, y in zip(pra, prb):
+                    if not _same(x.get("type"), y.get("type")) or not _same(x.get("multiplier"), y.get("multiplier")):
+                        errors.append("combat playerResistances row mismatch")
+            baa, bab = ca.get("basicAttack", {}), cb.get("basicAttack", {})
+            for k in ("id", "name", "damageType", "delivery", "baseDamage", "range", "arcDegrees",
+                      "radius", "windupSeconds", "cooldownSeconds"):
+                if not _same(baa.get(k), bab.get(k)):
+                    errors.append("combat basicAttack.%s: asset=%r json=%r" % (k, baa.get(k), bab.get(k)))
+            oda, odb = ca.get("onPlayerDefeat", []), cb.get("onPlayerDefeat", [])
+            if len(oda) != len(odb):
+                errors.append("combat onPlayerDefeat count mismatch")
+            else:
+                for x, y in zip(oda, odb):
+                    for k in ("type", "key", "value", "amount"):
+                        if not _same(x.get(k), y.get(k)):
+                            errors.append("combat onPlayerDefeat.%s: asset=%r json=%r" % (k, x.get(k), y.get(k)))
+
         # npcs (data-driven NPC definitions)
         def _n(v):
             if isinstance(v, bool): return str(int(v))
@@ -311,13 +405,16 @@ for needle in ["Mara_NPC", "Sera_NPC", "EchoShard", "EnergySeal",
                "useCountVar: brace_count", "useCountVar: rubble_count",
                "key: choir_beacon", "key: ember_cache", "key: keepsake_crate",
                "key: barricade", "key: barricade_rubble", "key: tide_calm",
+               "ChoirWarden", "WardenWreckage", "CombatDirector",
+               "enemyId: choir_warden", "key: choir_warden", "key: warden_wreckage",
                "areaId: annex", "defaultActive: 1", "m_IsTrigger: 1"]:
     if needle not in scene_txt:
         errors.append("scene missing: " + needle)
 
 for script_key in ["NpcAgent.cs", "NpcInteractable.cs", "StoryWorldState.cs", "StoryModeBootstrap.cs",
                    "GameUIBootstrap.cs", "AreaGate.cs", "StoryEventInteractable.cs", "AreaTrigger.cs",
-                   "WorldActionInteractable.cs", "NpcRelocator.cs"]:
+                   "WorldActionInteractable.cs", "NpcRelocator.cs",
+                   "EnemyAgent.cs", "CombatDirector.cs"]:
     if scene_txt.count(registry[script_key]) == 0:
         errors.append("scene does not reference %s" % script_key)
 

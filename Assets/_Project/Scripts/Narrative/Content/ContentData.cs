@@ -366,6 +366,141 @@ namespace Crossroads.Narrative
     }
 
     // =====================================================================================
+    // Combat definitions (core action system, Gameplay/Combat). All data: damage types,
+    // attack shapes, health/defense numbers, status effects, ability attack payloads and
+    // enemy archetypes. The combat runtime (CombatantState/DamageCalculator/EnemyBrain/
+    // EnemyAgent/PlayerCombatController) never hardcodes a number - adding an enemy,
+    // status or ability behaviour = adding rows here (mirrored in story_content.json).
+    // =====================================================================================
+
+    /// <summary>Damage channels (GAME_DESIGN §3 power lines + kinetic for plain force).</summary>
+    public enum DamageType
+    {
+        Kinetic = 0,   // plain force (basic strikes, falls)
+        Ember = 1,     // heat (ember_pulse line)
+        Tide = 2,      // pressure/water (tide_mend line)
+        Stone = 3,     // stillness/weight (stone_ward line)
+        Hollow = 4     // the Choir's own channel (enemy archetypes)
+    }
+
+    /// <summary>How an attack finds its targets (more arrive with the real combat phase).</summary>
+    public enum AttackDelivery
+    {
+        MeleeArc = 0,   // cone in front of the attacker (range + arcDegrees)
+        RadiusPulse = 1 // radial burst around the attacker (radius)
+    }
+
+    /// <summary>One damage-type multiplier row on a combatant (1 = full damage, 0.5 = resisted, 1.25 = vulnerable).</summary>
+    [Serializable]
+    public class DamageResistEntry
+    {
+        public DamageType type = DamageType.Kinetic;
+        public float multiplier = 1f;
+    }
+
+    /// <summary>
+    /// Timed combat modifier (task: status effects). Pure data: duration, optional periodic
+    /// health delta (DoT/HoT), movement/attack multipliers, damage immunity (dodge guard).
+    /// </summary>
+    [Serializable]
+    public class StatusEffectDefinitionData
+    {
+        public string id = "";
+        public string name = "";
+        public string description = "";
+        public float durationSeconds = 3f;
+        public float tickIntervalSeconds = 0f;     // 0 = no periodic health change
+        public int healthPerTick;                  // negative = damage over time, positive = heal
+        public float moveSpeedMultiplier = 1f;     // applied to the combatant's locomotion
+        public float attackRateMultiplier = 1f;    // applied to attack cooldowns (future)
+        public bool grantsImmunity;                // dodge guard / stone ward frames
+    }
+
+    /// <summary>
+    /// An attack shape + numbers (task: attack types + damage dealing). Used for the player's
+    /// basic strike and for enemy attacks; ability attacks reuse these fields via AbilityCombatData.
+    /// </summary>
+    [Serializable]
+    public class AttackDefinitionData
+    {
+        public string id = "";
+        public string name = "";
+        public DamageType damageType = DamageType.Kinetic;
+        public AttackDelivery delivery = AttackDelivery.MeleeArc;
+        public float baseDamage = 10f;
+        public float range = 2.8f;                 // melee arc reach / pulse inner range
+        public float arcDegrees = 110f;            // melee arc half-width in degrees
+        public float radius = 0f;                  // pulse radius (0 = melee arc)
+        public float windupSeconds = 0f;           // telegraph before the strike lands
+        public float cooldownSeconds = 1f;
+        public List<string> applyStatusIds = new List<string>(); // applied to the target on hit
+    }
+
+    /// <summary>
+    /// Combat payload of an EXISTING ability (task: abilities must use the existing ability
+    /// definitions, never duplicate them). Damage/heal scale with the ability's CURRENT level
+    /// row (AbilityUsedEvent.power) - so upgrades genuinely change combat behaviour.
+    /// </summary>
+    [Serializable]
+    public class AbilityCombatData
+    {
+        public string abilityId = "";
+        public DamageType damageType = DamageType.Kinetic;
+        public float damagePerPower = 8f;          // enemy damage = level-row power * this
+        public float healPlayerPerPower;           // player heal  = level-row power * this
+        public List<string> applyStatusToTargets = new List<string>();
+        public List<string> applyStatusToPlayer = new List<string>();
+    }
+
+    /// <summary>
+    /// Complete data-driven enemy archetype (task: enemy types). Health/defense/resistances,
+    /// movement + detection numbers, its attack (AttackDefinitionData), activation conditions
+    /// (combat encounters can be gated on story state) and on-defeat consequences delivered
+    /// through the SAME EffectApplier whitelist decisions/objectives use - so defeating an
+    /// enemy can move the world, NPCs and objectives with zero extra code.
+    /// </summary>
+    [Serializable]
+    public class EnemyDefinitionData
+    {
+        public string id = "";
+        public string displayName = "";
+        public string description = "";
+        public string sheetRef = "";               // CHARACTER_REFERENCE sheet (visual bible)
+        public float maxHealth = 50f;
+        public float defense = 2f;                 // flat mitigation after resistances
+        public List<DamageResistEntry> resistances = new List<DamageResistEntry>();
+        public float moveSpeed = 1.5f;
+        public float turnSpeed = 5f;
+        public float detectionRadius = 9f;         // Idle -> Alert
+        public float leashRadius = 14f;            // Alert/Approach -> Idle (gives up)
+        public float attackRange = 2.2f;
+        public float staggerSeconds = 0.35f;       // TakeDamage reaction
+        public AttackDefinitionData attack = new AttackDefinitionData();
+        public List<DecisionConditionData> activationConditions = new List<DecisionConditionData>();
+        public List<DecisionEffectData> onDefeatEffects = new List<DecisionEffectData>(); // EffectApplier
+    }
+
+    /// <summary>
+    /// Player-side combat settings (health/defense + basic attack + dodge), plus the
+    /// consequences of falling in combat - data-driven so a defeat NEVER destroys the save:
+    /// it applies these effects (a counter, a bond, a flag...) and the player gets back up.
+    /// </summary>
+    [Serializable]
+    public class CombatSettingsData
+    {
+        public float playerMaxHealth = 100f;
+        public float playerDefense = 2f;
+        public List<DamageResistEntry> playerResistances = new List<DamageResistEntry>();
+        public AttackDefinitionData basicAttack = new AttackDefinitionData();
+        public float dodgeDistance = 3.6f;
+        public float dodgeDurationSeconds = 0.28f;
+        public float dodgeCooldownSeconds = 1.6f;
+        public string dodgeStatusId = "dodge_guard";
+        public string healthVarKey = "player_hp";  // persisted between sessions (vars)
+        public List<DecisionEffectData> onPlayerDefeat = new List<DecisionEffectData>();
+    }
+
+    // =====================================================================================
     // Objective / mission definitions (GAME_DESIGN §5-§7: "objectives are authored per
     // path"; DEVELOPMENT_PLAN M2 systems core). Everything is plain serializable data:
     // a mission = one ObjectiveDefinitionData row; the ObjectiveManager never hardcodes
@@ -465,6 +600,12 @@ namespace Crossroads.Narrative
         public List<ObjectiveDefinitionData> objectives = new List<ObjectiveDefinitionData>();
         public List<WorldInteractionData> worldInteractions = new List<WorldInteractionData>();
 
+        // ---- combat content (core action system) ----
+        public List<StatusEffectDefinitionData> statusEffects = new List<StatusEffectDefinitionData>();
+        public List<AbilityCombatData> abilityCombat = new List<AbilityCombatData>();
+        public List<EnemyDefinitionData> enemies = new List<EnemyDefinitionData>();
+        public CombatSettingsData combat = new CombatSettingsData();
+
         public EncounterDefinitionData FindEncounter(string id)
         {
             for (int i = 0; i < encounters.Count; i++) if (encounters[i] != null && encounters[i].id == id) return encounters[i];
@@ -496,6 +637,24 @@ namespace Crossroads.Narrative
         {
             if (worldInteractions == null) return null;
             for (int i = 0; i < worldInteractions.Count; i++) if (worldInteractions[i] != null && worldInteractions[i].key == key) return worldInteractions[i];
+            return null;
+        }
+        public StatusEffectDefinitionData FindStatusEffect(string id)
+        {
+            if (statusEffects == null) return null;
+            for (int i = 0; i < statusEffects.Count; i++) if (statusEffects[i] != null && statusEffects[i].id == id) return statusEffects[i];
+            return null;
+        }
+        public AbilityCombatData FindAbilityCombat(string abilityId)
+        {
+            if (abilityCombat == null) return null;
+            for (int i = 0; i < abilityCombat.Count; i++) if (abilityCombat[i] != null && abilityCombat[i].abilityId == abilityId) return abilityCombat[i];
+            return null;
+        }
+        public EnemyDefinitionData FindEnemy(string id)
+        {
+            if (enemies == null) return null;
+            for (int i = 0; i < enemies.Count; i++) if (enemies[i] != null && enemies[i].id == id) return enemies[i];
             return null;
         }
     }

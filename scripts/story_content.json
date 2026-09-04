@@ -1,5 +1,5 @@
 {
- "_comment": "Prototype story content for CROSSROADS (decision + progression + world/objective phase). Generated into ScriptableObject assets by gen_story_content.py and mirrored by StoryContentBuilder.cs (validated by validate_assets.py). Enums are the ints from ContentData.cs (ConditionType: FlagIs=0 FlagIsNot=1 FlagMissing=2 VarAtLeast=3 AffinityAtLeast=4 BondAtLeast=5 DecisionWas=6 DecisionNotMade=7 CodexOwned=8 ReputationAtLeast=9 ItemHeld=10 AbilityOwned=11 AreaUnlocked=12 SkillAtLeast=13 EchoesAtLeast=14 AbilityLevelBelow=15 ObjectiveActive=16 ObjectiveCompleted=17 ObjectiveFailed=18 WorldStateIs=19 | EffectType: SetFlag=0 ClearFlag=1 AddAffinity=2 SetAffinity=3 AddBond=4 SetVar=5 AddVar=6 SetWorldState=7 SpawnEntity=8 AddCodex=9 GrantEchoes=10 AddReputation=11 SetReputation=12 UnlockAbility=13 AddSkillLevel=14 AddItem=15 RemoveItem=16 UnlockArea=17 UpgradeAbility=18 BlockAbility=19 MoveNpc=20 CloseArea=21 ReopenArea=22 UnlockInteraction=23 | ObjectiveType: Main=0 Side=1 Crisis=2 Recovery=3).",
+ "_comment": "Prototype story content for CROSSROADS (decision + progression + world/objective + combat phase). Generated into ScriptableObject assets by gen_story_content.py and mirrored by StoryContentBuilder.cs (validated by validate_assets.py). Enums are the ints from ContentData.cs (ConditionType: FlagIs=0 FlagIsNot=1 FlagMissing=2 VarAtLeast=3 AffinityAtLeast=4 BondAtLeast=5 DecisionWas=6 DecisionNotMade=7 CodexOwned=8 ReputationAtLeast=9 ItemHeld=10 AbilityOwned=11 AreaUnlocked=12 SkillAtLeast=13 EchoesAtLeast=14 AbilityLevelBelow=15 ObjectiveActive=16 ObjectiveCompleted=17 ObjectiveFailed=18 WorldStateIs=19 | EffectType: SetFlag=0 ClearFlag=1 AddAffinity=2 SetAffinity=3 AddBond=4 SetVar=5 AddVar=6 SetWorldState=7 SpawnEntity=8 AddCodex=9 GrantEchoes=10 AddReputation=11 SetReputation=12 UnlockAbility=13 AddSkillLevel=14 AddItem=15 RemoveItem=16 UnlockArea=17 UpgradeAbility=18 BlockAbility=19 MoveNpc=20 CloseArea=21 ReopenArea=22 UnlockInteraction=23 | ObjectiveType: Main=0 Side=1 Crisis=2 Recovery=3 | DamageType: Kinetic=0 Ember=1 Tide=2 Stone=3 Hollow=4 | AttackDelivery: MeleeArc=0 RadiusPulse=1).",
  "libraryName": "CL_C1_StoryContent",
  "progression": {
   "abilities": [
@@ -2016,7 +2016,7 @@
        "amount": 0
       }
      ],
-     "title": "Mara · Heartened",
+     "title": "Mara \u00b7 Heartened",
      "moodLine": "Mara stands easier since you told her how it felt.",
      "approachDistance": 1.2,
      "avoidDistance": -1.0,
@@ -2032,7 +2032,7 @@
        "amount": 8
       }
      ],
-     "title": "Mara · Warm",
+     "title": "Mara \u00b7 Warm",
      "moodLine": "Mara's eyes soften. She stays closer now.",
      "approachDistance": 1.3,
      "avoidDistance": -1,
@@ -2120,12 +2120,28 @@
      "conditions": [
       {
        "type": 17,
+       "key": "obj_warden_hunt",
+       "value": "",
+       "amount": 0
+      }
+     ],
+     "title": "Sera \u00b7 Shieldmate",
+     "moodLine": "'You put the Warden down.' Sera looks at you like the hall just changed its mind about you.",
+     "approachDistance": 1.3,
+     "avoidDistance": 0.0,
+     "moveSpeed": 1.0,
+     "reactRadius": -1.0
+    },
+    {
+     "conditions": [
+      {
+       "type": 17,
        "key": "obj_ember_beacon",
        "value": "",
        "amount": 0
       }
      ],
-     "title": "Sera · Vanguard",
+     "title": "Sera \u00b7 Vanguard",
      "moodLine": "'The beacon's quiet. First time in days I can hear myself think.' Sera takes her watch by the annex gate.",
      "approachDistance": 1.4,
      "avoidDistance": 0.0,
@@ -2141,7 +2157,7 @@
        "amount": 0
       }
      ],
-     "title": "Sera · Steadied",
+     "title": "Sera \u00b7 Steadied",
      "moodLine": "'It held. You held it.' Sera's shoulders drop an inch.",
      "approachDistance": 1.5,
      "avoidDistance": 0.0,
@@ -2157,7 +2173,7 @@
        "amount": 0
       }
      ],
-     "title": "Sera · Warded",
+     "title": "Sera \u00b7 Warded",
      "moodLine": "Sera's eyes rest on your empty hands. 'The hall says you gave it back. I can hear it in the silence you leave.'",
      "approachDistance": 1.8,
      "avoidDistance": 0.0,
@@ -2173,7 +2189,7 @@
        "amount": 2
       }
      ],
-     "title": "Sera · Attuned",
+     "title": "Sera \u00b7 Attuned",
      "moodLine": "'Your echo rings twice as deep as it did.' She nods, almost approving.",
      "approachDistance": 1.5,
      "avoidDistance": 0.0,
@@ -2189,7 +2205,7 @@
        "amount": 0
       }
      ],
-     "title": "Sera · Grateful",
+     "title": "Sera \u00b7 Grateful",
      "moodLine": "Sera's guard drops. She steps closer, unafraid.",
      "approachDistance": 1.5,
      "avoidDistance": 0,
@@ -2205,7 +2221,7 @@
        "amount": 0
       }
      ],
-     "title": "Sera · Watchful",
+     "title": "Sera \u00b7 Watchful",
      "moodLine": "Sera keeps her distance. Your echo burns too bright.",
      "approachDistance": 0,
      "avoidDistance": 3.4,
@@ -2221,7 +2237,7 @@
        "amount": 0
       }
      ],
-     "title": "Sera · Intrigued",
+     "title": "Sera \u00b7 Intrigued",
      "moodLine": "Sera studies you sidelong, curious despite herself.",
      "approachDistance": 1.2,
      "avoidDistance": 0,
@@ -2745,6 +2761,72 @@
    "followUps": [],
    "completionNotice": "Objective complete - the passage is clear again.",
    "failureNotice": ""
+  },
+  {
+   "id": "obj_warden_hunt",
+   "title": "Drive Off the Choir Warden",
+   "description": "The Choir sent a Warden to collect whoever the Fracture touched. That is you. It waits in the west transept - put it down before it reports.",
+   "type": 2,
+   "areaId": "hall",
+   "giverNpcId": "",
+   "offerConditions": [
+    {
+     "type": 6,
+     "key": "dec_c1_hall_first_light",
+     "value": "",
+     "amount": 0
+    }
+   ],
+   "autoActivate": true,
+   "completeConditions": [
+    {
+     "type": 3,
+     "key": "warden_driven_off",
+     "value": "",
+     "amount": 1
+    }
+   ],
+   "failConditions": [],
+   "counterVar": "",
+   "counterTarget": 0,
+   "counterText": "",
+   "steps": [],
+   "consequences": [
+    {
+     "type": 11,
+     "key": "choir",
+     "value": "",
+     "amount": -5
+    },
+    {
+     "type": 11,
+     "key": "folk",
+     "value": "",
+     "amount": 4
+    },
+    {
+     "type": 4,
+     "key": "sera",
+     "value": "",
+     "amount": 5
+    },
+    {
+     "type": 10,
+     "key": "",
+     "value": "",
+     "amount": 10
+    },
+    {
+     "type": 9,
+     "key": "c1_warden_driven_off",
+     "value": "",
+     "amount": 0
+    }
+   ],
+   "failureConsequences": [],
+   "followUps": [],
+   "completionNotice": "Objective complete - the Warden will not report you. Sera saw all of it.",
+   "failureNotice": ""
   }
  ],
  "worldInteractions": [
@@ -2832,5 +2914,224 @@
     }
    ]
   }
- ]
+ ],
+ "statusEffects": [
+  {
+   "id": "echo_burn",
+   "name": "Echo Burn",
+   "description": "The ember keeps burning after the pulse - heat gnawing at the Fracture's shell.",
+   "durationSeconds": 4.0,
+   "tickIntervalSeconds": 1.0,
+   "healthPerTick": -4,
+   "moveSpeedMultiplier": 1.0,
+   "attackRateMultiplier": 1.0,
+   "grantsImmunity": false
+  },
+  {
+   "id": "suppression",
+   "name": "Suppression",
+   "description": "The Choir's discipline drags at your limbs - everything feels heavier.",
+   "durationSeconds": 2.5,
+   "tickIntervalSeconds": 0.0,
+   "healthPerTick": 0,
+   "moveSpeedMultiplier": 0.65,
+   "attackRateMultiplier": 1.0,
+   "grantsImmunity": false
+  },
+  {
+   "id": "dodge_guard",
+   "name": "Flowing Aside",
+   "description": "You are already somewhere else. Incoming strikes miss.",
+   "durationSeconds": 0.45,
+   "tickIntervalSeconds": 0.0,
+   "healthPerTick": 0,
+   "moveSpeedMultiplier": 1.0,
+   "attackRateMultiplier": 1.0,
+   "grantsImmunity": true
+  },
+  {
+   "id": "tide_soothe",
+   "name": "Soothing Tide",
+   "description": "The cool wash keeps mending what the fight bruises.",
+   "durationSeconds": 3.0,
+   "tickIntervalSeconds": 1.0,
+   "healthPerTick": 6,
+   "moveSpeedMultiplier": 1.0,
+   "attackRateMultiplier": 1.0,
+   "grantsImmunity": false
+  }
+ ],
+ "abilityCombat": [
+  {
+   "abilityId": "ember_pulse",
+   "damageType": 1,
+   "damagePerPower": 10.0,
+   "healPlayerPerPower": 0.0,
+   "applyStatusToTargets": [
+    "echo_burn"
+   ],
+   "applyStatusToPlayer": []
+  },
+  {
+   "abilityId": "tide_mend",
+   "damageType": 2,
+   "damagePerPower": 3.0,
+   "healPlayerPerPower": 12.0,
+   "applyStatusToTargets": [],
+   "applyStatusToPlayer": [
+    "tide_soothe"
+   ]
+  },
+  {
+   "abilityId": "stone_ward",
+   "damageType": 3,
+   "damagePerPower": 8.0,
+   "healPlayerPerPower": 0.0,
+   "applyStatusToTargets": [
+    "suppression"
+   ],
+   "applyStatusToPlayer": []
+  }
+ ],
+ "enemies": [
+  {
+   "id": "choir_warden",
+   "displayName": "Choir Warden",
+   "description": "A tracker-construct of the Choir: tall, patient, humming with hollow light. It marks who the Fracture touched - and collects them.",
+   "sheetRef": "REF-06",
+   "maxHealth": 60.0,
+   "defense": 3.0,
+   "resistances": [
+    {
+     "type": 0,
+     "multiplier": 1.0
+    },
+    {
+     "type": 1,
+     "multiplier": 1.25
+    },
+    {
+     "type": 2,
+     "multiplier": 0.8
+    },
+    {
+     "type": 3,
+     "multiplier": 1.0
+    },
+    {
+     "type": 4,
+     "multiplier": 0.5
+    }
+   ],
+   "moveSpeed": 1.55,
+   "turnSpeed": 5.0,
+   "detectionRadius": 9.0,
+   "leashRadius": 15.0,
+   "attackRange": 2.3,
+   "staggerSeconds": 0.35,
+   "attack": {
+    "id": "warden_smite",
+    "name": "Hollow Smite",
+    "damageType": 4,
+    "delivery": 0,
+    "baseDamage": 12.0,
+    "range": 2.3,
+    "arcDegrees": 70.0,
+    "radius": 0.0,
+    "windupSeconds": 0.7,
+    "cooldownSeconds": 2.2,
+    "applyStatusIds": [
+     "suppression"
+    ]
+   },
+   "activationConditions": [
+    {
+     "type": 6,
+     "key": "dec_c1_hall_first_light",
+     "value": "",
+     "amount": 0
+    }
+   ],
+   "onDefeatEffects": [
+    {
+     "type": 6,
+     "key": "warden_driven_off",
+     "value": "",
+     "amount": 1
+    },
+    {
+     "type": 8,
+     "key": "choir_warden",
+     "value": "0",
+     "amount": 0
+    },
+    {
+     "type": 8,
+     "key": "warden_wreckage",
+     "value": "1",
+     "amount": 0
+    },
+    {
+     "type": 10,
+     "key": "",
+     "value": "",
+     "amount": 15
+    },
+    {
+     "type": 9,
+     "key": "c1_warden_felled",
+     "value": "",
+     "amount": 0
+    }
+   ]
+  }
+ ],
+ "combat": {
+  "playerMaxHealth": 100.0,
+  "playerDefense": 2.0,
+  "playerResistances": [
+   {
+    "type": 4,
+    "multiplier": 0.9
+   }
+  ],
+  "basicAttack": {
+   "id": "player_strike",
+   "name": "Strike",
+   "damageType": 0,
+   "delivery": 0,
+   "baseDamage": 10.0,
+   "range": 2.8,
+   "arcDegrees": 110.0,
+   "radius": 0.0,
+   "windupSeconds": 0.0,
+   "cooldownSeconds": 0.9,
+   "applyStatusIds": []
+  },
+  "dodgeDistance": 3.6,
+  "dodgeDurationSeconds": 0.28,
+  "dodgeCooldownSeconds": 1.6,
+  "dodgeStatusId": "dodge_guard",
+  "healthVarKey": "player_hp",
+  "onPlayerDefeat": [
+   {
+    "type": 6,
+    "key": "times_felled",
+    "value": "",
+    "amount": 1
+   },
+   {
+    "type": 4,
+    "key": "mara",
+    "value": "",
+    "amount": 1
+   },
+   {
+    "type": 9,
+    "key": "c1_felled_once",
+    "value": "",
+    "amount": 0
+   }
+  ]
+ }
 }

@@ -30,6 +30,8 @@ kit = ["SM_FloorTile","SM_Column","SM_LightBeam","SM_WallPanel","SM_GlazingPanel
 for i, k in enumerate(kit, 1): ensure(k, g32(i))
 mats = ["M_Hall_Concrete","M_Hall_Metal","M_Hall_LightColumn","M_Hall_Glazing","M_Hall_OrbGold","M_Hall_Holo"]
 for i, m in enumerate(mats, 40): ensure(m, g32(i))
+ensure("M_Enemy_Warden", g32(0x36))      # combat phase: Choir Warden body (hollow-lit shell)
+ensure("M_Enemy_Warden_Hit", g32(0x37))  # combat phase: damage-flash swap material
 ensure("ThirdPersonCameraController.cs", g32(80))
 ensure("Interactable.cs", g32(81))
 ensure("DoorInteractable.cs", g32(82))
@@ -76,7 +78,8 @@ KIT_DIR = os.path.join(ENV, "Kit")
 for k in kit:
     write_meta_if_missing(os.path.join(KIT_DIR, k + ".fbx"), NATIVE, REG[k])
 MAT_DIR = os.path.join(ENV, "Materials")
-for m in mats + ["M_Seq_Ember", "M_Seq_Tide", "M_Seq_Stone", "M_Npc_Mara", "M_Npc_Civilian"]:
+for m in mats + ["M_Seq_Ember", "M_Seq_Tide", "M_Seq_Stone", "M_Npc_Mara", "M_Npc_Civilian",
+                "M_Enemy_Warden", "M_Enemy_Warden_Hit"]:
     write_meta_if_missing(os.path.join(MAT_DIR, m + ".mat"), NATIVE, REG[m])
 write_meta_if_missing(os.path.join(ROOT, "Assets/Game/Scripts/ThirdPersonCameraController.cs"), MONO, REG["ThirdPersonCameraController.cs"])
 write_meta_if_missing(os.path.join(ROOT, "Assets/Game/Scripts/FirstLocationBootstrap.cs"), MONO, REG["FirstLocationBootstrap.cs"])
@@ -954,6 +957,43 @@ emit_monobehaviour(rubble_ids["action"], rubble_gid, REG["WorldActionInteractabl
         "\"You haul the splinters aside. The way opens.\"",
         "The Rubble", 3.2, 22))
 
+# ================================================================
+# COMBAT test area (west transept): the Choir Warden encounter.
+# Story-gated by the enemy definition's activationConditions; the hunt
+# objective (obj_warden_hunt) offers/autostarts off the same decision.
+# ================================================================
+
+# ---- Choir Warden (the ONE enemy prototype; EnemyAgent + data-driven FSM) ----
+warden_gid, warden_ids, warden_children = emit_char_root("ChoirWarden", ["collider", "enemy"],
+    (-13.5, 0, 1.5), (0, 90, 0), 1, [
+    ("Body", "M_Enemy_Warden", CAPSULE, (0, 1.05, 0), (0.62, 0.88, 0.62)),
+    ("Head", "M_Enemy_Warden", SPHERE, (0, 2.18, 0), (0.38, 0.38, 0.38)),
+    ("Core", "M_Hall_OrbGold", SPHERE, (0, 1.45, 0.22), (0.16, 0.16, 0.16)),
+    ("Pauldron_L", "M_Enemy_Warden", CUBE, (-0.52, 1.72, 0), (0.34, 0.18, 0.30)),
+    ("Pauldron_R", "M_Enemy_Warden", CUBE, (0.52, 1.72, 0), (0.34, 0.18, 0.30)),
+])
+emit_capsulecollider(warden_ids["collider"], warden_gid, 0.45, 2.4, (0, 1.2, 0))
+emit_monobehaviour(warden_ids["enemy"], warden_gid, REG["EnemyAgent.cs"],
+    "  enemyId: choir_warden\n"
+    "  bodyRenderer: {fileID: %d}\n"
+    "  baseMaterial: {fileID: 2100000, guid: %s, type: 2}\n"
+    "  hitMaterial: {fileID: 2100000, guid: %s, type: 2}\n"
+    "  sinkSeconds: 1.2" %
+    (child_renderer_id(warden_children, "Body"), REG["M_Enemy_Warden"], REG["M_Enemy_Warden_Hit"]))
+
+# ---- Warden wreckage (spawned at the encounter spot when the Warden falls) ----
+warden_wreck_gid, _, _ = emit_char_root("WardenWreckage", [], (-13.5, 0, 1.5), (0, 35, 0), 0, [
+    ("Husk", "M_Enemy_Warden", CUBE, (0, 0.22, 0), (1.5, 0.42, 0.9)),
+    ("Shell_Bit", "M_Enemy_Warden", CUBE, (0.7, 0.5, -0.3), (0.5, 0.34, 0.4)),
+    ("Dead_Core", "M_Hall_Metal", SPHERE, (-0.45, 0.32, 0.35), (0.22, 0.22, 0.22)),
+])
+
+# ---- Combat director (ability->attack routing + enemy registry + player bridge) ----
+director_gid, director_ids = emit_gameobject("CombatDirector", ["transform", "director"])
+emit_transform(director_ids["transform"], director_gid, (0, 0, 0), (0, 0, 0), (1, 1, 1))
+emit_monobehaviour(director_ids["director"], director_gid, REG["CombatDirector.cs"])
+root_gids.append(director_gid)
+
 # ---- NPC relocation: Sera takes the annex gate after the beacon falls quiet ----
 loc_gid, loc_ids = emit_gameobject("Loc_Sera_AnnexGate", ["transform"])
 emit_transform(loc_ids["transform"], loc_gid, (2.8, 0, 22.6), (0, 180, 0), (1, 1, 1))
@@ -984,8 +1024,11 @@ emit_monobehaviour(ids["worldstate"], gid, REG["StoryWorldState.cs"],
     "  - key: barricade\n    target: {fileID: %d}\n    defaultActive: 1\n"
     "  - key: barricade_rubble\n    target: {fileID: %d}\n    defaultActive: 0\n"
     "  - key: tide_calm\n    target: {fileID: %d}\n    defaultActive: 0\n"
+    "  - key: choir_warden\n    target: {fileID: %d}\n    defaultActive: 1\n"
+    "  - key: warden_wreckage\n    target: {fileID: %d}\n    defaultActive: 0\n"
     "  areaVariants: []" % (m_ember, m_tide, m_stone, by_gid, shard_gid,
-                           beacon_gid, cache_gid, crate_gid, barricade_gid, rubble_gid, calm_gid))
+                           beacon_gid, cache_gid, crate_gid, barricade_gid, rubble_gid, calm_gid,
+                           warden_gid, warden_wreck_gid))
 root_gids.append(gid)
 
 # ---- SceneRoots (root order, Unity 6) ----
