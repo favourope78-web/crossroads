@@ -155,5 +155,10 @@
  "Env_OldMarket.prefab": "c0a1fed20000000000000000000000f9",
  "Env_SpireAscent.prefab": "c0a1fed20000000000000000000000fa",
  "Env_Choirmaster.prefab": "c0a1fed20000000000000000000000fb",
- "Env_Epilogue.prefab": "c0a1fed20000000000000000000000fc"
+ "Env_Epilogue.prefab": "c0a1fed20000000000000000000000fc",
+ "URP_Renderer_Mobile.asset": "c0a1fed2000000000000000000000200",
+ "URP_Low.asset": "c0a1fed2000000000000000000000201",
+ "URP_Balanced.asset": "c0a1fed2000000000000000000000202",
+ "URP_High.asset": "c0a1fed2000000000000000000000203",
+ "PostProcess_Global.asset": "c0a1fed2000000000000000000000204"
 }

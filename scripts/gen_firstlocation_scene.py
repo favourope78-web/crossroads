@@ -58,7 +58,7 @@ for need in ["PlayerInteraction.cs","StoryWorldState.cs","StoryModeBootstrap.cs"
         raise SystemExit("registry missing %s - run scripts/gen_story_content.py first" % need)
 json.dump(REG, open(REG_PATH, "w"), indent=1)
 
-URP = "9335e4a172916944ba2695448482493a"
+URP = "933532a4fcc9baf4fa0491de14d08ed7"
 
 NATIVE = """fileFormatVersion: 2
 guid: {g}

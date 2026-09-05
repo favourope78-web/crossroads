@@ -1,0 +1,15 @@
+{
+  "_comment": "Mid-range Android budget (GAME_DESIGN §14: 30 fps floor on 2019-class phones, 60 fps target). Checked statically by scripts/profile_scene.py --check; numbers are per-scene worst case with every room loaded (rooms are never culled by streaming in the single-scene design, only by the camera frustum / far clip).",
+  "target_devices": "Snapdragon 660-class / Helio G85 / Exynos 9611, 3-4 GB RAM, 1080p, Vulkan or GLES3",
+  "max_active_renderers": 820,
+  "max_estimated_draw_calls": 420,
+  "min_static_batchable_fraction": 0.55,
+  "max_ticking_behaviours": 64,
+  "max_texture_size": 2048,
+  "allowed_android_texture_formats": [34, 45, 46, 47, 48, 49, 50, 51, 52, 53],
+  "max_far_clip": 120,
+  "max_realtime_lights": 2,
+  "max_shadowed_lights": 1,
+  "max_scene_bytes": 3200000,
+  "required_quality_tiers": ["Low", "Balanced", "High"]
+}

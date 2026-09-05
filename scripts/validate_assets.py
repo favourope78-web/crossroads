@@ -40,7 +40,24 @@ for dirpath, _, files in os.walk(os.path.join(ROOT, "Assets")):
 
 ALLOWED_EXTERNAL = {
     "0000000000000000e000000000000000": "built-in meshes",
-    "9335e4a172916944ba2695448482493a": "URP/Lit (package)",
+    "0000000000000000f000000000000000": "built-in shaders",
+    "933532a4fcc9baf4fa0491de14d08ed7": "URP/Lit (package)",
+    "650dd9526735d5b46b79224bc6e94025": "URP/Unlit (package)",
+    "8d2bb70cbf9db8d4da26e15b26e74248": "URP/SimpleLit (package)",
+    "0406db5a14f94604a8c57ccfbc9f3b46": "URP/Particles/Unlit (package)",
+    # render pipeline scripts + data referenced by Assets/Settings/* and the scene camera/volume
+    "bf2edee5c58d82540a51f03df9d42094": "UniversalRenderPipelineAsset.cs",
+    "de640fe3d0db1804a85f9fc8f5cadab6": "UniversalRendererData.cs",
+    "2ec995e51a6e251468d2a3fd8a686257": "UniversalRenderPipelineGlobalSettings.cs",
+    "41439944d30ece34e96484bdb6645b55": "PostProcessData.asset (package)",
+    "d7fd9488000d3734a9e00ee676215985": "VolumeProfile.cs",
+    "172515602e62fb746b5d573b38a5fe58": "Volume.cs",
+    "0b2db86121404754db890f4c8dfe81b2": "Bloom.cs",
+    "899c54efeace73346a0a16faa3afe726": "Vignette.cs",
+    "66f335fb1ffd8684294ad653bf1c7564": "ColorAdjustments.cs",
+    "97c23e3b12dc18c42a140437e53d3951": "Tonemapping.cs",
+    "a79441f348de89743a2939f4d699eac1": "UniversalAdditionalCameraData.cs",
+    "474bcb49853aa07438625e644c072ee6": "UniversalAdditionalLightData.cs",
 }
 all_guids = dict(registry)
 all_guids.update(meta_guids)
@@ -64,6 +81,14 @@ mat_dir = os.path.join(ROOT, "Assets/Game/Environment/Materials")
 for f in sorted(os.listdir(mat_dir)):
     if f.endswith(".mat"):
         check_text_refs(os.path.join(mat_dir, f), f)
+
+set_dir = os.path.join(ROOT, "Assets/Settings")
+if os.path.isdir(set_dir):
+    for f in sorted(os.listdir(set_dir)):
+        if f.endswith(".asset"):
+            check_text_refs(os.path.join(set_dir, f), "Settings/" + f)
+for pf in ["ProjectSettings/GraphicsSettings.asset", "ProjectSettings/ProjectSettings.asset"]:
+    check_text_refs(os.path.join(ROOT, pf), pf)
 
 for name, g in registry.items():
     if name.endswith(".cs") and g not in meta_guids:
