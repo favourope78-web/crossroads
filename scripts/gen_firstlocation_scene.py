@@ -41,6 +41,15 @@ ensure("FirstLocation.unity", g32(90))
 ensure("Env_Hall.prefab", g32(0xc3))
 ensure("Env_Annex.prefab", g32(0xc4))
 ensure("Env_Tidewell.prefab", g32(0xc5))
+# campaign content pass: CHARACTER_REFERENCE palette materials + per-location env kits (0xd0..)
+CAMPAIGN_MATS = ["M_Char_Mara", "M_Char_Mara_Dress", "M_Char_Mara_Hoodie", "M_Char_Dax_Blazer", "M_Char_Dax_Hair", "M_Char_Dax_Tee",
+                 "M_Char_Kael", "M_Char_Odalys", "M_Char_Bran", "M_Char_Archivist", "M_Char_Hair_Silver",
+                 "M_Choir_Grunt", "M_Choir_Bruiser", "M_Choir_Elite", "M_Choir_Hit", "M_Boss_Echo", "M_Boss_Choirmaster", "M_Hollow",
+                 "M_Env_Summer", "M_Env_Water", "M_Env_Ruin", "M_Env_Rebuilt", "M_Env_Contested"]
+for i, m in enumerate(CAMPAIGN_MATS): ensure(m, g32(0xd0 + i))
+CAMPAIGN_KITS = ["LastSummer", "FractureNight", "UnderSpire", "InterludeBecoming", "ContestedDocks", "Sanctuary", "LongWall",
+                 "DaxArena", "InterludeReckoning", "OldMarket", "SpireAscent", "Choirmaster", "Epilogue"]
+for i, k in enumerate(CAMPAIGN_KITS): ensure("Env_%s.prefab" % k, g32(0xf0 + i))
 # story additions must already exist in the registry (see gen_story_content.py); sanity check:
 for need in ["PlayerInteraction.cs","StoryWorldState.cs","StoryModeBootstrap.cs",
              "GameUIBootstrap.cs","ScriptableObjectAssets.cs","NpcAgent.cs","NpcInteractable.cs",
@@ -288,7 +297,19 @@ GameObject:
   m_Tag: Untagged
   m_IsActive: %d""" % (g, "\n".join(comp_lines), name, is_active))
     go2tid[g] = ids["transform"]
+    _last_gid[0] = g
     return g, ids
+
+_last_gid = [0]
+def last_gid():
+    """GameObject id of the most recently emitted ROOT (emit_char_root emits children first, root last)."""
+    return _last_gid[0]
+
+# campaign content pass collectors (filled by gen_campaign_scene.build, consumed by the
+# StoryWorldState / NpcRelocator emission below)
+CAMPAIGN_ENTITIES = []     # (entity key, GameObject id, defaultActive)
+CAMPAIGN_VARIANTS = []     # (area, variant, GameObject id)
+CAMPAIGN_RELOCATIONS = []  # (npcId, locationKey, Transform id, notice)
 
 def euler_to_quat(euler_xyz):
     """Unity Quaternion.Euler(x, y, z) == qy * qx * qz (Hamilton product), computed here
@@ -1092,64 +1113,6 @@ emit_transform(director_ids["transform"], director_gid, (0, 0, 0), (0, 0, 0), (1
 emit_monobehaviour(director_ids["director"], director_gid, REG["CombatDirector.cs"])
 root_gids.append(director_gid)
 
-# ---- NPC relocation: Sera takes the annex gate after the beacon falls quiet ----
-loc_gid, loc_ids = emit_gameobject("Loc_Sera_AnnexGate", ["transform"])
-emit_transform(loc_ids["transform"], loc_gid, (2.8, 0, 22.6), (0, 180, 0), (1, 1, 1))
-reloc_gid, reloc_ids = emit_gameobject("NpcRelocator", ["transform", "relocator"])
-emit_transform(reloc_ids["transform"], reloc_gid, (0, 0, 0), (0, 0, 0), (1, 1, 1))
-emit_monobehaviour(reloc_ids["relocator"], reloc_gid, REG["NpcRelocator.cs"],
-    "  bindings:\n"
-    "  - npcId: sera\n"
-    "    locationKey: annex_gate\n"
-    "    target: {fileID: %d}\n"
-    "    notice: Sera takes her watch by the annex gate.\n"
-    "  - npcId: sera\n"
-    "    locationKey: tidewell\n"
-    "    target: {fileID: %d}\n"
-    "    notice: Sera is waiting by the tidewell, lamp already lit.\n"
-    "  toastOnLiveMove: 1" % (loc_ids["transform"], sera_tide_ids["transform"]))
-
-# ---- world-state applier: replays persisted consequences on every load ----
-# ---- world-state applier: replays persisted consequences on every load ----
-gid, ids = emit_gameobject("StoryWorldState", ["transform", "worldstate"])
-emit_transform(ids["transform"], gid, (0, 0, 0), (0, 0, 0), (1, 1, 1))
-emit_monobehaviour(ids["worldstate"], gid, REG["StoryWorldState.cs"],
-    "  entities:\n"
-    "  - key: ember_marker\n    target: {fileID: %d}\n    defaultActive: 0\n"
-    "  - key: tide_marker\n    target: {fileID: %d}\n    defaultActive: 0\n"
-    "  - key: stone_marker\n    target: {fileID: %d}\n    defaultActive: 0\n"
-    "  - key: tide_bystanders\n    target: {fileID: %d}\n    defaultActive: 0\n"
-    "  - key: echo_shard\n    target: {fileID: %d}\n    defaultActive: 1\n"
-    "  - key: choir_beacon\n    target: {fileID: %d}\n    defaultActive: 1\n"
-    "  - key: ember_cache\n    target: {fileID: %d}\n    defaultActive: 0\n"
-    "  - key: keepsake_crate\n    target: {fileID: %d}\n    defaultActive: 1\n"
-    "  - key: barricade\n    target: {fileID: %d}\n    defaultActive: 1\n"
-    "  - key: barricade_rubble\n    target: {fileID: %d}\n    defaultActive: 0\n"
-    "  - key: tide_calm\n    target: {fileID: %d}\n    defaultActive: 0\n"
-    "  - key: choir_warden\n    target: {fileID: %d}\n    defaultActive: 1\n"
-    "  - key: warden_wreckage\n    target: {fileID: %d}\n    defaultActive: 0\n"
-    "  areaVariants: []" % (m_ember, m_tide, m_stone, by_gid, shard_gid,
-                           beacon_gid, cache_gid, crate_gid, barricade_gid, rubble_gid, calm_gid,
-                           warden_gid, warden_wreck_gid))
-root_gids.append(gid)
-
-# ---- SceneRoots (root order, Unity 6) ----
-roots_txt = "\n".join("  - {fileID: %d}" % go2tid[g] for g in root_gids)
-add_block("""--- !u!1660057539 &9223372036854775807
-SceneRoots:
-  m_ObjectHideFlags: 0
-  m_Roots:
-%s""" % roots_txt)
-
-scene = "\n".join(out + blocks) + "\n"
-open(os.path.join(SCN, "FirstLocation.unity"), "w").write(scene)
-write_meta_if_missing(os.path.join(SCN, "FirstLocation.unity"), NATIVE, REG["FirstLocation.unity"])
-
-# ================================================================
-# WORLD EXPANSION: per-location environment kit prefabs
-# (Assets/Game/Locations/<Location>/Env_<Loc>.prefab - a sun preset per
-# location, values mirroring story_content.json's environment blocks)
-# ================================================================
 def env_prefab(kit_dir, prefab_name, go_name, light_rgb, intensity):
     kd = os.path.join(ROOT, "Assets/Game/Locations", kit_dir)
     os.makedirs(kd, exist_ok=True)
@@ -1218,6 +1181,74 @@ Light:
     write_meta_if_missing(p, NATIVE, REG[prefab_name])
     print("prefab +", os.path.relpath(p, ROOT))
 
+
+# ================================================================
+# CAMPAIGN CONTENT PASS: 13 locations, roster, enemies, cutscenes, variants (scripts/gen_campaign_scene.py)
+# ================================================================
+import gen_campaign_scene
+CAMPAIGN_KIT_DIRS = gen_campaign_scene.build(globals())
+
+# ---- NPC relocation: Sera takes the annex gate after the beacon falls quiet ----
+loc_gid, loc_ids = emit_gameobject("Loc_Sera_AnnexGate", ["transform"])
+emit_transform(loc_ids["transform"], loc_gid, (2.8, 0, 22.6), (0, 180, 0), (1, 1, 1))
+reloc_gid, reloc_ids = emit_gameobject("NpcRelocator", ["transform", "relocator"])
+emit_transform(reloc_ids["transform"], reloc_gid, (0, 0, 0), (0, 0, 0), (1, 1, 1))
+emit_monobehaviour(reloc_ids["relocator"], reloc_gid, REG["NpcRelocator.cs"],
+    "  bindings:\n"
+    "  - npcId: sera\n"
+    "    locationKey: annex_gate\n"
+    "    target: {fileID: %d}\n"
+    "    notice: Sera takes her watch by the annex gate.\n"
+    "  - npcId: sera\n"
+    "    locationKey: tidewell\n"
+    "    target: {fileID: %d}\n"
+    "    notice: Sera is waiting by the tidewell, lamp already lit.\n" % (loc_ids["transform"], sera_tide_ids["transform"])
+    + "".join("  - npcId: %s\n    locationKey: %s\n    target: {fileID: %d}\n    notice: %s\n" % r for r in CAMPAIGN_RELOCATIONS)
+    + "  toastOnLiveMove: 1")
+
+# ---- world-state applier: replays persisted consequences on every load ----
+# ---- world-state applier: replays persisted consequences on every load ----
+gid, ids = emit_gameobject("StoryWorldState", ["transform", "worldstate"])
+emit_transform(ids["transform"], gid, (0, 0, 0), (0, 0, 0), (1, 1, 1))
+emit_monobehaviour(ids["worldstate"], gid, REG["StoryWorldState.cs"],
+    "  entities:\n"
+    "  - key: ember_marker\n    target: {fileID: %d}\n    defaultActive: 0\n"
+    "  - key: tide_marker\n    target: {fileID: %d}\n    defaultActive: 0\n"
+    "  - key: stone_marker\n    target: {fileID: %d}\n    defaultActive: 0\n"
+    "  - key: tide_bystanders\n    target: {fileID: %d}\n    defaultActive: 0\n"
+    "  - key: echo_shard\n    target: {fileID: %d}\n    defaultActive: 1\n"
+    "  - key: choir_beacon\n    target: {fileID: %d}\n    defaultActive: 1\n"
+    "  - key: ember_cache\n    target: {fileID: %d}\n    defaultActive: 0\n"
+    "  - key: keepsake_crate\n    target: {fileID: %d}\n    defaultActive: 1\n"
+    "  - key: barricade\n    target: {fileID: %d}\n    defaultActive: 1\n"
+    "  - key: barricade_rubble\n    target: {fileID: %d}\n    defaultActive: 0\n"
+    "  - key: tide_calm\n    target: {fileID: %d}\n    defaultActive: 0\n"
+    "  - key: choir_warden\n    target: {fileID: %d}\n    defaultActive: 1\n"
+    "  - key: warden_wreckage\n    target: {fileID: %d}\n    defaultActive: 0\n" % (m_ember, m_tide, m_stone, by_gid, shard_gid,
+                           beacon_gid, cache_gid, crate_gid, barricade_gid, rubble_gid, calm_gid,
+                           warden_gid, warden_wreck_gid)
+    + "  - key: sera_lamp\n    target: {fileID: %d}\n    defaultActive: 1\n" % lamp_gid
+    + "".join("  - key: %s\n    target: {fileID: %d}\n    defaultActive: %d\n" % e for e in CAMPAIGN_ENTITIES)
+    + ("  areaVariants:\n" + "".join("  - area: %s\n    variant: %s\n    target: {fileID: %d}\n" % v for v in CAMPAIGN_VARIANTS)))
+root_gids.append(gid)
+
+# ---- SceneRoots (root order, Unity 6) ----
+roots_txt = "\n".join("  - {fileID: %d}" % go2tid[g] for g in root_gids)
+add_block("""--- !u!1660057539 &9223372036854775807
+SceneRoots:
+  m_ObjectHideFlags: 0
+  m_Roots:
+%s""" % roots_txt)
+
+scene = "\n".join(out + blocks) + "\n"
+open(os.path.join(SCN, "FirstLocation.unity"), "w").write(scene)
+write_meta_if_missing(os.path.join(SCN, "FirstLocation.unity"), NATIVE, REG["FirstLocation.unity"])
+
+# ================================================================
+# WORLD EXPANSION: per-location environment kit prefabs
+# (Assets/Game/Locations/<Location>/Env_<Loc>.prefab - a sun preset per
+# location, values mirroring story_content.json's environment blocks)
+# ================================================================
 env_prefab("FractureHall", "Env_Hall.prefab", "Env_Hall_Dawn", ("0.812", "0.902", "0.949"), "1.05")
 env_prefab("NorthAnnex", "Env_Annex.prefab", "Env_Annex_Ember", ("1.0", "0.698", "0.478"), "0.85")
 env_prefab("TidewellShrine", "Env_Tidewell.prefab", "Env_Tidewell_Glass", ("0.749", "0.918", "0.949"), "0.9")

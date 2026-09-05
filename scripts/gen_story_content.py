@@ -189,7 +189,9 @@ FOLDER_META_PATHS = [
     os.path.join(ROOT, "Assets/Game/Locations/FractureHall"),
     os.path.join(ROOT, "Assets/Game/Locations/NorthAnnex"),
     os.path.join(ROOT, "Assets/Game/Locations/TidewellShrine"),
-]
+] + [os.path.join(ROOT, "Assets/Game/Locations", k) for k in
+     ("LastSummer", "FractureNight", "UnderSpire", "InterludeBecoming", "ContestedDocks", "Sanctuary", "LongWall",
+      "DaxArena", "InterludeReckoning", "OldMarket", "SpireAscent", "Choirmaster", "Epilogue")]  # campaign content pass
 for fd in FOLDER_META_PATHS:
     os.makedirs(fd, exist_ok=True)
     fm = fd + ".meta"

@@ -602,9 +602,62 @@ for script_key in ["NpcAgent.cs", "NpcInteractable.cs", "StoryWorldState.cs", "S
     if scene_txt.count(registry[script_key]) == 0:
         errors.append("scene does not reference %s" % script_key)
 
+# ---------------------------------------------------------------- 4b. campaign scene contracts (derived from the JSON)
+# Every campaign location needs its travel anchor + area trigger; every NPC/enemy definition needs
+# a scene root bound to its id; every SpawnEntity key the content writes needs a StoryWorldState
+# entity binding; every MoveNpc location key needs an NpcRelocator binding; every world-state
+# variant the content sets (market/docks/spire/vessa) needs an areaVariants row.
+def _walk_effects(o, out):
+    if isinstance(o, dict):
+        if set(o.keys()) == {"type", "key", "value", "amount"}:
+            out.append(o)
+        for v in o.values():
+            _walk_effects(v, out)
+    elif isinstance(o, list):
+        for v in o:
+            _walk_effects(v, out)
+_records = []
+_walk_effects({k: v for k, v in content.items() if k != "_comment"}, _records)
+scene_entity_keys = set(re.findall(r"^  - key: (\S+)$", scene_txt, re.M))
+scene_variant_rows = set(re.findall(r"^  - area: (\S+)\n    variant: (\S+)$", scene_txt, re.M))
+scene_reloc_keys = set(re.findall(r"^  - npcId: (\S+)\n    locationKey: (\S+)$", scene_txt, re.M))
+for loc in content["locations"]:
+    for needle in ("LocationAnchor_" + loc["id"], "AreaTrigger_" + loc["id"]):
+        if needle.lower() not in scene_txt.lower():
+            errors.append("scene missing location contract: " + needle)
+for n in content["npcs"]:
+    if ("npcId: " + n["id"] + "\n") not in scene_txt:
+        errors.append("scene has no NpcAgent for npc " + n["id"])
+for e in content["enemies"]:
+    if ("enemyId: " + e["id"] + "\n") not in scene_txt:
+        errors.append("scene has no EnemyAgent for enemy " + e["id"])
+_effects_only = [r for r in _records if r["type"] == 8 and r["key"] not in ("",)]
+for r in _effects_only:
+    if r["key"] not in scene_entity_keys:
+        errors.append("SpawnEntity key '%s' has no StoryWorldState binding in the scene" % r["key"])
+for r in [r for r in _records if r["type"] == 20]:
+    if (r["key"], r["value"]) not in scene_reloc_keys:
+        errors.append("MoveNpc %s -> %s has no NpcRelocator binding" % (r["key"], r["value"]))
+_world_states = set((r["key"], r["value"]) for r in _records if r["type"] == 7 and r["key"] in ("market", "docks", "spire", "vessa"))
+for (a, v) in sorted(_world_states):
+    if (a, v) not in scene_variant_rows:
+        errors.append("world-state variant %s=%s has no areaVariants dressing in the scene" % (a, v))
+print("Campaign contracts: %d locations, %d npcs, %d enemies, %d entity keys, %d variants" %
+      (len(content["locations"]), len(content["npcs"]), len(content["enemies"]), len(scene_entity_keys), len(scene_variant_rows)))
+
 # ---------------------------------------------------------------- 5. location kits
 # Assets/Game/Locations/<Location>/ must carry one environment prefab each (guid-valid).
-LOC_KITS = {"FractureHall": "hall", "NorthAnnex": "annex", "TidewellShrine": "tidewell"}
+LOC_KITS = {"FractureHall": "hall", "NorthAnnex": "annex", "TidewellShrine": "tidewell",
+            # campaign content pass (GAME_DESIGN §11.2)
+            "LastSummer": "last_summer", "FractureNight": "fracture_night", "UnderSpire": "under_spire",
+            "InterludeBecoming": "interlude_becoming", "ContestedDocks": "docks", "Sanctuary": "sanctuary",
+            "LongWall": "long_wall", "DaxArena": "dax_arena", "InterludeReckoning": "interlude_reckoning",
+            "OldMarket": "market", "SpireAscent": "spire_ascent", "Choirmaster": "choirmaster", "Epilogue": "epilogue"}
+for kit_dir, loc_id in LOC_KITS.items():
+    if not any(l["id"] == loc_id for l in content["locations"]):
+        errors.append("location kit %s maps to unknown location %s" % (kit_dir, loc_id))
+    if not os.path.exists(os.path.join(ROOT, "Assets/Game/Locations", kit_dir + ".meta")):
+        errors.append("location kit folder has no .meta: " + kit_dir)
 for kit_dir, loc_id in LOC_KITS.items():
     kit_path = os.path.join(ROOT, "Assets/Game/Locations", kit_dir)
     if not os.path.isdir(kit_path):
