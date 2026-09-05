@@ -23,6 +23,7 @@ namespace Crossroads.Gameplay
         private static readonly Color EmberColor = new Color(0.95f, 0.38f, 0.22f, 0.9f);
         private static readonly Color TideColor = new Color(0.25f, 0.80f, 0.85f, 0.9f);
         private static readonly Color StoneColor = new Color(0.85f, 0.68f, 0.32f, 0.9f);
+        private static readonly Color HollowColor = new Color(0.45f, 0.18f, 0.60f, 0.9f); // Hollow line (campaign pass)
 
         private GameObject _ring;
         private Material _ringMaterial;
@@ -73,7 +74,16 @@ namespace Crossroads.Gameplay
         {
             for (int i = 0; i < abilityIds.Length; i++)
                 if (abilityIds[i] == abilityId) return true;
-            return false;
+            // campaign content pass: every authored power line gets the pulse (colour from its line)
+            return LineOf(abilityId) != "";
+        }
+
+        /// <summary>Ability line ("ember"/"tide"/"stone"/"hollow") from the content, "" if unknown.</summary>
+        private static string LineOf(string abilityId)
+        {
+            if (!Crossroads.Narrative.GameServices.IsInitialized || Crossroads.Narrative.GameServices.Abilities == null) return "";
+            var def = Crossroads.Narrative.GameServices.Abilities.Find(abilityId);
+            return def != null && def.line != null ? def.line : "";
         }
 
         private void Update()
@@ -109,6 +119,12 @@ namespace Crossroads.Gameplay
                 case "ember_pulse": return EmberColor;
                 case "tide_mend": return TideColor;
                 case "stone_ward": return StoneColor;
+            }
+            switch (LineOf(abilityId))
+            {
+                case "tide": return TideColor;
+                case "stone": return StoneColor;
+                case "hollow": return HollowColor;
                 default: return EmberColor;
             }
         }

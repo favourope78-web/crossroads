@@ -415,6 +415,8 @@ namespace UnityEngine
         public void SetFloat(int id, float v) { }
         public void SetFloat(int id, float v, float damp, float dt) { }
         public void SetBool(int id, bool v) { }
+        public void SetTrigger(int id) { }
+        public void ResetTrigger(int id) { }
         public static int StringToHash(string s) { return s.GetHashCode(); }
     }
 

@@ -669,6 +669,26 @@ for kit_dir, loc_id in LOC_KITS.items():
     for f in prefabs:
         check_text_refs(os.path.join(kit_path, f), "location kit " + kit_dir)
 
+# ---------------------------------------------------------------- 6. player combat animations (campaign pass)
+# The canonical Ari controller must carry the four combat triggers PlayerCombatController fires and
+# each trigger's clip must exist (scripts/gen_ari_combat_anims.py) with a resolvable guid.
+ari_dir = os.path.join(ROOT, "Assets/_Project/Art/Characters/Ari")
+ctrl_txt = open(os.path.join(ari_dir, "Ari_Controller.controller")).read()
+for trig in ("Attack", "Dodge", "Hit", "Defeat"):
+    if ("m_Name: %s\n    m_Type: 9" % trig) not in ctrl_txt:
+        errors.append("Ari_Controller missing Trigger parameter " + trig)
+    clip_path = os.path.join(ari_dir, "Ari_%s.anim" % trig)
+    if not os.path.exists(clip_path):
+        errors.append("missing combat clip Ari_%s.anim" % trig)
+        continue
+    m = re.search(r"^guid: ([0-9a-f]{32})", open(clip_path + ".meta").read(), re.M) if os.path.exists(clip_path + ".meta") else None
+    if not m:
+        errors.append("combat clip without meta guid: Ari_%s.anim" % trig)
+    elif m.group(1) not in ctrl_txt:
+        errors.append("Ari_Controller does not reference Ari_%s.anim" % trig)
+check_text_refs(os.path.join(ari_dir, "Ari_Controller.controller"), "Ari_Controller")
+print("Player combat animations: Attack/Dodge/Hit/Defeat wired")
+
 print("=" * 60)
 if errors:
     for e in errors:

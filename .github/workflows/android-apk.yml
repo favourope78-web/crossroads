@@ -7,8 +7,11 @@
 #   1. Personal (free) licenses work: follow game-ci's "Activation" docs
 #      (github.com/game-ci/documentation) to obtain a .ulf license file.
 #   2. Add it as a repository secret named UNITY_LICENSE
-#      (Settings -> Secrets and variables -> Actions -> New repository secret).
-#   3. Push - the APK appears under Actions -> <run> -> Artifacts.
+#      (Settings -> Secrets and variables -> Actions -> New repository secret)
+#      - or, for Unity 6 personal, add UNITY_EMAIL + UNITY_PASSWORD (+ UNITY_SERIAL for Pro).
+#   3. Push (or Actions -> android-dev-apk -> Run workflow) - the APK appears under Artifacts.
+#   Status: as of the campaign content pass no secret is configured on this repository, so every
+#   run so far stopped inside game-ci before Unity started (see CAMPAIGN_CONTENT_REPORT.md).
 #
 # The first successful run also proves the Android launch path end-to-end:
 # Unity 6 LTS + IL2CPP + ARM64, FirstLocation scene, same content pipeline.
@@ -21,6 +24,11 @@ on:
 
 env:
   UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+  # Unity 6 personal licenses activate with email + password (+ serial for pro) instead of a .ulf;
+  # either set works - game-ci uses whichever secrets are present.
+  UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+  UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+  UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
 
 jobs:
   build:
@@ -31,7 +39,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          lfs: true
+          # the repo's binaries (kit FBX, Ari FBX/PNG, reference renders) are committed as plain
+          # blobs - .gitattributes' LFS rules never activated in the authoring sandbox. lfs:false
+          # keeps the checkout byte-identical so game-ci's "dirty branch" guard stays quiet.
+          lfs: false
 
       # cache the Unity editor download between runs (it is multi-GB)
       - uses: actions/cache@v4
@@ -46,6 +57,12 @@ jobs:
           androidTargetSdkVersion: 34
           androidBuildType: development
           androidSymbolType: none
+          # Semantic versioning walks git tags and refuses to run on a "dirty" tree (the LFS
+          # smudge/clean normalisation made every binary look modified in earlier runs). The dev
+          # APK needs no derived version - pin it and let allowDirtyBuild cover any residual noise.
+          versioning: None
+          allowDirtyBuild: true
+          buildName: CrossroadsDev
           customParameters: -executeMethod Crossroads.EditorTools.AndroidDevBuild.Configure -nographics
 
       - name: Configure + build APK through the project's own build script
@@ -58,5 +75,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: CrossroadsDev-APK
-          path: build/*.apk
+          path: |
+            build/**/*.apk
+            build/*.apk
           if-no-files-found: warn

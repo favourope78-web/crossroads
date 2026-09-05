@@ -351,7 +351,7 @@ namespace Crossroads.Narrative
                 moveSpeed = 1.8f, turnSpeed = 5f, detectionRadius = 14f, leashRadius = 24f, attackRange = 2.8f, staggerSeconds = 0.35f,
                 attack = new AttackDefinitionData { id = "cm_chorus", name = "Chorus", damageType = DamageType.Hollow, delivery = AttackDelivery.MeleeArc, baseDamage = 17f, range = 2.8f, arcDegrees = 90f, radius = 0f, windupSeconds = 0.7f, cooldownSeconds = 1.8f, applyStatusIds = new List<string> { "choir_song", "hollow_drain" } },
                 activationConditions = L(Cd(ConditionType.FlagIs, "cm_press", "1", 0)),
-                onDefeatEffects = L(Ef(EffectType.SetFlag, "cm_p2", "1", 0), Ef(EffectType.SpawnEntity, "choirmaster_p2", "0", 0), Ef(EffectType.SpawnEntity, "choirmaster_p3", "1", 0), Ef(EffectType.SpawnEntity, "cm_finale_sign", "1", 0), Ef(EffectType.GrantEchoes, "", "", 20))
+                onDefeatEffects = L(Ef(EffectType.SetFlag, "cm_p2", "1", 0), Ef(EffectType.SpawnEntity, "choirmaster_p2", "0", 0), Ef(EffectType.SpawnEntity, "choirmaster_p3", "1", 0), Ef(EffectType.GrantEchoes, "", "", 20))
             });
             content.enemies.Add(new EnemyDefinitionData
             {

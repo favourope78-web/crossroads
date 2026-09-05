@@ -90,6 +90,7 @@ def build(g):
         for dx in (-5, 5):
             for dz in (-5, 5):
                 pieces.append(("SM_FloorTile", (cx + dx, 0.05, cz + dz), 0, floor_mat))
+        open_sides = ()  # rooms are reached by travel (map -> LocationAnchor); no walk-in shortcuts past the unlock rules
         if "n" not in open_sides:
             pieces += [("SM_WallPanel", (cx - 5, 3, cz + 10), 0, wall_mat), ("SM_WallPanel", (cx + 5, 3, cz + 10), 0, wall_mat)]
         if "s" not in open_sides:
@@ -297,7 +298,7 @@ BoxCollider:
     action("SanctuaryBreach", (cx + 8, 0, cz + 2), [("Crack", "M_Env_Ruin", CUBE, (0, 1.0, 0), (0.6, 2.0, 0.6)), ("Rush", "M_Env_Water", SPHERE, (0, 0.4, 0), (0.8, 0.5, 0.8))],
            "Hold the breach", [cond_yaml(0, "c2_path", "sanctuary")], [eff_yaml(6, "sanctuary_breaches", amount=1)], "sanctuary_breaches", 3, "",
            q("Nothing breaks here yet."), q("The water takes another step. If it reaches the altar three times, the Sanctuary is lost."), "The Breach (danger)", priority=10)
-    sign("sanctuary", "Cutscene_MaraCrane_S", (cx - 3, 0, cz - 2), "M_Seq_Tide", "Mara - the crane!", "c2_mara_pressure", active=0, priority=31, entity_key="mara_crane_s")
+    sign("sanctuary", "Cutscene_MaraCrane_S", (cx - 3, 0, cz - 2), "M_Seq_Tide", "Mara - the crane!", "c2_mara_pressure", active=0, priority=31, entity_key="mara_crane")
 
     # ================================================================ C2C The Long Wall
     cx, cz = room("long_wall", "M_Hall_Concrete", "M_Env_Ruin", open_sides=("n",))
@@ -314,7 +315,7 @@ BoxCollider:
     action("WallBreach", (cx + 8, 0, cz + 4), [("Gap", "M_Env_Ruin", CUBE, (0, 1.0, 0), (0.6, 2.0, 1.2))],
            "The gate gives", [cond_yaml(0, "c2_path", "long_wall")], [eff_yaml(6, "wall_breaches", amount=1)], "wall_breaches", 3, "",
            q("The wall holds here."), q("The gate splinters another hand's width. Three breaches and the Outskirts are theirs."), "The Gate (danger)", priority=10)
-    sign("long_wall", "Cutscene_MaraCrane_W", (cx - 3, 0, cz - 2), "M_Seq_Tide", "Mara - the crane!", "c2_mara_pressure", active=0, priority=31, entity_key="mara_crane_w")
+    sign("long_wall", "Cutscene_MaraCrane_W", (cx - 3, 0, cz - 2), "M_Seq_Tide", "Mara - the crane!", "c2_mara_pressure", active=0, priority=31, entity_key="mara_crane")
 
     # ================================================================ C2X Dax Confrontation
     cx, cz = room("dax_arena", "M_Hall_Concrete", "M_Env_Ruin")
@@ -369,8 +370,8 @@ BoxCollider:
     foe("Choirmaster_P2", "choirmaster_p2", (cx, 0, cz + 6), 180, "M_Boss_Choirmaster", scale=1.6, active=0, core_mat="M_Hollow")
     foe("Choirmaster_P3", "choirmaster_p3", (cx, 0, cz + 6), 180, "M_Hollow", scale=1.7, active=0, core_mat="M_Boss_Choirmaster")
     sign("choirmaster", "Cutscene_DoorInTheSong", (cx - 6, 0, cz), "M_Hall_Holo", "A door in the song", "c3_cm_transition", active=0, priority=32, entity_key="cm_door")
-    sign("choirmaster", "Cutscene_PhaseTwo", (cx + 6, 0, cz), "M_Boss_Choirmaster", "The chorus", "c3_cm_phase2", active=0, priority=29, entity_key="cm_finale_sign")
-    sign("choirmaster", "Cutscene_PhaseThree", (cx + 6, 0, cz - 3), "M_Hollow", "The finale", "c3_cm_phase3", active=0, priority=29, entity_key="cm_finale_sign_2")
+    sign("choirmaster", "Cutscene_PhaseTwo", (cx + 6, 0, cz), "M_Boss_Choirmaster", "The chorus", "c3_cm_phase2", active=0, priority=29, entity_key="choirmaster_p2")  # appears/vanishes with phase two
+    sign("choirmaster", "Cutscene_PhaseThree", (cx + 6, 0, cz - 3), "M_Hollow", "The finale", "c3_cm_phase3", active=0, priority=29, entity_key="choirmaster_p3")
     # fate inserts (phase two): enemies AND allies
     foe("Dax_FinalEnemy", "dax_final", (cx - 4, 0, cz + 3), 160, "M_Char_Dax_Blazer", scale=1.05, active=0, core_mat="M_Hollow")
     foe("Mara_Turned", "mara_turned", (cx + 4, 0, cz + 3), 200, "M_Char_Mara_Hoodie", scale=1.0, active=0, core_mat="M_Hollow")
@@ -382,9 +383,7 @@ BoxCollider:
     dressing("Fracture_Heart", (cx, 0, cz + 6), [("Heart", "M_Boss_Echo", SPHERE, (0, 1.5, 0), (2.2, 2.2, 2.2))])
     heart_gid = g["last_gid"]()
     entity_bindings.append(("fracture_heart", heart_gid, 0))
-    sign("choirmaster", "FinalDecision", (cx, 0, cz + 3), "M_Hall_OrbGold", "The Fracture's heart", "c3_final_decision", active=0, priority=33, entity_key="fracture_heart_sign")
-    # the final-decision sign follows the heart: same key spawns both
-    entity_bindings.append(("fracture_heart", g["last_gid"](), 0))
+    sign("choirmaster", "FinalDecision", (cx, 0, cz + 3), "M_Hall_OrbGold", "The Fracture's heart", "c3_final_decision", active=0, priority=33, entity_key="fracture_heart")  # same key as the heart
 
     # ================================================================ EP Epilogue
     cx, cz = room("epilogue", "M_Env_Summer", "M_Hall_Concrete", open_sides=("n",))

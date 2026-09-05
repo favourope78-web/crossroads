@@ -312,7 +312,7 @@ enemy("choirmaster_p1", "The Choirmaster", "The Choir's conductor at the Fractur
       visited("choirmaster"), [setf("cm_p1"), eff(SpawnEntity, "choirmaster_p1", "0"), eff(SpawnEntity, "choirmaster_p2", "1"), eff(SpawnEntity, "cm_door", "1"), eff(GrantEchoes, "", "", 20)])
 enemy("choirmaster_p2", "The Choirmaster, Unmasked", "Phase two: the Choirmaster calls whoever your life left standing against you - or beside you.", "BOSS-04",
       260, 3.5, R_BOSS, 1.8, 14.0, 24.0, 2.8, 0.35, attack("cm_chorus", "Chorus", HOLLOW, MELEE, 17, 2.8, 90, 0, 0.7, 1.8, ["choir_song", "hollow_drain"]),
-      [flag("cm_press")], [setf("cm_p2"), eff(SpawnEntity, "choirmaster_p2", "0"), eff(SpawnEntity, "choirmaster_p3", "1"), eff(SpawnEntity, "cm_finale_sign", "1"), eff(GrantEchoes, "", "", 20)])
+      [flag("cm_press")], [setf("cm_p2"), eff(SpawnEntity, "choirmaster_p2", "0"), eff(SpawnEntity, "choirmaster_p3", "1"), eff(GrantEchoes, "", "", 20)])
 enemy("choirmaster_p3", "The Choirmaster, Ascendant", "Phase three: the mechanics belong to your dominant line - a race, a ward, an attrition, or an execution window.", "BOSS-04",
       300, 4.0, R_BOSS, 2.0, 14.0, 24.0, 3.0, 0.3, attack("cm_finale", "Finale", HOLLOW, MELEE, 20, 3.0, 100, 0, 0.65, 1.5, ["choir_song", "hollow_drain", "suppression"]),
       [flag("cm_p2")], [setf("choirmaster_defeated"), eff(SpawnEntity, "choirmaster_p3", "0"), eff(SpawnEntity, "fracture_heart", "1"),

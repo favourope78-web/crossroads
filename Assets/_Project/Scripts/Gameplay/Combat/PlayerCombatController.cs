@@ -36,6 +36,16 @@ namespace Crossroads.Gameplay
         private float _playerSpeedMultiplier = 1f;
         private float _nextPersist;
 
+        // combat animation hooks (campaign content pass): Animator triggers authored by
+        // scripts/gen_ari_combat_anims.py on the canonical Ari controller; null-safe everywhere.
+        private Animator _animator;
+        private float _lastKnownHealth = -1f;
+        private static readonly int AttackHash = Animator.StringToHash("Attack");
+        private static readonly int DodgeHash = Animator.StringToHash("Dodge");
+        private static readonly int HitHash = Animator.StringToHash("Hit");
+        private static readonly int DefeatHash = Animator.StringToHash("Defeat");
+        private void Trigger(int hash) { if (_animator != null) _animator.SetTrigger(hash); }
+
         public CombatantState Combatant { get { return _combatant; } }
         public bool Dodging { get { return _dodgeRemaining > 0f; } }
         public float HealthFraction
@@ -46,6 +56,8 @@ namespace Crossroads.Gameplay
         private void Start()
         {
             _cc = GetComponent<CharacterController>();
+            _animator = GetComponent<Animator>();
+            if (_animator == null) _animator = GetComponentInChildren<Animator>();
             if (GameServices.IsInitialized && GameServices.Content != null && GameServices.Content.Content != null)
             {
                 _settings = GameServices.Content.Content.combat;
@@ -75,10 +87,15 @@ namespace Crossroads.Gameplay
             _playerSpeedMultiplier = _combatant.MoveSpeedMultiplier;
             PlayerPrototypeController.ExternalSpeedMultiplier = _playerSpeedMultiplier;
 
+            // hit reaction: health dropped since last frame (damage feedback on the rig)
+            if (_lastKnownHealth >= 0f && _combatant.Health < _lastKnownHealth - 0.01f && _combatant.Alive) Trigger(HitHash);
+            _lastKnownHealth = _combatant.Health;
+
             // defeat handling (once)
             if (!_combatant.Alive && !_defeatHandled)
             {
                 _defeatHandled = true;
+                Trigger(DefeatHash);
                 OnDefeated();
             }
 
@@ -129,6 +146,7 @@ namespace Crossroads.Gameplay
             if (Time.time < _attackCooldownUntil) return false;
             AttackDefinitionData attack = _settings.basicAttack;
             _attackCooldownUntil = Time.time + attack.cooldownSeconds;
+            Trigger(AttackHash);
 
             Point3 origin = ToPoint3(transform.position);
             float facing = transform.eulerAngles.y;
@@ -162,6 +180,7 @@ namespace Crossroads.Gameplay
             if (Time.time < _dodgeCooldownUntil || Dodging) return false;
             _dodgeCooldownUntil = Time.time + _settings.dodgeCooldownSeconds;
             _dodgeRemaining = _settings.dodgeDurationSeconds;
+            Trigger(DodgeHash);
 
             Vector3 forward = transform.forward;
             forward.y = 0f;
