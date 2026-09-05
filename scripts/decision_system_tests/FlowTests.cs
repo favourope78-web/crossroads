@@ -1479,6 +1479,11 @@ namespace Crossroads.Tests
             _passed += locationPassed;
             _failed += locationFailed;
 
+            int campaignContentPassed, campaignContentFailed;
+            CampaignContentTests.RunAll(out campaignContentPassed, out campaignContentFailed);
+            _passed += campaignContentPassed;
+            _failed += campaignContentFailed;
+
             Console.WriteLine("======================================");
             foreach (var line in Log) Console.WriteLine(line);
             foreach (var line in WorldTests.GetLog()) Console.WriteLine(line);
@@ -1486,6 +1491,7 @@ namespace Crossroads.Tests
             foreach (var line in MobileExperienceTests.GetLog()) Console.WriteLine(line);
             foreach (var line in CampaignTests.GetLog()) Console.WriteLine(line);
             foreach (var line in LocationTests.GetLog()) Console.WriteLine(line);
+            foreach (var line in CampaignContentTests.GetLog()) Console.WriteLine(line);
             Console.WriteLine("======================================");
             Console.WriteLine("RESULT: {0} passed, {1} failed", _passed, _failed);
             return _failed == 0 ? 0 : 1;

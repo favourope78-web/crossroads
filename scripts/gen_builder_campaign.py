@@ -32,15 +32,14 @@ OBJTYPE = ["Main", "Side", "Crisis", "Recovery"]
 CATEGORY = ["Active", "Passive", "Utility"]
 
 def S(s):
-    """C# string literal whose source text contains the JSON string verbatim (ASCII) or
-    with \\uXXXX escapes (non-ASCII) - exactly what validate_assets.py §3 looks for."""
+    """C# string literal whose source text contains the JSON string verbatim (UTF-8 source,
+    like the hand-written builder) - exactly what validate_assets.py §3 looks for."""
     out = []
     for ch in s:
         o = ord(ch)
         if ch == '"': out.append('\\"')
         elif ch == "\\": out.append("\\\\")
         elif ch == "\n": out.append("\\n")
-        elif o > 126: out.append("\\u%04x" % o)
         else: out.append(ch)
     return '"' + "".join(out) + '"'
 

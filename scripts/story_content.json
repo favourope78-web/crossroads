@@ -2154,6 +2154,18 @@
        "key": "kael",
        "value": "1",
        "amount": 0
+      },
+      {
+       "type": 8,
+       "key": "odalys",
+       "value": "0",
+       "amount": 0
+      },
+      {
+       "type": 8,
+       "key": "bran",
+       "value": "0",
+       "amount": 0
       }
      ]
     },
@@ -2204,6 +2216,18 @@
        "key": "odalys",
        "value": "1",
        "amount": 0
+      },
+      {
+       "type": 8,
+       "key": "kael",
+       "value": "0",
+       "amount": 0
+      },
+      {
+       "type": 8,
+       "key": "bran",
+       "value": "0",
+       "amount": 0
       }
      ]
     },
@@ -2253,6 +2277,18 @@
        "type": 8,
        "key": "bran",
        "value": "1",
+       "amount": 0
+      },
+      {
+       "type": 8,
+       "key": "kael",
+       "value": "0",
+       "amount": 0
+      },
+      {
+       "type": 8,
+       "key": "odalys",
+       "value": "0",
        "amount": 0
       }
      ]
@@ -2673,6 +2709,12 @@
        "key": "c2_mara_saved",
        "value": "",
        "amount": 0
+      },
+      {
+       "type": 8,
+       "key": "mara_crane",
+       "value": "0",
+       "amount": 0
       }
      ]
     },
@@ -2741,6 +2783,12 @@
        "key": "mara_c3",
        "value": "0",
        "amount": 0
+      },
+      {
+       "type": 8,
+       "key": "mara_crane",
+       "value": "0",
+       "amount": 0
       }
      ]
     },
@@ -2772,6 +2820,12 @@
        "type": 9,
        "key": "c2_mara_hesitated",
        "value": "",
+       "amount": 0
+      },
+      {
+       "type": 8,
+       "key": "mara_crane",
+       "value": "0",
        "amount": 0
       }
      ]
@@ -2924,6 +2978,12 @@
        "key": "dax_rival",
        "value": "0",
        "amount": 0
+      },
+      {
+       "type": 8,
+       "key": "dax_down",
+       "value": "0",
+       "amount": 0
       }
      ]
     },
@@ -2935,7 +2995,7 @@
      "effects": [
       {
        "type": 0,
-       "key": "dax_resolved",
+       "key": "dax_yielded",
        "value": "1",
        "amount": 0
       },
@@ -2961,6 +3021,24 @@
        "type": 9,
        "key": "c2_dax_yielded",
        "value": "",
+       "amount": 0
+      },
+      {
+       "type": 8,
+       "key": "dax_down",
+       "value": "0",
+       "amount": 0
+      },
+      {
+       "type": 8,
+       "key": "dax_yielded",
+       "value": "1",
+       "amount": 0
+      },
+      {
+       "type": 0,
+       "key": "dax_resolved",
+       "value": "1",
        "amount": 0
       }
      ]
@@ -3041,6 +3119,12 @@
       {
        "type": 8,
        "key": "dax_rival",
+       "value": "0",
+       "amount": 0
+      },
+      {
+       "type": 8,
+       "key": "dax_down",
        "value": "0",
        "amount": 0
       }
@@ -3205,9 +3289,9 @@
        "amount": 0
       },
       {
-       "type": 8,
-       "key": "hollow_shrine",
-       "value": "0",
+       "type": 7,
+       "key": "spire",
+       "value": "collapsed",
        "amount": 0
       }
      ]
@@ -14694,9 +14778,9 @@
      "label": "Dax: Redeemed",
      "requiredConditions": [
       {
-       "type": 6,
-       "key": "dec_dax_duel_end",
-       "value": "yield",
+       "type": 0,
+       "key": "dax_yielded",
+       "value": "1",
        "amount": 0
       },
       {
@@ -14722,9 +14806,9 @@
      "label": "Dax: Final Enemy",
      "requiredConditions": [
       {
-       "type": 6,
-       "key": "dec_dax_duel_end",
-       "value": "yield",
+       "type": 0,
+       "key": "dax_yielded",
+       "value": "1",
        "amount": 0
       }
      ],
@@ -14902,6 +14986,281 @@
      ],
      "onResolveEffects": [],
      "priority": 5
+    },
+    {
+     "id": "beat_rk_ins_dax_final",
+     "title": "Dax sings the Choirmaster's part",
+     "journalText": "Dax came up the Spire ahead of you, and he was singing.",
+     "offerConditions": [
+      {
+       "type": 0,
+       "key": "dax_fate",
+       "value": "final_enemy",
+       "amount": 0
+      }
+     ],
+     "resolveTrigger": 0,
+     "resolveKey": "",
+     "resolveConditions": [
+      {
+       "type": 0,
+       "key": "cm_press",
+       "value": "1",
+       "amount": 0
+      }
+     ],
+     "requiredBeatIds": [
+      "beat_rk_transition"
+     ],
+     "onResolveEffects": [
+      {
+       "type": 8,
+       "key": "dax_final",
+       "value": "1",
+       "amount": 0
+      }
+     ],
+     "priority": 9
+    },
+    {
+     "id": "beat_rk_ins_mara_turned",
+     "title": "Mara, Turned",
+     "journalText": "Mara got up from under the crane. So did the Hollow.",
+     "offerConditions": [
+      {
+       "type": 0,
+       "key": "mara_fate",
+       "value": "turned",
+       "amount": 0
+      }
+     ],
+     "resolveTrigger": 0,
+     "resolveKey": "",
+     "resolveConditions": [
+      {
+       "type": 0,
+       "key": "cm_press",
+       "value": "1",
+       "amount": 0
+      }
+     ],
+     "requiredBeatIds": [
+      "beat_rk_transition"
+     ],
+     "onResolveEffects": [
+      {
+       "type": 8,
+       "key": "mara_turned",
+       "value": "1",
+       "amount": 0
+      }
+     ],
+     "priority": 9
+    },
+    {
+     "id": "beat_rk_ins_mara_ally",
+     "title": "Mara takes the left side",
+     "journalText": "Mara climbed the Spire with you and took the left side.",
+     "offerConditions": [
+      {
+       "type": 0,
+       "key": "mara_fate",
+       "value": "ally",
+       "amount": 0
+      }
+     ],
+     "resolveTrigger": 0,
+     "resolveKey": "",
+     "resolveConditions": [
+      {
+       "type": 0,
+       "key": "cm_press",
+       "value": "1",
+       "amount": 0
+      }
+     ],
+     "requiredBeatIds": [
+      "beat_rk_transition"
+     ],
+     "onResolveEffects": [
+      {
+       "type": 8,
+       "key": "mara_ally_cm",
+       "value": "1",
+       "amount": 0
+      },
+      {
+       "type": 4,
+       "key": "mara",
+       "value": "",
+       "amount": 5
+      }
+     ],
+     "priority": 9
+    },
+    {
+     "id": "beat_rk_ins_dax_ally",
+     "title": "Dax takes the right side",
+     "journalText": "Dax, redeemed, took the right side and told everyone afterwards.",
+     "offerConditions": [
+      {
+       "type": 0,
+       "key": "dax_fate",
+       "value": "redeemed",
+       "amount": 0
+      }
+     ],
+     "resolveTrigger": 0,
+     "resolveKey": "",
+     "resolveConditions": [
+      {
+       "type": 0,
+       "key": "cm_press",
+       "value": "1",
+       "amount": 0
+      }
+     ],
+     "requiredBeatIds": [
+      "beat_rk_transition"
+     ],
+     "onResolveEffects": [
+      {
+       "type": 8,
+       "key": "dax_ally_cm",
+       "value": "1",
+       "amount": 0
+      },
+      {
+       "type": 4,
+       "key": "dax",
+       "value": "",
+       "amount": 5
+      }
+     ],
+     "priority": 9
+    },
+    {
+     "id": "beat_rk_ins_kael",
+     "title": "Kael holds the line",
+     "journalText": "Kael stood in phase two, coat buttoned to the throat.",
+     "offerConditions": [
+      {
+       "type": 0,
+       "key": "mentor_fate",
+       "value": "alive",
+       "amount": 0
+      },
+      {
+       "type": 6,
+       "key": "dec_mentor",
+       "value": "kael",
+       "amount": 0
+      }
+     ],
+     "resolveTrigger": 0,
+     "resolveKey": "",
+     "resolveConditions": [
+      {
+       "type": 0,
+       "key": "cm_press",
+       "value": "1",
+       "amount": 0
+      }
+     ],
+     "requiredBeatIds": [
+      "beat_rk_transition"
+     ],
+     "onResolveEffects": [
+      {
+       "type": 8,
+       "key": "kael_cm",
+       "value": "1",
+       "amount": 0
+      }
+     ],
+     "priority": 9
+    },
+    {
+     "id": "beat_rk_ins_odalys",
+     "title": "Odalys holds the line",
+     "journalText": "Odalys stood in phase two, hem dripping.",
+     "offerConditions": [
+      {
+       "type": 0,
+       "key": "mentor_fate",
+       "value": "alive",
+       "amount": 0
+      },
+      {
+       "type": 6,
+       "key": "dec_mentor",
+       "value": "odalys",
+       "amount": 0
+      }
+     ],
+     "resolveTrigger": 0,
+     "resolveKey": "",
+     "resolveConditions": [
+      {
+       "type": 0,
+       "key": "cm_press",
+       "value": "1",
+       "amount": 0
+      }
+     ],
+     "requiredBeatIds": [
+      "beat_rk_transition"
+     ],
+     "onResolveEffects": [
+      {
+       "type": 8,
+       "key": "odalys_cm",
+       "value": "1",
+       "amount": 0
+      }
+     ],
+     "priority": 9
+    },
+    {
+     "id": "beat_rk_ins_bran",
+     "title": "Bran holds the line",
+     "journalText": "Bran stood in phase two, the way he stands everywhere.",
+     "offerConditions": [
+      {
+       "type": 0,
+       "key": "mentor_fate",
+       "value": "alive",
+       "amount": 0
+      },
+      {
+       "type": 6,
+       "key": "dec_mentor",
+       "value": "bran",
+       "amount": 0
+      }
+     ],
+     "resolveTrigger": 0,
+     "resolveKey": "",
+     "resolveConditions": [
+      {
+       "type": 0,
+       "key": "cm_press",
+       "value": "1",
+       "amount": 0
+      }
+     ],
+     "requiredBeatIds": [
+      "beat_rk_transition"
+     ],
+     "onResolveEffects": [
+      {
+       "type": 8,
+       "key": "bran_cm",
+       "value": "1",
+       "amount": 0
+      }
+     ],
+     "priority": 9
     }
    ],
    "branches": [
@@ -15185,6 +15544,12 @@
      "type": 0,
      "key": "ep_open",
      "value": "1",
+     "amount": 0
+    },
+    {
+     "type": 20,
+     "key": "archivist",
+     "value": "epilogue_pier",
      "amount": 0
     },
     {
