@@ -136,7 +136,7 @@ namespace Crossroads.Tests
             Log.Add("[40] Combat content: data-driven definitions satisfy the runtime contracts");
             var content = StoryContentBuilder.CreateFirstLightContent();
 
-            CheckEq(content.statusEffects.Count, 4, "four status effect definitions");
+            Check(content.statusEffects.Count == 4 + StoryContentBuilder.CampaignStatusCount, "four chapter-one status effects + the campaign pass (" + content.statusEffects.Count + ")");
             Check(content.FindStatusEffect("echo_burn") != null
                   && content.FindStatusEffect("suppression") != null
                   && content.FindStatusEffect("dodge_guard") != null

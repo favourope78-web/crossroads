@@ -519,6 +519,8 @@ else:
 
 # ---------------------------------------------------------------- 3. JSON <-> C# builder
 builder = open(os.path.join(ROOT, "Assets/_Project/Scripts/Narrative/Content/StoryContentBuilder.cs")).read()
+# campaign content pass: the generated partial (scripts/gen_builder_campaign.py) mirrors the same JSON
+builder += open(os.path.join(ROOT, "Assets/_Project/Scripts/Narrative/Content/StoryContentBuilder.Campaign.cs")).read()
 def walk_strings(o, out):
     if isinstance(o, dict):
         for v in o.values():

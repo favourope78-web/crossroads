@@ -148,7 +148,7 @@ namespace Crossroads.Tests
         {
             Log.Add("[30] Objectives: data-driven definitions satisfy the manager contracts");
             var content = StoryContentBuilder.CreateFirstLightContent();
-            CheckEq(content.objectives.Count, 7, "seven authored objectives (3 paths + 3 follow-ups + 1 combat crisis)");
+            Check(content.objectives.Count == 7 + StoryContentBuilder.CampaignObjectiveCount, "seven chapter-one objectives (3 paths + 3 follow-ups + 1 combat crisis) + the campaign pass (" + content.objectives.Count + ")");
             Check(content.FindObjective(StoryContentBuilder.ObjectiveEmberBeacon) != null, "ember path objective present");
             Check(content.FindObjective(StoryContentBuilder.ObjectiveTideKeepsake) != null, "tide path objective present");
             Check(content.FindObjective(StoryContentBuilder.ObjectiveStoneBarricade) != null, "stone path objective present");
@@ -183,13 +183,13 @@ namespace Crossroads.Tests
                   && content.FindObjective(StoryContentBuilder.ObjectiveTideKeepsake).failConditions.Count == 0,
                   "ember/tide objectives are unfailable");
 
-            CheckEq(content.worldInteractions.Count, 7, "seven world interaction rows (incl. ability-gated)");
+            Check(content.worldInteractions.Count == 7 + StoryContentBuilder.CampaignWorldInteractionCount, "seven chapter-one world interaction rows + the campaign pass (" + content.worldInteractions.Count + ")");
 
             string dir = TempDir("content");
             IEncounterSource src;
             NewRun(dir, out src);
-            Check(WorldServices.IsInitialized && WorldServices.Objectives.RegisteredCount == 7,
-                  "booted manager sees the seven authored objectives");
+            Check(WorldServices.IsInitialized && WorldServices.Objectives.RegisteredCount == content.objectives.Count,
+                  "booted manager sees every authored objective (chapter one + campaign pass)");
             Check(WorldServices.World != null, "world-state system bootstrapped");
             Shutdown();
             Directory.Delete(dir, true);

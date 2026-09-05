@@ -16,7 +16,7 @@ namespace Crossroads.Narrative
     /// All content is data (mirrored in content JSON + the authored asset); the runner,
     /// evaluators and GameStateManager never hardcode a branch.
     /// </summary>
-    public static class StoryContentBuilder
+    public static partial class StoryContentBuilder
     {
         // ids ------------------------------------------------------------------
         public const string EncounterFirstLight = "c1_hall_first_light";
@@ -1548,6 +1548,9 @@ namespace Crossroads.Narrative
                     environment = new LocationEnvironmentData { profile = "tide_glass", ambient = "2e4a52", fog = "22383f", fogDensity = 0.045f, sun = "bfeaf2", sunIntensity = 0.9f }
                 }
             });
+
+            // ---------------------------------------------------------------- campaign content pass (generated mirror)
+            AppendCampaignContent(content);
 
             return content;
         }

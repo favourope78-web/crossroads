@@ -1,0 +1,18 @@
+{
+ "_comment": "Room centres (x,z) of the campaign locations inside the single FirstLocation scene. Shared by add_campaign_pass_content.py (NPC routines) and gen_firstlocation_scene.py (rooms, anchors, triggers). Each room is 20x20 (2x2 floor tiles).",
+ "rooms": {
+  "last_summer":        [-40, -10],
+  "fracture_night":     [-40,  20],
+  "under_spire":        [-40,  50],
+  "interlude_becoming": [-70, -10],
+  "docks":              [-70,  20],
+  "sanctuary":          [-70,  50],
+  "long_wall":          [-70, -40],
+  "dax_arena":          [-100, 20],
+  "interlude_reckoning":[-100,-10],
+  "market":             [-100, 50],
+  "spire_ascent":       [-100,-40],
+  "choirmaster":        [-130, 20],
+  "epilogue":           [-130,-10]
+ }
+}

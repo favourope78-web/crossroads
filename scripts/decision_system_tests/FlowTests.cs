@@ -404,7 +404,7 @@ namespace Crossroads.Tests
             Log.Add("[22] Abilities: pure-data definitions satisfy the manager contracts");
             var content = StoryContentBuilder.CreateFirstLightContent();
             var defs = content.progression.abilities;
-            CheckEq(defs.Count, 3, "three initial ability definitions");
+            Check(defs.Count >= 3 && defs.Count == 3 + StoryContentBuilder.CampaignAbilityCount, "three chapter-one abilities + the campaign lines (" + defs.Count + ")");
 
             string[] ids = { "ember_pulse", "tide_mend", "stone_ward" };
             string[] lines = { "ember", "tide", "stone" };
@@ -436,7 +436,7 @@ namespace Crossroads.Tests
             IEncounterSource booted;
             NewRun(dir, out booted);
             Check(GameServices.Abilities != null, "AbilityManager bootstrapped with GameServices");
-            CheckEq(GameServices.Abilities.Definitions.Count, 3, "manager sees the authored definitions");
+            CheckEq(GameServices.Abilities.Definitions.Count, content.progression.abilities.Count, "manager sees the authored definitions");
             Check(GameServices.Abilities.Find("ember_pulse") != null && GameServices.Abilities.Find("nothing") == null,
                   "Find resolves ids");
             CheckEq(GameServices.Abilities.Level("ember_pulse"), 0, "level 0 while locked");
@@ -476,7 +476,7 @@ namespace Crossroads.Tests
 
                 // sheet rows mirror the same verdicts (UI model = manager + data, no hardcoded ids)
                 var rows = AbilitySheetModel.Build(GameServices.Abilities);
-                CheckEq(rows.Count, 3, "sheet lists every known ability");
+                CheckEq(rows.Count, GameServices.Abilities.Definitions.Count, "sheet lists every known ability");
                 bool sawOwner = false, sawLocked = false;
                 for (int r = 0; r < rows.Count; r++)
                 {

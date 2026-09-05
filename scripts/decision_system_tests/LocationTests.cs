@@ -139,7 +139,7 @@ namespace Crossroads.Tests
             NewRun(dir);
             StoryContentData c = GameServices.Content.Content;
 
-            CheckEq(c.locations.Count, 3, "three prototype locations");
+            CheckEq(c.locations.Count, 3 + StoryContentBuilder.CampaignLocationIds.Length, "three prototype locations + the thirteen campaign locations");
             LocationDefinitionData hall = c.FindLocation("hall");
             LocationDefinitionData annex = c.FindLocation("annex");
             LocationDefinitionData tidewell = c.FindLocation("tidewell");
