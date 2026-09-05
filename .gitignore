@@ -92,3 +92,7 @@ Desktop.ini
 
 # headless test save output (tests use temp dirs; this is a stray-stub byproduct)
 scripts/decision_system_tests/crossroads/
+
+# Python bytecode caches
+__pycache__/
+*.pyc
