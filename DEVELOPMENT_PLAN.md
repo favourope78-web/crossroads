@@ -41,7 +41,7 @@ Exact order (each step depends on the previous):
 2. **0.2 Git init** — repo + Unity `.gitignore` + Git LFS (track `*.png *.psd *.fbx *.wav *.ogg *.mp4 *.ttf`). First commit before any edits. Remote backup configured.
 3. **0.3 Folder structure** — create exactly the tree in DESIGN §13.3 (`Assets/_Project/...`). Add assembly definitions: `Core`, `Gameplay`, `Narrative`, `UI` (compile times + dependency discipline from day 1).
 4. **0.4 Packages** — Input System, Cinemachine, TextMeshPro (essentials), DOTween (or commit to hand-rolled tweens). Remove unused template packages.
-5. **0.5 URP mobile config** — URP asset with: no realtime shadows on Low tier, HDR off (mobile), MSAA 2×, render scale 0.8–1.0 hook; 3 quality tier assets (Low/Med/High) wired into Quality Settings.
+5. **0.5 URP mobile config** — URP asset with: no realtime shadows on Low tier, HDR off (mobile), MSAA 2×, render scale 0.8–1.0 hook; 3 quality tier assets (Low/Med/High) wired into Quality Settings. **✅ Done (production-polish pass):** `scripts/gen_render_settings.py` → `Assets/Settings/URP_Low|Balanced|High.asset` + `UniversalRenderer_Mobile` + `PostProcess_Global`, bound in `QualitySettings.asset`/`GraphicsSettings.asset`; live tier switch in the pause menu; budget enforced by `scripts/profile_scene.py --check` (`docs/PERF_BUDGET.json`). See `POLISH_PASS_REPORT.md`.
 6. **0.6 Core services skeleton** (pure C#, no content):
    - `AppServices` (service locator) + `IGameService` lifecycle (`Init/Pause/Resume/Shutdown`).
    - `EventBus` (typed pub/sub structs).
