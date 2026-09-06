@@ -355,12 +355,11 @@ Transform:
   m_LocalPosition: {x: %s, y: %s, z: %s}
   m_LocalScale: {x: %s, y: %s, z: %s}
   m_ConstrainProportionsScale: 0
-  m_Children:
-%s
+  m_Children:%s
   m_Father: {fileID: %d}
   m_LocalEulerAnglesHint: {x: %s, y: %s, z: %s}""" % (
         tid, gid, qx, qy, qz, qw, pos[0], pos[1], pos[2], scale[0], scale[1], scale[2],
-        ch if ch else "  []", father, rot_euler[0], rot_euler[1], rot_euler[2]))
+        ("\n" + ch) if ch else " []", father, rot_euler[0], rot_euler[1], rot_euler[2]))  # empty seq inline: valid YAML (Unity's own format)
 
 def emit_meshfilter(mid, gid, meshguid, builtin_fileid=None):
     if builtin_fileid is not None:

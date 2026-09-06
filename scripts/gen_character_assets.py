@@ -334,8 +334,8 @@ AnimatorState:
   m_Name: %s
   m_Speed: %s
   m_CycleOffset: 0
-  m_Transitions:
-%s  m_StateMachineBehaviours: []
+  m_Transitions:%s
+  m_StateMachineBehaviours: []
   m_Position: {x: 50, y: 50, z: 0}
   m_IKOnFeet: 0
   m_WriteDefaultValues: 1
@@ -350,7 +350,7 @@ AnimatorState:
   m_MirrorParameter: 
   m_CycleOffsetParameter: 
   m_TimeParameter: 
-""" % (sid, name, speed, "".join("  - {fileID: %d}\n" % t for t in transitions) or "  []\n" if transitions else "  []\n", motion_ref)
+""" % (sid, name, speed, ("\n" + "".join("  - {fileID: %d}\n" % t for t in transitions).rstrip("\n")) if transitions else " []", motion_ref)
 
     def transition(tid, dst, conditions, duration, exit_time, has_exit, self_ok=0):
         cond = "".join("  - m_ConditionMode: %d\n    m_ConditionEvent: %s\n    m_EventTreshold: %s\n" % c for c in conditions)
@@ -361,8 +361,8 @@ AnimatorStateTransition:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: 
-  m_Conditions:
-%s  m_DstStateMachine: {fileID: 0}
+  m_Conditions:%s
+  m_DstStateMachine: {fileID: 0}
   m_DstState: {fileID: %d}
   m_Solo: 0
   m_Mute: 0
@@ -376,7 +376,7 @@ AnimatorStateTransition:
   m_InterruptionSource: 0
   m_OrderedInterruption: 1
   m_CanTransitionToSelf: %d
-""" % (tid, cond if conditions else "  []\n", dst, duration, exit_time, 1 if has_exit else 0, self_ok)
+""" % (tid, ("\n" + cond.rstrip("\n")) if conditions else " []", dst, duration, exit_time, 1 if has_exit else 0, self_ok)
 
     blocks = []
     blocks.append("""--- !u!206 &%d

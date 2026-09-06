@@ -3,7 +3,6 @@
     "rootNamespace": "Crossroads.UI",
     "references": [
         "Crossroads.Core",
-        "Crossroads.Input",
         "Crossroads.Gameplay",
         "Crossroads.Narrative",
         "UnityEngine.UI",
