@@ -102,8 +102,85 @@ namespace Crossroads.Tests
             TestCombatControlGating();
             TestAbilityOwnershipFilter();
             TestFullMobileLoop();
+            TestPolishPresentationLayer();
             passed = _passed;
             failed = _failed;
+        }
+
+        // ---------------------------------------------------------------- polish pass: presentation layer
+        // GameAudio / CombatVFX / camera framing / fader are pure EventBus consumers, so the headless
+        // stub can drive them end-to-end: publish -> assert state (no Unity player needed).
+        private static void TestPolishPresentationLayer()
+        {
+            Log.Add("[56] Polish pass: audio director, combat VFX pool, cinematic camera, transition fader");
+            EventBus.Clear();
+            CM.InputBus.Reset();
+            InputLock.Set(false, "tests");
+
+            // ---- audio: ability -> palette clip; environment profile -> ambient bed; music state machine
+            var audio = new GameAudio();
+            audio.abilityEmber = new UnityEngine.AudioClip { name = "ember" };
+            audio.abilityTide = new UnityEngine.AudioClip { name = "tide" };
+            audio.abilityStone = new UnityEngine.AudioClip { name = "stone" };
+            audio.abilityHollow = new UnityEngine.AudioClip { name = "hollow" };
+            audio.uiConfirm = new UnityEngine.AudioClip { name = "confirm" };
+            audio.ambHall = new UnityEngine.AudioClip { name = "hall" };
+            audio.ambWind = new UnityEngine.AudioClip { name = "wind" };
+            audio.ambWater = new UnityEngine.AudioClip { name = "water" };
+            audio.ambHollow = new UnityEngine.AudioClip { name = "hollowamb" };
+            CheckEq(audio.ClipForAbility("ember_pulse").name, "ember", "audio: ember line -> ember clip");
+            CheckEq(audio.ClipForAbility("tide_mend").name, "tide", "audio: tide line -> tide clip");
+            CheckEq(audio.ClipForAbility("stone_ward").name, "stone", "audio: stone line -> stone clip");
+            CheckEq(audio.ClipForAbility("hollow_call").name, "hollow", "audio: hollow line -> hollow clip");
+            CheckEq(audio.ClipForAbility("").name, "confirm", "audio: unknown ability -> neutral confirm");
+            CheckEq(audio.AmbientForProfile("hall_dawn").name, "hall", "ambient: hall_dawn -> hall hum");
+            CheckEq(audio.AmbientForProfile("tide_glass").name, "water", "ambient: tide_glass -> water");
+            CheckEq(audio.AmbientForProfile("docks_rust").name, "water", "ambient: docks_rust -> water");
+            CheckEq(audio.AmbientForProfile("arena_dusk").name, "wind", "ambient: arena_dusk -> wind");
+            CheckEq(audio.AmbientForProfile("fracture_violet").name, "hollowamb", "ambient: fracture_violet -> hollow drone");
+            CheckEq(audio.AmbientForProfile("summer_gold").name, "wind", "ambient: summer_gold -> wind");
+            CheckEq(audio.AmbientForProfile(null).name, "hall", "ambient: missing profile -> hall fallback");
+            // music state machine (sources are null under the stub -> state still tracks)
+            CheckEq((int)audio.CurrentMusic, (int)GameAudio.MusicState.None, "music: starts unset");
+            audio.SetMusic(GameAudio.MusicState.Calm, true);
+            CheckEq((int)audio.CurrentMusic, (int)GameAudio.MusicState.Calm, "music: calm bed on start");
+            audio.SetMusic(GameAudio.MusicState.Tension, false);
+            CheckEq((int)audio.CurrentMusic, (int)GameAudio.MusicState.Tension, "music: alert -> tension");
+            audio.SetMusic(GameAudio.MusicState.Combat, false);
+            audio.SetMusic(GameAudio.MusicState.Combat, false);
+            CheckEq((int)audio.CurrentMusic, (int)GameAudio.MusicState.Combat, "music: combat is idempotent");
+            audio.PlayOneShot(null);   // must not throw
+            Check(true, "audio: null clip one-shot is a no-op");
+
+            // ---- VFX: palette resolution mirrors the ability/damage lines; pool starts idle
+            CheckEq(CombatVFX.PaletteFor("ember_pulse"), 0, "vfx: ember -> palette 0");
+            CheckEq(CombatVFX.PaletteFor("tide_mend"), 1, "vfx: tide -> palette 1");
+            CheckEq(CombatVFX.PaletteFor("stone_ward"), 2, "vfx: stone -> palette 2");
+            CheckEq(CombatVFX.PaletteFor("hollow"), 3, "vfx: hollow -> palette 3");
+            CheckEq(CombatVFX.PaletteFor("kinetic"), 5, "vfx: kinetic -> neutral spark");
+            var vfx = new CombatVFX();
+            CheckEq(vfx.LiveShards, 0, "vfx: pool idle before any event");
+
+            // ---- player action events flow from the combat controller verbs
+            int actions = 0; PlayerAction last = PlayerAction.Interact;
+            Action<PlayerActionEvent> onAction = e => { actions++; last = e.action; };
+            EventBus.Subscribe(onAction);
+            EventBus.Publish(new PlayerActionEvent { action = PlayerAction.Dodge });
+            EventBus.Publish(new PlayerActionEvent { action = PlayerAction.Footstep });
+            CheckEq(actions, 2, "player action events reach presentation subscribers");
+            CheckEq((int)last, (int)PlayerAction.Footstep, "footstep cadence event is a PlayerAction");
+            EventBus.Unsubscribe(onAction);
+
+            // ---- camera: framing seams start neutral (no target under the stub -> no NaNs, no throws)
+            var cam = new Crossroads.Prototype.ThirdPersonCameraController();
+            CheckEq(cam.Cinematic, 0f, "camera: gameplay framing by default");
+            CheckEq(cam.CombatBlend, 0f, "camera: calm framing by default");
+
+            // ---- fader: without UI the arrival still applies (no exceptions), not transitioning
+            var fader = new LocationTransitionFader();
+            Check(!fader.Transitioning, "fader: idle before any arrival");
+
+            EventBus.Clear();
         }
 
         public static IEnumerable<string> GetLog() { return Log; }

@@ -55,7 +55,27 @@ namespace Crossroads.EditorTools
             // graphics jobs off on Adreno/Mali drivers for stability; URP does the work
             PlayerSettings.SetMobileMTRendering(BuildTargetGroup.Android, true);
 
-            Debug.Log("[CROSSROADS] Android player settings configured (API24+, ARM64/ARMv7, IL2CPP, landscape)");
+            // ---- production polish pass: performance / size / battery ----
+            // IL2CPP "Master" optimises for runtime speed (Release keeps build time down; Master is
+            // what ships), C++ compiler config + managed stripping shrink the APK and cold-start time.
+            PlayerSettings.SetIl2CppCompilerConfiguration(BuildTargetGroup.Android, Il2CppCompilerConfiguration.Master);
+            PlayerSettings.SetManagedStrippingLevel(BuildTargetGroup.Android, ManagedStrippingLevel.Medium);
+            PlayerSettings.stripEngineCode = true;
+            // Vulkan first (Adreno 6xx/Mali-G7x: fewer draw-call submissions, SRP batcher shines), GLES3 fallback
+            PlayerSettings.SetUseDefaultGraphicsAPIs(BuildTarget.Android, false);
+            PlayerSettings.SetGraphicsAPIs(BuildTarget.Android, new[] { UnityEngine.Rendering.GraphicsDeviceType.Vulkan, UnityEngine.Rendering.GraphicsDeviceType.OpenGLES3 });
+            // ASTC everywhere (Ari_Albedo is ASTC 6x6): smaller than ETC2 at equal quality on every API24+ GPU
+            EditorUserBuildSettings.androidBuildSubtarget = MobileTextureSubtarget.ASTC;
+            // 32-bit display buffer, no HDR display, no 24-bit depth requirement beyond URP's own
+            PlayerSettings.use32BitDisplayBuffer = true;
+            PlayerSettings.Android.startInFullscreen = true;
+            PlayerSettings.Android.renderOutsideSafeArea = true;   // SafeAreaFitter handles the notch
+            // quality tier default for Android = Balanced (index 1; PauseMenu switches live)
+            var groupNames = QualitySettings.names;
+            for (int i = 0; i < groupNames.Length; i++)
+                if (groupNames[i] == "Balanced") { QualitySettings.SetQualityLevel(i, true); break; }
+
+            Debug.Log("[CROSSROADS] Android player settings configured (API24+, ARM64/ARMv7, IL2CPP Master, Vulkan+GLES3, ASTC, landscape)");
         }
 
         [MenuItem("Build/CROSSROADS Dev APK (Android)")]

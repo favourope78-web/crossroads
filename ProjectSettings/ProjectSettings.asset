@@ -21,7 +21,7 @@ PlayerSettings:
   targetArchitectures: 9
   AndroidTargetArchitectures: 9
   scriptingBackend: 1
-  il2cppCompilerConfiguration: 0
+  il2cppCompilerConfiguration: 2
   applicationIdentifier:
     Android: com.favourope78.crossroads
   buildingForAndroid: 1
