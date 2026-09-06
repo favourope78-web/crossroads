@@ -38,7 +38,7 @@ namespace Crossroads.UI
 
             var header = RuntimeMenuFactory.CreateButton("MapHeader", rect, "LOCATIONS", 22,
                 new Color(0.10f, 0.14f, 0.19f, 0.95f), RuntimeMenuFactory.Accent);
-            RuntimeMenuFactory.Stretch(header.rectTransform, 12f, 12f, 12f, 296f);
+            RuntimeMenuFactory.Stretch((RectTransform)header.transform, 12f, 12f, 12f, 296f);
             header.onClick.AddListener(Toggle);
 
             _list = RuntimeMenuFactory.CreateRect("MapList", rect);
@@ -128,7 +128,7 @@ namespace Crossroads.UI
             else if (entry.state == LocationServices.MapEntryState.TravelTo)
             {
                 var btn = RuntimeMenuFactory.CreateButton("MapTravel" + entry.id, _list, label, 22, bg, fg);
-                Pin(btn.rectTransform, y, height);
+                Pin((RectTransform)btn.transform, y, height);
                 string id = entry.id;
                 btn.onClick.AddListener(delegate { LocationServices.Travel(id); });
             }

@@ -506,6 +506,11 @@ namespace UnityEngine
     public struct Ray { public Vector3 origin; public Vector3 direction; public Ray(Vector3 o, Vector3 d) { origin = o; direction = d; } }
 }
 
+namespace UnityEngine.EventSystems
+{
+    public abstract class UIBehaviour : UnityEngine.MonoBehaviour { }
+}
+
 namespace UnityEngine.UI
 {
     using UnityEngine.Events;
@@ -547,10 +552,14 @@ namespace UnityEngine.UI
         public Image image { get { return targetGraphic as Image; } set { targetGraphic = value; } }
     }
 
-    public class Selectable : Graphic
+    // Real uGUI hierarchy: Selectable : UIBehaviour : MonoBehaviour. Selectable is NOT a Graphic,
+    // so Button has no rectTransform / color / raycastTarget (Unity 6 compile error CS1061 that the
+    // previous stub hid). Mirror reality here so the local compile fails where the editor would.
+    public class Selectable : UnityEngine.EventSystems.UIBehaviour
     {
         public Graphic targetGraphic;
         public ColorBlock colors;
+        public bool interactable = true;
     }
 
     public class CanvasScaler : UnityEngine.Behaviour
