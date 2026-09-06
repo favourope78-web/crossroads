@@ -196,7 +196,48 @@ def profile():
     urp_assets = glob.glob(os.path.join(ROOT, "Assets/**/*.asset"), recursive=True)
     urp_assets = [os.path.relpath(p, ROOT) for p in urp_assets if "UniversalRenderPipelineAsset" in open(p, errors="ignore").read()[:4000] or re.search(r"m_Script: \{fileID: 11500000, guid: bf2edee5c58d82540a51f03df9d42094", open(p, errors="ignore").read())]
 
+    # characters (release pass): NpcAgent/EnemyAgent avatarPrefab bindings spawn one skinned humanoid
+    # each at runtime (2-3 sub-meshes: body atlas / hair / metal) and hide the authored primitives
+    # of that root. Count both sides so the draw-call estimate reflects the real frame.
+    avatar_bindings = []
+    prefab_mats = {}
+    for pf in glob.glob(os.path.join(ROOT, "Assets/_Project/Prefabs/Characters/*.prefab")):
+        g = re.search(r"guid: ([0-9a-f]+)", open(pf + ".meta").read()).group(1)
+        fbx_guid = re.search(r"m_SourcePrefab: \{fileID: 100100000, guid: ([0-9a-f]+)", open(pf).read()).group(1)
+        fbx_meta = None
+        for mm in glob.glob(os.path.join(ROOT, "Assets/_Project/Art/Characters/*/*.fbx.meta")):
+            if ("guid: " + fbx_guid) in open(mm).read():
+                fbx_meta = mm; break
+        n_mats = len(re.findall(r"type: UnityEngine:Material", open(fbx_meta).read())) if fbx_meta else 2
+        prefab_mats[g] = {"name": os.path.basename(pf)[:-7], "submeshes": max(1, n_mats),
+                          "tris": None, "fbx_bytes": os.path.getsize(fbx_meta[:-5]) if fbx_meta else 0}
+    models_json = os.path.join(ROOT, "reference/concept/build/models.json")
+    if os.path.exists(models_json):
+        for name, info in json.load(open(models_json)).items():
+            for pm in prefab_mats.values():
+                if pm["name"] == name: pm["tris"] = info.get("tris")
+    hidden_prims = 0
+    avatar_draws = 0
+    avatar_tris = 0
+    per_prefab = collections.Counter()
+    for fid, d in by_kind[114]:
+        m = re.search(r"avatarPrefab: \{fileID: 100100000, guid: ([0-9a-f]+), type: 3\}", d)
+        if not m or m.group(1) not in prefab_mats: continue
+        go = int(field(d, "m_GameObject").split(":")[1].strip(" }"))
+        if not effective_active(go): continue
+        pm = prefab_mats[m.group(1)]
+        per_prefab[pm["name"]] += 1
+        avatar_draws += pm["submeshes"]
+        avatar_tris += pm["tris"] or 0
+        hidden_prims += sum(1 for r in active_r if r["root"] == go_name.get(go, "") and r["root"])
+    characters = {
+        "prefabs": len(prefab_mats), "active_bindings": sum(per_prefab.values()), "per_prefab": dict(per_prefab.most_common()),
+        "skinned_draw_calls": avatar_draws, "skinned_triangles": avatar_tris, "primitive_renderers_hidden": hidden_prims,
+        "lod": {"near_m": 14, "far_m": 32, "policy": "tier0 full | tier1 animator 1/2 + brain 1/2, no shadow | tier2 animator frozen + brain 1/4"},
+    }
+
     report = {
+        "characters": characters,
         "scene": {
             "path": os.path.relpath(SCENE, ROOT), "bytes": os.path.getsize(SCENE), "lines": src.count("\n"),
             "gameobjects": len(gos), "roots": len(re.findall(r"- \{fileID: \d+\}", src.split("SceneRoots:")[-1])) if "SceneRoots:" in src else 0,
@@ -206,8 +247,8 @@ def profile():
         "renderers": {
             "total": len(renderers), "active": len(active_r), "inactive": len(renderers) - len(active_r),
             "active_static_batchable": len(static_r), "active_dynamic": len(dynamic_r),
-            "worst_case_draw_calls_unbatched": len(active_r),
-            "estimated_draw_calls_batched": len(set((tuple(r["mats"]) for r in static_r))) + len(dynamic_r),
+            "worst_case_draw_calls_unbatched": len(active_r) - hidden_prims + avatar_draws,
+            "estimated_draw_calls_batched": len(set((tuple(r["mats"]) for r in static_r))) + len(dynamic_r) - hidden_prims + avatar_draws,
             "shadow_casters": sum(1 for r in active_r if r["cast"]),
             "per_room_active": dict(room_of.most_common()),
             "light_probe_users": sum(1 for r in active_r if r["probes"] != 0),
@@ -268,6 +309,9 @@ def main():
         print("scene      : %s  (%.1f MB, %d lines, %d GameObjects, %d roots)" % (s["path"], s["bytes"] / 1e6, s["lines"], s["gameobjects"], s["roots"]))
         print("scripts    : %d MonoBehaviours, %d ticking (Update) while active" % (s["monobehaviours"], s["monobehaviours_ticking_active"]))
         print("renderers  : %d total / %d active / %d inactive" % (rd["total"], rd["active"], rd["inactive"]))
+        ch = report["characters"]
+        print("characters : %d prefabs, %d active avatars (%d skinned draws, %d tris) replace %d primitive renderers; LOD %s" % (
+            ch["prefabs"], ch["active_bindings"], ch["skinned_draw_calls"], ch["skinned_triangles"], ch["primitive_renderers_hidden"], ch["lod"]["policy"]))
         print("             static-batchable %d, dynamic %d, shadow casters %d" % (rd["active_static_batchable"], rd["active_dynamic"], rd["shadow_casters"]))
         print("draw calls : worst case %d unbatched -> ~%d with static batching" % (rd["worst_case_draw_calls_unbatched"], rd["estimated_draw_calls_batched"]))
         print("             probes/reflection/motion-vector users: %d/%d/%d" % (rd["light_probe_users"], rd["reflection_probe_users"], rd["motion_vector_users"]))

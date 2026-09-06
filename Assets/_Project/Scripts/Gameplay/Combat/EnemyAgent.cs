@@ -25,6 +25,10 @@ namespace Crossroads.Gameplay
         [SerializeField] private Material baseMaterial;
         [SerializeField] private Material hitMaterial;          // damage flash
         [SerializeField] private float sinkSeconds = 1.2f;      // defeat animation time
+        [Tooltip("Canonical character prefab (Assets/_Project/Prefabs/Characters). Optional: primitives stay as fallback.")]
+        [SerializeField] private GameObject avatarPrefab;
+        private CharacterAvatar _avatar;
+        public CharacterAvatar Avatar { get { return _avatar; } }
 
         private EnemyDefinitionData _def;
         private CombatantState _combatant;
@@ -69,6 +73,11 @@ namespace Crossroads.Gameplay
 
                 if (ConditionEvaluator.Evaluate(_def.activationConditions, GameServices.State)) _brain.Activate();
             }
+            if (avatarPrefab != null)
+            {
+                _avatar = new CharacterAvatar(transform);
+                _avatar.Spawn(avatarPrefab, enemyId, bodyRenderer);
+            }
             Subscribe(true);
         }
 
@@ -112,12 +121,13 @@ namespace Crossroads.Gameplay
         {
             if (_combatant == null || e.combatantId != _combatant.Id) return;
 
-            // damage feedback: material flash
+            // damage feedback: material flash (+ humanoid hit reaction when a real body exists)
             if (bodyRenderer != null && hitMaterial != null)
             {
                 bodyRenderer.sharedMaterial = hitMaterial;
                 _flashTimer = 0.12f;
             }
+            if (_avatar != null && !e.dodged && !e.defeated) _avatar.Hit();
 
             if (e.defeated) return; // defeat handled below
             if (_brain != null) _brain.OnDamaged();
@@ -145,6 +155,12 @@ namespace Crossroads.Gameplay
             // 1/4 rate: 49 agents live in the single campaign scene, only a room's worth matter.
             EnemyState state = _brain.State;
             if (state == EnemyState.Dormant) return;
+            if (_avatar != null)
+            {
+                float d = Point3.Distance(_world.Position, CombatDirector.PlayerPosition());
+                _avatar.Tick(state == EnemyState.Idle ? d : 0f); // engaged enemies always animate fully
+                _avatar.SetSpeed(state == EnemyState.Approach ? 1f : 0f);
+            }
             if (state == EnemyState.Idle && _flashTimer <= 0f)
             {
                 _lodFrame++;
@@ -209,7 +225,8 @@ namespace Crossroads.Gameplay
         {
             if (_defeatApplied) return;
             _defeatApplied = true;
-            _sinkTimer = sinkSeconds;
+            _sinkTimer = _avatar != null ? sinkSeconds + 1.2f : sinkSeconds; // let the defeat clip play out
+            if (_avatar != null) _avatar.Defeat();
             PublishState(EnemyState.Defeat);
             CombatResolution.DefeatEnemy(_def, GameServices.State); // effects -> objectives/world
             CombatDirector.OnEnemyDefeated(this);
@@ -223,6 +240,11 @@ namespace Crossroads.Gameplay
         private void PublishState(EnemyState state)
         {
             _lastPublished = state;
+            if (_avatar != null)
+            {
+                if (state == EnemyState.Alert) _avatar.Alert();
+                else if (state == EnemyState.AttackWindup) _avatar.Attack();
+            }
             EventBus.Publish(new EnemyStateChangedEvent
             {
                 enemyId = enemyId,

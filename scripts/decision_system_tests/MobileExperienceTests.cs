@@ -103,8 +103,81 @@ namespace Crossroads.Tests
             TestAbilityOwnershipFilter();
             TestFullMobileLoop();
             TestPolishPresentationLayer();
+            TestCharacterAvatarLod();
             passed = _passed;
             failed = _failed;
+        }
+
+        // ---------------------------------------------------------------- release pass: character avatars + NPC LOD
+        // CharacterAvatar is the one body/animation/LOD seam shared by NpcAgent and EnemyAgent. Its
+        // decisions are pure (distance -> tier -> brain divisor / animator state) so they are asserted
+        // headlessly; the Unity-side prefab wiring is covered by validate_assets.py.
+        private static void TestCharacterAvatarLod()
+        {
+            Log.Add("[86] Release pass: character avatar LOD tiers, brain rate divisors, animation vocabulary");
+            EventBus.Clear();
+
+            // tier thresholds (near 14 m / far 32 m by default)
+            CheckEq(CharacterAvatar.TierFor(0f, 14f, 32f), 0, "lod: at the player -> full tier");
+            CheckEq(CharacterAvatar.TierFor(13.99f, 14f, 32f), 0, "lod: just inside near -> full tier");
+            CheckEq(CharacterAvatar.TierFor(14f, 14f, 32f), 1, "lod: at near -> reduced tier");
+            CheckEq(CharacterAvatar.TierFor(31.9f, 14f, 32f), 1, "lod: just inside far -> reduced tier");
+            CheckEq(CharacterAvatar.TierFor(32f, 14f, 32f), 2, "lod: at far -> dormant tier");
+            CheckEq(CharacterAvatar.TierFor(200f, 14f, 32f), 2, "lod: far away -> dormant tier");
+            CheckEq(CharacterAvatar.BrainDivisor(0), 1, "lod: full tier ticks the brain every frame");
+            CheckEq(CharacterAvatar.BrainDivisor(1), 2, "lod: reduced tier ticks the brain every 2nd frame");
+            CheckEq(CharacterAvatar.BrainDivisor(2), 4, "lod: dormant tier ticks the brain every 4th frame");
+            CheckEq(CharacterAvatar.DefaultNearDistance, 14f, "lod: default near distance");
+            CheckEq(CharacterAvatar.DefaultFarDistance, 32f, "lod: default far distance");
+
+            // avatar without a body: the vocabulary is a no-op but state is tracked (headless / no prefab)
+            var owner = new UnityEngine.Transform();
+            var avatar = new CharacterAvatar(owner);
+            Check(!avatar.HasBody, "avatar: no body before Spawn");
+            avatar.SetSpeed(1.7f);
+            CheckNear(avatar.Speed, 1f, 0.0001f, "avatar: speed is clamped to the 0..1 blend range");
+            avatar.SetSpeed(-2f);
+            CheckNear(avatar.Speed, 0f, 0.0001f, "avatar: negative speed clamps to idle");
+            avatar.SetTalking(true);
+            Check(avatar.Talking, "avatar: talking flag tracked without a body");
+            CheckEq(avatar.Tick(5f), 0, "avatar: tick near -> tier 0");
+            CheckEq(avatar.Tier, 0, "avatar: tier cached");
+            CheckEq(avatar.Tick(20f), 1, "avatar: tick mid -> tier 1");
+            CheckEq(avatar.Tick(50f), 2, "avatar: tick far -> tier 2");
+            avatar.Attack(); avatar.Dodge(); avatar.Hit(); avatar.Alert();
+            Check(!avatar.Defeated, "avatar: reactions do not defeat");
+            avatar.Defeat();
+            Check(avatar.Defeated, "avatar: defeat is latched");
+            avatar.Spawn(null, "nobody", null);
+            Check(!avatar.HasBody, "avatar: null prefab never spawns a body");
+
+            // NpcAgent brain throttling: far NPCs skip frames but accumulate dt (routine timing exact)
+            var agent = new NpcAgent();
+            float acc = 0f; int ticks = 0;
+            for (int i = 0; i < 40; i++)
+            {
+                int tier = agent.TickForTests(60f, 0.0166f, false);
+                if (i == 0) CheckEq(tier, 2, "npc lod: far NPC is dormant tier");
+                if (agent.AccumulatedDtForTests == 0f) { ticks++; acc = 0f; } else acc = agent.AccumulatedDtForTests;
+            }
+            CheckEq(ticks, 10, "npc lod: dormant NPC ran its brain on exactly 1 of every 4 frames");
+            Check(acc < 0.0166f * 3.5f, "npc lod: accumulated dt never exceeds three skipped frames");
+            ticks = 0;
+            for (int i = 0; i < 40; i++)
+            {
+                agent.TickForTests(20f, 0.0166f, false);
+                if (agent.AccumulatedDtForTests == 0f) ticks++;
+            }
+            CheckEq(ticks, 20, "npc lod: reduced-tier NPC ran its brain on 1 of every 2 frames");
+            ticks = 0;
+            for (int i = 0; i < 40; i++)
+            {
+                int tier = agent.TickForTests(5f, 0.0166f, false);
+                if (i == 0) CheckEq(tier, 0, "npc lod: near NPC is full tier");
+                if (agent.AccumulatedDtForTests == 0f) ticks++;
+            }
+            CheckEq(ticks, 40, "npc lod: near NPC ticks every frame");
+            CheckEq(agent.TickForTests(90f, 0.0166f, true), 0, "npc lod: a talking NPC is always full tier regardless of distance");
         }
 
         // ---------------------------------------------------------------- polish pass: presentation layer

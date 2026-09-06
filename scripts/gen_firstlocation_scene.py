@@ -853,8 +853,8 @@ emit_capsulecollider(mara_ids["collider"], mara_gid, 0.35, 1.7, (0, 0.85, 0))
 emit_monobehaviour(mara_ids["npc"], mara_gid, REG["NpcInteractable.cs"],
     "  npc: {fileID: %d}\n  promptLabel: Talk to Mara\n  interactRadius: 3.2\n  priority: 20" % mara_ids["fate"])
 emit_monobehaviour(mara_ids["fate"], mara_gid, REG["NpcAgent.cs"],
-    "  npcId: mara\n  baseTitle: \"\"\n  playerRef: {fileID: 0}\n  bodyRenderer: {fileID: %d}\n  baseMaterial: {fileID: 2100000, guid: %s, type: 2}\n  avatarPrefab: {fileID: 0}\n  visualVariants:\n  - conditions:\n    - type: 5\n      key: mara\n      value: \"\"\n      amount: 8\n    material: {fileID: 2100000, guid: %s, type: 2}" %
-    (child_renderer_id(mara_children, "Body"), REG["M_Npc_Mara"], REG["M_Seq_Tide"]))
+    "  npcId: mara\n  baseTitle: \"\"\n  playerRef: {fileID: 0}\n  bodyRenderer: {fileID: %d}\n  baseMaterial: {fileID: 2100000, guid: %s, type: 2}\n  avatarPrefab: {fileID: 100100000, guid: %s, type: 3}\n  visualVariants:\n  - conditions:\n    - type: 5\n      key: mara\n      value: \"\"\n      amount: 8\n    material: {fileID: 2100000, guid: %s, type: 2}" %
+    (child_renderer_id(mara_children, "Body"), REG["M_Npc_Mara"], REG["Mara.prefab"], REG["M_Seq_Tide"]))
 
 # ---- consequence markers (start inactive; one is activated by the chosen path) ----
 def emit_marker(go_name, matkey, pos):
@@ -998,11 +998,11 @@ emit_capsulecollider(sera_ids["collider"], sera_gid, 0.32, 1.6, (0, 0.8, 0))
 emit_monobehaviour(sera_ids["npc"], sera_gid, REG["NpcInteractable.cs"],
     "  npc: {fileID: %d}\n  promptLabel: Talk to Sera\n  interactRadius: 3.0\n  priority: 20" % sera_ids["fate"])
 emit_monobehaviour(sera_ids["fate"], sera_gid, REG["NpcAgent.cs"],
-    "  npcId: sera\n  baseTitle: \"\"\n  playerRef: {fileID: 0}\n  bodyRenderer: {fileID: %d}\n  baseMaterial: {fileID: 2100000, guid: %s, type: 2}\n  avatarPrefab: {fileID: 0}\n  visualVariants:\n"
+    "  npcId: sera\n  baseTitle: \"\"\n  playerRef: {fileID: 0}\n  bodyRenderer: {fileID: %d}\n  baseMaterial: {fileID: 2100000, guid: %s, type: 2}\n  avatarPrefab: {fileID: 100100000, guid: %s, type: 3}\n  visualVariants:\n"
     "  - conditions:\n    - type: 0\n      key: c1_hall_drive\n      value: ember\n      amount: 0\n    material: {fileID: 2100000, guid: %s, type: 2}\n"
     "  - conditions:\n    - type: 0\n      key: c1_hall_drive\n      value: tide\n      amount: 0\n    material: {fileID: 2100000, guid: %s, type: 2}\n"
     "  - conditions:\n    - type: 0\n      key: c1_hall_drive\n      value: stone\n      amount: 0\n    material: {fileID: 2100000, guid: %s, type: 2}" %
-    (child_renderer_id(sera_children, "Body"), REG["M_Npc_Civilian"],
+    (child_renderer_id(sera_children, "Body"), REG["M_Npc_Civilian"], REG["Sera.prefab"],
      REG["M_Seq_Ember"], REG["M_Seq_Tide"], REG["M_Seq_Stone"]))
 
 # ---- area tracking (persisted currentArea) ----

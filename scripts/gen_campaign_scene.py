@@ -210,6 +210,24 @@ BoxCollider:
         "bran": lambda h, body: rig_mentor(h, "bran"),
     }
 
+    # Canonical character prefabs (release pass): one model per recurring character, reused in every
+    # scene appearance. The primitive stand-ins stay authored underneath as headless/test fallbacks
+    # and are hidden by CharacterAvatar at runtime.
+    def avatar_ref(prefab_name):
+        key = prefab_name + ".prefab"
+        if key not in REG:
+            raise SystemExit("character prefab %s not registered - run scripts/gen_character_assets.py first" % key)
+        return "{fileID: 100100000, guid: %s, type: 3}" % REG[key]
+
+    NPC_AVATAR = {"mara_young": "Mara", "mara": "Mara", "mara_c2": "Mara", "mara_c3": "Mara_Dress", "dax": "Dax",
+                  "archivist": "Archivist", "kael": "Kael", "odalys": "Odalys", "bran": "Bran", "sera": "Sera"}
+    ENEMY_AVATAR = {"choir_grunt": "Soldier_A", "choir_charger": "Soldier_A", "choir_sentinel": "Soldier_A", "choir_lancer": "Soldier_A",
+                    "choir_bruiser": "Soldier_B", "choir_warden": "Soldier_B", "spire_warden": "Soldier_B", "choir_hunter": "Soldier_B",
+                    "choir_caster": "Soldier_C", "choir_elite": "Soldier_C", "choir_cantor": "Soldier_C",
+                    "choirmaster_p1": "Soldier_C", "choirmaster_p2": "Soldier_C", "choirmaster_p3": "Soldier_C",
+                    "dax_rival": "Dax", "dax_final": "Dax", "mara_turned": "Mara_Dress", "hollow_husk": "Civilian"}
+    # first_echo stays the emissive Ari-silhouette primitive rig (it is an echo, not a person)
+
     def human(name, npc_id, pos, yaw, body_mat, hair_mat, prompt, accent=None, height=1.0, active=1, entity_key=None, extra_prims=None):
         """<Name>_NPC root: NpcInteractable + NpcAgent, primitives in the character's canonical palette.
         Recurring characters (CANON) get their signature silhouette on top of the shared base."""
@@ -226,8 +244,8 @@ BoxCollider:
         emit_monobehaviour(ids["npc"], gid, REG["NpcInteractable.cs"],
             "  npc: {fileID: %d}\n  promptLabel: %s\n  interactRadius: 3.2\n  priority: 20" % (ids["fate"], prompt))
         emit_monobehaviour(ids["fate"], gid, REG["NpcAgent.cs"],
-            "  npcId: %s\n  baseTitle: \"\"\n  playerRef: {fileID: 0}\n  bodyRenderer: {fileID: %d}\n  baseMaterial: {fileID: 2100000, guid: %s, type: 2}\n  avatarPrefab: {fileID: 0}\n  visualVariants: []"
-            % (npc_id, child_renderer_id(children, "Body"), REG[body_mat]))
+            "  npcId: %s\n  baseTitle: \"\"\n  playerRef: {fileID: 0}\n  bodyRenderer: {fileID: %d}\n  baseMaterial: {fileID: 2100000, guid: %s, type: 2}\n  avatarPrefab: %s\n  visualVariants: []"
+            % (npc_id, child_renderer_id(children, "Body"), REG[body_mat], avatar_ref(NPC_AVATAR[npc_id]) if npc_id in NPC_AVATAR else "{fileID: 0}"))
         if entity_key: entity_bindings.append((entity_key, gid, active))
         return gid, ids
 
@@ -241,8 +259,8 @@ BoxCollider:
         ])
         emit_capsulecollider(ids["collider"], gid, 0.45 * scale, 2.4 * scale, (0, 1.2 * scale, 0))
         emit_monobehaviour(ids["enemy"], gid, REG["EnemyAgent.cs"],
-            "  enemyId: %s\n  bodyRenderer: {fileID: %d}\n  baseMaterial: {fileID: 2100000, guid: %s, type: 2}\n  hitMaterial: {fileID: 2100000, guid: %s, type: 2}\n  sinkSeconds: 1.2"
-            % (enemy_id, child_renderer_id(children, "Body"), REG[mat], REG["M_Choir_Hit"]))
+            "  enemyId: %s\n  bodyRenderer: {fileID: %d}\n  baseMaterial: {fileID: 2100000, guid: %s, type: 2}\n  hitMaterial: {fileID: 2100000, guid: %s, type: 2}\n  sinkSeconds: 1.2\n  avatarPrefab: %s"
+            % (enemy_id, child_renderer_id(children, "Body"), REG[mat], REG["M_Choir_Hit"], avatar_ref(ENEMY_AVATAR[enemy_id]) if enemy_id in ENEMY_AVATAR else "{fileID: 0}"))
         if entity_key is None: entity_key = enemy_id
         entity_bindings.append((entity_key, gid, active))
         return gid

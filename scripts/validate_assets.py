@@ -8,7 +8,7 @@
      StoryContentBuilder.cs (the code-built fallback must stay in sync).
   4. Scene sanity: cast, gate, annex, triggers and story bootstrappers are present.
 Run: python3 scripts/validate_assets.py"""
-import json, os, re, sys
+import glob, json, os, re, sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
@@ -696,25 +696,89 @@ for kit_dir, loc_id in LOC_KITS.items():
     for f in prefabs:
         check_text_refs(os.path.join(kit_path, f), "location kit " + kit_dir)
 
-# ---------------------------------------------------------------- 6. player combat animations (campaign pass)
-# The canonical Ari controller must carry the four combat triggers PlayerCombatController fires and
-# each trigger's clip must exist (scripts/gen_ari_combat_anims.py) with a resolvable guid.
+# ---------------------------------------------------------------- 6. character animation set (release pass)
+# One shared Humanoid animation library drives the hero and the whole cast. The Ari controller must
+# carry the triggers PlayerCombatController fires, every library clip must exist as a Humanoid FBX
+# with a resolvable guid referenced by both controllers, and every canonical character needs a
+# Humanoid model + materials + prefab so NpcAgent/EnemyAgent avatarPrefab references resolve.
 ari_dir = os.path.join(ROOT, "Assets/_Project/Art/Characters/Ari")
+char_root = os.path.join(ROOT, "Assets/_Project/Art/Characters")
+anim_dir = os.path.join(char_root, "_Animations")
 ctrl_txt = open(os.path.join(ari_dir, "Ari_Controller.controller")).read()
-for trig in ("Attack", "Dodge", "Hit", "Defeat"):
-    if ("m_Name: %s\n    m_Type: 9" % trig) not in ctrl_txt:
-        errors.append("Ari_Controller missing Trigger parameter " + trig)
-    clip_path = os.path.join(ari_dir, "Ari_%s.anim" % trig)
-    if not os.path.exists(clip_path):
-        errors.append("missing combat clip Ari_%s.anim" % trig)
+shared_ctrl_path = os.path.join(anim_dir, "Character_Controller.controller")
+shared_txt = open(shared_ctrl_path).read() if os.path.exists(shared_ctrl_path) else ""
+if not shared_txt:
+    errors.append("missing shared Character_Controller.controller")
+for trig in ("Attack", "Dodge", "Hit", "Defeat", "Alert"):
+    for label, txt in (("Ari_Controller", ctrl_txt), ("Character_Controller", shared_txt)):
+        if txt and ("m_Name: %s\n    m_Type: 9" % trig) not in txt:
+            errors.append("%s missing Trigger parameter %s" % (label, trig))
+for param, ptype in (("Speed", 1), ("Talking", 4)):
+    for label, txt in (("Ari_Controller", ctrl_txt), ("Character_Controller", shared_txt)):
+        if txt and ("m_Name: %s\n    m_Type: %d" % (param, ptype)) not in txt:
+            errors.append("%s missing parameter %s" % (label, param))
+CAST_CLIPS = ("Idle", "Walk", "Run", "Talk", "Alert", "Attack", "Hit", "Dodge", "Defeat")
+for clip in CAST_CLIPS:
+    fbx = os.path.join(anim_dir, "Anim_%s.fbx" % clip)
+    if not os.path.exists(fbx) or os.path.getsize(fbx) < 20000:
+        errors.append("missing/empty animation clip Anim_%s.fbx" % clip)
         continue
-    m = re.search(r"^guid: ([0-9a-f]{32})", open(clip_path + ".meta").read(), re.M) if os.path.exists(clip_path + ".meta") else None
+    meta = fbx + ".meta"
+    m = re.search(r"^guid: ([0-9a-f]{32})", open(meta).read(), re.M) if os.path.exists(meta) else None
     if not m:
-        errors.append("combat clip without meta guid: Ari_%s.anim" % trig)
-    elif m.group(1) not in ctrl_txt:
-        errors.append("Ari_Controller does not reference Ari_%s.anim" % trig)
+        errors.append("animation clip without meta guid: Anim_%s.fbx" % clip)
+        continue
+    if "animationType: 3" not in open(meta).read():
+        errors.append("Anim_%s.fbx is not imported as Humanoid" % clip)
+    for label, txt in (("Ari_Controller", ctrl_txt), ("Character_Controller", shared_txt)):
+        if txt and m.group(1) not in txt:
+            errors.append("%s does not reference Anim_%s.fbx" % (label, clip))
 check_text_refs(os.path.join(ari_dir, "Ari_Controller.controller"), "Ari_Controller")
-print("Player combat animations: Attack/Dodge/Hit/Defeat wired")
+if shared_txt:
+    check_text_refs(shared_ctrl_path, "Character_Controller")
+CAST = ("Ari", "Mara", "Mara_Dress", "Dax", "Archivist", "Kael", "Odalys", "Bran", "Sera", "Civilian", "Soldier_A", "Soldier_B", "Soldier_C")
+prefab_dir = os.path.join(ROOT, "Assets/_Project/Prefabs/Characters")
+for name in CAST:
+    d = os.path.join(char_root, name)
+    fbx = os.path.join(d, name + ".fbx")
+    if not os.path.exists(fbx) or os.path.getsize(fbx) < 20000:
+        errors.append("missing character model %s.fbx" % name); continue
+    meta = fbx + ".meta"
+    if not os.path.exists(meta):
+        errors.append("character model without meta: %s.fbx" % name); continue
+    mtxt = open(meta).read()
+    if "animationType: 3" not in mtxt:
+        errors.append("%s.fbx is not imported as Humanoid (retargeting requires animationType 3)" % name)
+    if not os.path.exists(os.path.join(d, name + "_Albedo.png")):
+        errors.append("missing atlas %s_Albedo.png" % name)
+    for mat in ("M_%s.mat" % name, "M_%s_Hair.mat" % name):
+        mp = os.path.join(d, mat)
+        if not os.path.exists(mp):
+            errors.append("missing material " + mat); continue
+        check_text_refs(mp, mat)
+        mg = re.search(r"^guid: ([0-9a-f]{32})", open(mp + ".meta").read(), re.M).group(1)
+        if mg not in mtxt:
+            errors.append("%s.fbx.meta does not remap %s" % (name, mat))
+    pf = os.path.join(prefab_dir, name + ".prefab")
+    if not os.path.exists(pf):
+        errors.append("missing character prefab %s.prefab" % name); continue
+    check_text_refs(pf, name + ".prefab")
+    ptxt = open(pf).read()
+    fg = re.search(r"^guid: ([0-9a-f]{32})", mtxt, re.M).group(1)
+    if fg not in ptxt:
+        errors.append("%s.prefab does not derive from %s.fbx" % (name, name))
+# every NpcAgent / EnemyAgent avatarPrefab in the scenes must point at a registered character prefab
+prefab_guids = set()
+for f in os.listdir(prefab_dir) if os.path.isdir(prefab_dir) else []:
+    if f.endswith(".prefab.meta"):
+        prefab_guids.add(re.search(r"^guid: ([0-9a-f]{32})", open(os.path.join(prefab_dir, f)).read(), re.M).group(1))
+scene_avatar_refs = 0
+for scene_file in glob.glob(os.path.join(ROOT, "Assets/Scenes/**/*.unity"), recursive=True):
+    for m in re.finditer(r"avatarPrefab: \{fileID: 100100000, guid: ([0-9a-f]{32}), type: 3\}", open(scene_file).read()):
+        scene_avatar_refs += 1
+        if m.group(1) not in prefab_guids:
+            errors.append("%s: avatarPrefab guid %s is not a character prefab" % (os.path.basename(scene_file), m.group(1)))
+print("Character set: %d humanoid models, %d shared clips, %d scene avatar bindings" % (len(CAST), len(CAST_CLIPS), scene_avatar_refs))
 
 # ---------------------------------------------------------------- 7. audio + presentation wiring (polish pass)
 # Every AudioClip the GameAudio component references must exist as a WAV with a meta whose guid

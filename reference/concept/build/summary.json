@@ -1,0 +1,158 @@
+{
+ "Ari": {
+  "png": "Assets/_Project/Art/Characters/Ari/Ari_Albedo.png",
+  "size_kb": 854,
+  "figure_px": [
+   373,
+   629
+  ],
+  "wrist_span": [
+   0.0,
+   1.0
+  ]
+ },
+ "Mara": {
+  "png": "Assets/_Project/Art/Characters/Mara/Mara_Albedo.png",
+  "size_kb": 580,
+  "figure_px": [
+   352,
+   689
+  ],
+  "wrist_span": [
+   0.0,
+   1.0
+  ]
+ },
+ "Mara_Dress": {
+  "png": "Assets/_Project/Art/Characters/Mara_Dress/Mara_Dress_Albedo.png",
+  "size_kb": 579,
+  "figure_px": [
+   344,
+   720
+  ],
+  "wrist_span": [
+   0.0,
+   1.0
+  ]
+ },
+ "Dax": {
+  "png": "Assets/_Project/Art/Characters/Dax/Dax_Albedo.png",
+  "size_kb": 632,
+  "figure_px": [
+   459,
+   974
+  ],
+  "wrist_span": [
+   0.0,
+   1.0
+  ]
+ },
+ "Archivist": {
+  "png": "Assets/_Project/Art/Characters/Archivist/Archivist_Albedo.png",
+  "size_kb": 512,
+  "figure_px": [
+   444,
+   721
+  ],
+  "wrist_span": [
+   0.0,
+   1.0
+  ]
+ },
+ "Kael": {
+  "png": "Assets/_Project/Art/Characters/Kael/Kael_Albedo.png",
+  "size_kb": 513,
+  "figure_px": [
+   375,
+   625
+  ],
+  "wrist_span": [
+   0.0,
+   1.0
+  ]
+ },
+ "Odalys": {
+  "png": "Assets/_Project/Art/Characters/Odalys/Odalys_Albedo.png",
+  "size_kb": 643,
+  "figure_px": [
+   304,
+   604
+  ],
+  "wrist_span": [
+   0.0,
+   1.0
+  ]
+ },
+ "Bran": {
+  "png": "Assets/_Project/Art/Characters/Bran/Bran_Albedo.png",
+  "size_kb": 673,
+  "figure_px": [
+   331,
+   632
+  ],
+  "wrist_span": [
+   0.0,
+   1.0
+  ]
+ },
+ "Sera": {
+  "png": "Assets/_Project/Art/Characters/Sera/Sera_Albedo.png",
+  "size_kb": 511,
+  "figure_px": [
+   374,
+   639
+  ],
+  "wrist_span": [
+   0.0,
+   1.0
+  ]
+ },
+ "Civilian": {
+  "png": "Assets/_Project/Art/Characters/Civilian/Civilian_Albedo.png",
+  "size_kb": 644,
+  "figure_px": [
+   328,
+   639
+  ],
+  "wrist_span": [
+   0.0,
+   1.0
+  ]
+ },
+ "Soldier_A": {
+  "png": "Assets/_Project/Art/Characters/Soldier_A/Soldier_A_Albedo.png",
+  "size_kb": 585,
+  "figure_px": [
+   419,
+   691
+  ],
+  "wrist_span": [
+   0.0,
+   1.0
+  ]
+ },
+ "Soldier_B": {
+  "png": "Assets/_Project/Art/Characters/Soldier_B/Soldier_B_Albedo.png",
+  "size_kb": 674,
+  "figure_px": [
+   418,
+   688
+  ],
+  "wrist_span": [
+   0.0,
+   1.0
+  ]
+ },
+ "Soldier_C": {
+  "png": "Assets/_Project/Art/Characters/Soldier_C/Soldier_C_Albedo.png",
+  "size_kb": 643,
+  "figure_px": [
+   378,
+   680
+  ],
+  "wrist_span": [
+   0.0,
+   1.0
+  ]
+ }
+}

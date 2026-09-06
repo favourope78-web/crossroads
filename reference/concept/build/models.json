@@ -1,0 +1,78 @@
+{
+ "Ari": {
+  "tris": 1900,
+  "height": 1.78,
+  "fbx": "Assets/_Project/Art/Characters/Ari/Ari.fbx"
+ },
+ "Mara": {
+  "tris": 2104,
+  "height": 1.68,
+  "fbx": "Assets/_Project/Art/Characters/Mara/Mara.fbx"
+ },
+ "Mara_Dress": {
+  "tris": 2172,
+  "height": 1.68,
+  "fbx": "Assets/_Project/Art/Characters/Mara_Dress/Mara_Dress.fbx"
+ },
+ "Dax": {
+  "tris": 2344,
+  "height": 1.78,
+  "fbx": "Assets/_Project/Art/Characters/Dax/Dax.fbx"
+ },
+ "Archivist": {
+  "tris": 1952,
+  "height": 1.86,
+  "fbx": "Assets/_Project/Art/Characters/Archivist/Archivist.fbx"
+ },
+ "Kael": {
+  "tris": 1968,
+  "height": 1.8,
+  "fbx": "Assets/_Project/Art/Characters/Kael/Kael.fbx"
+ },
+ "Odalys": {
+  "tris": 2136,
+  "height": 1.66,
+  "fbx": "Assets/_Project/Art/Characters/Odalys/Odalys.fbx"
+ },
+ "Bran": {
+  "tris": 1376,
+  "height": 1.84,
+  "fbx": "Assets/_Project/Art/Characters/Bran/Bran.fbx"
+ },
+ "Sera": {
+  "tris": 1900,
+  "height": 1.64,
+  "fbx": "Assets/_Project/Art/Characters/Sera/Sera.fbx"
+ },
+ "Civilian": {
+  "tris": 1936,
+  "height": 1.74,
+  "fbx": "Assets/_Project/Art/Characters/Civilian/Civilian.fbx"
+ },
+ "Soldier_A": {
+  "tris": 1900,
+  "height": 1.78,
+  "fbx": "Assets/_Project/Art/Characters/Soldier_A/Soldier_A.fbx"
+ },
+ "Soldier_B": {
+  "tris": 1376,
+  "height": 1.86,
+  "fbx": "Assets/_Project/Art/Characters/Soldier_B/Soldier_B.fbx"
+ },
+ "Soldier_C": {
+  "tris": 1900,
+  "height": 1.8,
+  "fbx": "Assets/_Project/Art/Characters/Soldier_C/Soldier_C.fbx"
+ },
+ "_animations": [
+  "Anim_Idle",
+  "Anim_Walk",
+  "Anim_Run",
+  "Anim_Talk",
+  "Anim_Alert",
+  "Anim_Attack",
+  "Anim_Hit",
+  "Anim_Dodge",
+  "Anim_Defeat"
+ ]
+}

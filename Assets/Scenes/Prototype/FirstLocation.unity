@@ -11071,7 +11071,7 @@ MonoBehaviour:
   playerRef: {fileID: 0}
   bodyRenderer: {fileID: 1810}
   baseMaterial: {fileID: 2100000, guid: c0a1fed2000000000000000000000034, type: 2}
-  avatarPrefab: {fileID: 0}
+  avatarPrefab: {fileID: 100100000, guid: c0a1fed20000000000000000000004a1, type: 3}
   visualVariants:
   - conditions:
     - type: 5
@@ -14766,7 +14766,7 @@ MonoBehaviour:
   playerRef: {fileID: 0}
   bodyRenderer: {fileID: 2106}
   baseMaterial: {fileID: 2100000, guid: c0a1fed2000000000000000000000035, type: 2}
-  avatarPrefab: {fileID: 0}
+  avatarPrefab: {fileID: 100100000, guid: c0a1fed20000000000000000000004a8, type: 3}
   visualVariants:
   - conditions:
     - type: 0
@@ -22490,7 +22490,7 @@ MonoBehaviour:
   playerRef: {fileID: 0}
   bodyRenderer: {fileID: 2662}
   baseMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000d1, type: 2}
-  avatarPrefab: {fileID: 0}
+  avatarPrefab: {fileID: 100100000, guid: c0a1fed20000000000000000000004a1, type: 3}
   visualVariants: []
 --- !u!1 &2699
 GameObject:
@@ -25262,7 +25262,7 @@ MonoBehaviour:
   playerRef: {fileID: 0}
   bodyRenderer: {fileID: 2884}
   baseMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000d6, type: 2}
-  avatarPrefab: {fileID: 0}
+  avatarPrefab: {fileID: 100100000, guid: c0a1fed20000000000000000000004a5, type: 3}
   visualVariants: []
 --- !u!1 &2915
 GameObject:
@@ -25855,7 +25855,7 @@ MonoBehaviour:
   playerRef: {fileID: 0}
   bodyRenderer: {fileID: 2928}
   baseMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000d7, type: 2}
-  avatarPrefab: {fileID: 0}
+  avatarPrefab: {fileID: 100100000, guid: c0a1fed20000000000000000000004a6, type: 3}
   visualVariants: []
 --- !u!1 &2959
 GameObject:
@@ -26448,7 +26448,7 @@ MonoBehaviour:
   playerRef: {fileID: 0}
   bodyRenderer: {fileID: 2972}
   baseMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000d8, type: 2}
-  avatarPrefab: {fileID: 0}
+  avatarPrefab: {fileID: 100100000, guid: c0a1fed20000000000000000000004a7, type: 3}
   visualVariants: []
 --- !u!1 &3003
 GameObject:
@@ -27211,7 +27211,7 @@ MonoBehaviour:
   playerRef: {fileID: 0}
   bodyRenderer: {fileID: 3016}
   baseMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000d3, type: 2}
-  avatarPrefab: {fileID: 0}
+  avatarPrefab: {fileID: 100100000, guid: c0a1fed20000000000000000000004a3, type: 3}
   visualVariants: []
 --- !u!1 &3059
 GameObject:
@@ -27702,6 +27702,7 @@ MonoBehaviour:
   baseMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000db, type: 2}
   hitMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000de, type: 2}
   sinkSeconds: 1.2
+  avatarPrefab: {fileID: 100100000, guid: c0a1fed20000000000000000000004aa, type: 3}
 --- !u!1 &3095
 GameObject:
   m_ObjectHideFlags: 0
@@ -28191,6 +28192,7 @@ MonoBehaviour:
   baseMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000db, type: 2}
   hitMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000de, type: 2}
   sinkSeconds: 1.2
+  avatarPrefab: {fileID: 100100000, guid: c0a1fed20000000000000000000004aa, type: 3}
 --- !u!1 &3131
 GameObject:
   m_ObjectHideFlags: 0
@@ -28680,6 +28682,7 @@ MonoBehaviour:
   baseMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000db, type: 2}
   hitMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000de, type: 2}
   sinkSeconds: 1.2
+  avatarPrefab: {fileID: 100100000, guid: c0a1fed20000000000000000000004aa, type: 3}
 --- !u!1 &3167
 GameObject:
   m_ObjectHideFlags: 0
@@ -29169,6 +29172,7 @@ MonoBehaviour:
   baseMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000db, type: 2}
   hitMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000de, type: 2}
   sinkSeconds: 1.2
+  avatarPrefab: {fileID: 100100000, guid: c0a1fed20000000000000000000004aa, type: 3}
 --- !u!1 &3203
 GameObject:
   m_ObjectHideFlags: 0
@@ -32091,6 +32095,7 @@ MonoBehaviour:
   baseMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000dd, type: 2}
   hitMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000de, type: 2}
   sinkSeconds: 1.2
+  avatarPrefab: {fileID: 100100000, guid: c0a1fed20000000000000000000004ac, type: 3}
 --- !u!1 &3427
 GameObject:
   m_ObjectHideFlags: 0
@@ -32580,6 +32585,7 @@ MonoBehaviour:
   baseMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000dd, type: 2}
   hitMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000de, type: 2}
   sinkSeconds: 1.2
+  avatarPrefab: {fileID: 100100000, guid: c0a1fed20000000000000000000004ac, type: 3}
 --- !u!1 &3463
 GameObject:
   m_ObjectHideFlags: 0
@@ -33069,6 +33075,7 @@ MonoBehaviour:
   baseMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000dc, type: 2}
   hitMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000de, type: 2}
   sinkSeconds: 1.2
+  avatarPrefab: {fileID: 100100000, guid: c0a1fed20000000000000000000004ab, type: 3}
 --- !u!1 &3499
 GameObject:
   m_ObjectHideFlags: 0
@@ -33776,6 +33783,7 @@ MonoBehaviour:
   baseMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000df, type: 2}
   hitMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000de, type: 2}
   sinkSeconds: 1.2
+  avatarPrefab: {fileID: 0}
 --- !u!1 &3551
 GameObject:
   m_ObjectHideFlags: 0
@@ -37207,7 +37215,7 @@ MonoBehaviour:
   playerRef: {fileID: 0}
   bodyRenderer: {fileID: 3752}
   baseMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000d9, type: 2}
-  avatarPrefab: {fileID: 0}
+  avatarPrefab: {fileID: 100100000, guid: c0a1fed20000000000000000000004a4, type: 3}
   visualVariants: []
 --- !u!1 &3813
 GameObject:
@@ -38002,7 +38010,7 @@ MonoBehaviour:
   playerRef: {fileID: 0}
   bodyRenderer: {fileID: 3828}
   baseMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000d2, type: 2}
-  avatarPrefab: {fileID: 0}
+  avatarPrefab: {fileID: 100100000, guid: c0a1fed20000000000000000000004a1, type: 3}
   visualVariants: []
 --- !u!1 &3871
 GameObject:
@@ -40757,6 +40765,7 @@ MonoBehaviour:
   baseMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000db, type: 2}
   hitMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000de, type: 2}
   sinkSeconds: 1.2
+  avatarPrefab: {fileID: 100100000, guid: c0a1fed20000000000000000000004aa, type: 3}
 --- !u!1 &4085
 GameObject:
   m_ObjectHideFlags: 0
@@ -41246,6 +41255,7 @@ MonoBehaviour:
   baseMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000db, type: 2}
   hitMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000de, type: 2}
   sinkSeconds: 1.2
+  avatarPrefab: {fileID: 100100000, guid: c0a1fed20000000000000000000004aa, type: 3}
 --- !u!1 &4121
 GameObject:
   m_ObjectHideFlags: 0
@@ -41735,6 +41745,7 @@ MonoBehaviour:
   baseMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000db, type: 2}
   hitMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000de, type: 2}
   sinkSeconds: 1.2
+  avatarPrefab: {fileID: 100100000, guid: c0a1fed20000000000000000000004aa, type: 3}
 --- !u!1 &4157
 GameObject:
   m_ObjectHideFlags: 0
@@ -42224,6 +42235,7 @@ MonoBehaviour:
   baseMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000db, type: 2}
   hitMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000de, type: 2}
   sinkSeconds: 1.2
+  avatarPrefab: {fileID: 100100000, guid: c0a1fed20000000000000000000004aa, type: 3}
 --- !u!1 &4193
 GameObject:
   m_ObjectHideFlags: 0
@@ -42713,6 +42725,7 @@ MonoBehaviour:
   baseMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000db, type: 2}
   hitMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000de, type: 2}
   sinkSeconds: 1.2
+  avatarPrefab: {fileID: 100100000, guid: c0a1fed20000000000000000000004aa, type: 3}
 --- !u!1 &4229
 GameObject:
   m_ObjectHideFlags: 0
@@ -43202,6 +43215,7 @@ MonoBehaviour:
   baseMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000db, type: 2}
   hitMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000de, type: 2}
   sinkSeconds: 1.2
+  avatarPrefab: {fileID: 100100000, guid: c0a1fed20000000000000000000004aa, type: 3}
 --- !u!1 &4265
 GameObject:
   m_ObjectHideFlags: 0
@@ -43691,6 +43705,7 @@ MonoBehaviour:
   baseMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000db, type: 2}
   hitMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000de, type: 2}
   sinkSeconds: 1.2
+  avatarPrefab: {fileID: 100100000, guid: c0a1fed20000000000000000000004aa, type: 3}
 --- !u!1 &4301
 GameObject:
   m_ObjectHideFlags: 0
@@ -44180,6 +44195,7 @@ MonoBehaviour:
   baseMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000db, type: 2}
   hitMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000de, type: 2}
   sinkSeconds: 1.2
+  avatarPrefab: {fileID: 100100000, guid: c0a1fed20000000000000000000004aa, type: 3}
 --- !u!1 &4337
 GameObject:
   m_ObjectHideFlags: 0
@@ -44669,6 +44685,7 @@ MonoBehaviour:
   baseMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000dd, type: 2}
   hitMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000de, type: 2}
   sinkSeconds: 1.2
+  avatarPrefab: {fileID: 100100000, guid: c0a1fed20000000000000000000004ac, type: 3}
 --- !u!1 &4373
 GameObject:
   m_ObjectHideFlags: 0
@@ -48639,6 +48656,7 @@ MonoBehaviour:
   baseMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000db, type: 2}
   hitMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000de, type: 2}
   sinkSeconds: 1.2
+  avatarPrefab: {fileID: 100100000, guid: c0a1fed20000000000000000000004aa, type: 3}
 --- !u!1 &4673
 GameObject:
   m_ObjectHideFlags: 0
@@ -49128,6 +49146,7 @@ MonoBehaviour:
   baseMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000db, type: 2}
   hitMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000de, type: 2}
   sinkSeconds: 1.2
+  avatarPrefab: {fileID: 100100000, guid: c0a1fed20000000000000000000004aa, type: 3}
 --- !u!1 &4709
 GameObject:
   m_ObjectHideFlags: 0
@@ -49617,6 +49636,7 @@ MonoBehaviour:
   baseMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000db, type: 2}
   hitMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000de, type: 2}
   sinkSeconds: 1.2
+  avatarPrefab: {fileID: 100100000, guid: c0a1fed20000000000000000000004aa, type: 3}
 --- !u!1 &4745
 GameObject:
   m_ObjectHideFlags: 0
@@ -50106,6 +50126,7 @@ MonoBehaviour:
   baseMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000db, type: 2}
   hitMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000de, type: 2}
   sinkSeconds: 1.2
+  avatarPrefab: {fileID: 100100000, guid: c0a1fed20000000000000000000004aa, type: 3}
 --- !u!1 &4781
 GameObject:
   m_ObjectHideFlags: 0
@@ -50595,6 +50616,7 @@ MonoBehaviour:
   baseMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000db, type: 2}
   hitMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000de, type: 2}
   sinkSeconds: 1.2
+  avatarPrefab: {fileID: 100100000, guid: c0a1fed20000000000000000000004aa, type: 3}
 --- !u!1 &4817
 GameObject:
   m_ObjectHideFlags: 0
@@ -51084,6 +51106,7 @@ MonoBehaviour:
   baseMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000db, type: 2}
   hitMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000de, type: 2}
   sinkSeconds: 1.2
+  avatarPrefab: {fileID: 100100000, guid: c0a1fed20000000000000000000004aa, type: 3}
 --- !u!1 &4853
 GameObject:
   m_ObjectHideFlags: 0
@@ -51573,6 +51596,7 @@ MonoBehaviour:
   baseMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000db, type: 2}
   hitMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000de, type: 2}
   sinkSeconds: 1.2
+  avatarPrefab: {fileID: 100100000, guid: c0a1fed20000000000000000000004aa, type: 3}
 --- !u!1 &4889
 GameObject:
   m_ObjectHideFlags: 0
@@ -52062,6 +52086,7 @@ MonoBehaviour:
   baseMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000db, type: 2}
   hitMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000de, type: 2}
   sinkSeconds: 1.2
+  avatarPrefab: {fileID: 100100000, guid: c0a1fed20000000000000000000004aa, type: 3}
 --- !u!1 &4925
 GameObject:
   m_ObjectHideFlags: 0
@@ -52551,6 +52576,7 @@ MonoBehaviour:
   baseMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000dd, type: 2}
   hitMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000de, type: 2}
   sinkSeconds: 1.2
+  avatarPrefab: {fileID: 100100000, guid: c0a1fed20000000000000000000004ac, type: 3}
 --- !u!1 &4961
 GameObject:
   m_ObjectHideFlags: 0
@@ -55998,6 +56024,7 @@ MonoBehaviour:
   baseMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000db, type: 2}
   hitMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000de, type: 2}
   sinkSeconds: 1.2
+  avatarPrefab: {fileID: 100100000, guid: c0a1fed20000000000000000000004aa, type: 3}
 --- !u!1 &5223
 GameObject:
   m_ObjectHideFlags: 0
@@ -56487,6 +56514,7 @@ MonoBehaviour:
   baseMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000db, type: 2}
   hitMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000de, type: 2}
   sinkSeconds: 1.2
+  avatarPrefab: {fileID: 100100000, guid: c0a1fed20000000000000000000004aa, type: 3}
 --- !u!1 &5259
 GameObject:
   m_ObjectHideFlags: 0
@@ -56976,6 +57004,7 @@ MonoBehaviour:
   baseMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000db, type: 2}
   hitMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000de, type: 2}
   sinkSeconds: 1.2
+  avatarPrefab: {fileID: 100100000, guid: c0a1fed20000000000000000000004aa, type: 3}
 --- !u!1 &5295
 GameObject:
   m_ObjectHideFlags: 0
@@ -57465,6 +57494,7 @@ MonoBehaviour:
   baseMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000db, type: 2}
   hitMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000de, type: 2}
   sinkSeconds: 1.2
+  avatarPrefab: {fileID: 100100000, guid: c0a1fed20000000000000000000004aa, type: 3}
 --- !u!1 &5331
 GameObject:
   m_ObjectHideFlags: 0
@@ -57954,6 +57984,7 @@ MonoBehaviour:
   baseMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000db, type: 2}
   hitMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000de, type: 2}
   sinkSeconds: 1.2
+  avatarPrefab: {fileID: 100100000, guid: c0a1fed20000000000000000000004aa, type: 3}
 --- !u!1 &5367
 GameObject:
   m_ObjectHideFlags: 0
@@ -58443,6 +58474,7 @@ MonoBehaviour:
   baseMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000db, type: 2}
   hitMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000de, type: 2}
   sinkSeconds: 1.2
+  avatarPrefab: {fileID: 100100000, guid: c0a1fed20000000000000000000004aa, type: 3}
 --- !u!1 &5403
 GameObject:
   m_ObjectHideFlags: 0
@@ -58932,6 +58964,7 @@ MonoBehaviour:
   baseMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000db, type: 2}
   hitMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000de, type: 2}
   sinkSeconds: 1.2
+  avatarPrefab: {fileID: 100100000, guid: c0a1fed20000000000000000000004aa, type: 3}
 --- !u!1 &5439
 GameObject:
   m_ObjectHideFlags: 0
@@ -59421,6 +59454,7 @@ MonoBehaviour:
   baseMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000db, type: 2}
   hitMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000de, type: 2}
   sinkSeconds: 1.2
+  avatarPrefab: {fileID: 100100000, guid: c0a1fed20000000000000000000004aa, type: 3}
 --- !u!1 &5475
 GameObject:
   m_ObjectHideFlags: 0
@@ -59910,6 +59944,7 @@ MonoBehaviour:
   baseMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000dd, type: 2}
   hitMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000de, type: 2}
   sinkSeconds: 1.2
+  avatarPrefab: {fileID: 100100000, guid: c0a1fed20000000000000000000004ac, type: 3}
 --- !u!1 &5511
 GameObject:
   m_ObjectHideFlags: 0
@@ -62986,6 +63021,7 @@ MonoBehaviour:
   baseMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000d3, type: 2}
   hitMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000de, type: 2}
   sinkSeconds: 1.2
+  avatarPrefab: {fileID: 100100000, guid: c0a1fed20000000000000000000004a3, type: 3}
 --- !u!1 &5747
 GameObject:
   m_ObjectHideFlags: 0
@@ -63475,6 +63511,7 @@ MonoBehaviour:
   baseMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000dd, type: 2}
   hitMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000de, type: 2}
   sinkSeconds: 1.2
+  avatarPrefab: {fileID: 100100000, guid: c0a1fed20000000000000000000004ab, type: 3}
 --- !u!1 &5783
 GameObject:
   m_ObjectHideFlags: 0
@@ -67217,7 +67254,7 @@ MonoBehaviour:
   playerRef: {fileID: 0}
   bodyRenderer: {fileID: 6026}
   baseMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000d2, type: 2}
-  avatarPrefab: {fileID: 0}
+  avatarPrefab: {fileID: 100100000, guid: c0a1fed20000000000000000000004a2, type: 3}
   visualVariants: []
 --- !u!1 &6069
 GameObject:
@@ -70776,6 +70813,7 @@ MonoBehaviour:
   baseMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000e1, type: 2}
   hitMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000de, type: 2}
   sinkSeconds: 1.2
+  avatarPrefab: {fileID: 100100000, guid: c0a1fed20000000000000000000004a9, type: 3}
 --- !u!1 &6339
 GameObject:
   m_ObjectHideFlags: 0
@@ -71265,6 +71303,7 @@ MonoBehaviour:
   baseMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000e1, type: 2}
   hitMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000de, type: 2}
   sinkSeconds: 1.2
+  avatarPrefab: {fileID: 100100000, guid: c0a1fed20000000000000000000004a9, type: 3}
 --- !u!1 &6375
 GameObject:
   m_ObjectHideFlags: 0
@@ -71754,6 +71793,7 @@ MonoBehaviour:
   baseMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000e1, type: 2}
   hitMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000de, type: 2}
   sinkSeconds: 1.2
+  avatarPrefab: {fileID: 100100000, guid: c0a1fed20000000000000000000004a9, type: 3}
 --- !u!1 &6411
 GameObject:
   m_ObjectHideFlags: 0
@@ -72243,6 +72283,7 @@ MonoBehaviour:
   baseMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000dd, type: 2}
   hitMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000de, type: 2}
   sinkSeconds: 1.2
+  avatarPrefab: {fileID: 100100000, guid: c0a1fed20000000000000000000004ac, type: 3}
 --- !u!1 &6447
 GameObject:
   m_ObjectHideFlags: 0
@@ -75468,6 +75509,7 @@ MonoBehaviour:
   baseMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000dc, type: 2}
   hitMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000de, type: 2}
   sinkSeconds: 1.2
+  avatarPrefab: {fileID: 100100000, guid: c0a1fed20000000000000000000004ab, type: 3}
 --- !u!1 &6693
 GameObject:
   m_ObjectHideFlags: 0
@@ -75957,6 +75999,7 @@ MonoBehaviour:
   baseMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000dc, type: 2}
   hitMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000de, type: 2}
   sinkSeconds: 1.2
+  avatarPrefab: {fileID: 100100000, guid: c0a1fed20000000000000000000004ab, type: 3}
 --- !u!1 &6729
 GameObject:
   m_ObjectHideFlags: 0
@@ -78942,6 +78985,7 @@ MonoBehaviour:
   baseMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000e0, type: 2}
   hitMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000de, type: 2}
   sinkSeconds: 1.2
+  avatarPrefab: {fileID: 100100000, guid: c0a1fed20000000000000000000004ac, type: 3}
 --- !u!1 &6959
 GameObject:
   m_ObjectHideFlags: 0
@@ -79431,6 +79475,7 @@ MonoBehaviour:
   baseMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000e0, type: 2}
   hitMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000de, type: 2}
   sinkSeconds: 1.2
+  avatarPrefab: {fileID: 100100000, guid: c0a1fed20000000000000000000004ac, type: 3}
 --- !u!1 &6995
 GameObject:
   m_ObjectHideFlags: 0
@@ -79920,6 +79965,7 @@ MonoBehaviour:
   baseMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000e1, type: 2}
   hitMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000de, type: 2}
   sinkSeconds: 1.2
+  avatarPrefab: {fileID: 100100000, guid: c0a1fed20000000000000000000004ac, type: 3}
 --- !u!1 &7031
 GameObject:
   m_ObjectHideFlags: 0
@@ -81063,6 +81109,7 @@ MonoBehaviour:
   baseMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000d3, type: 2}
   hitMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000de, type: 2}
   sinkSeconds: 1.2
+  avatarPrefab: {fileID: 100100000, guid: c0a1fed20000000000000000000004a3, type: 3}
 --- !u!1 &7115
 GameObject:
   m_ObjectHideFlags: 0
@@ -81552,6 +81599,7 @@ MonoBehaviour:
   baseMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000d2, type: 2}
   hitMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000de, type: 2}
   sinkSeconds: 1.2
+  avatarPrefab: {fileID: 100100000, guid: c0a1fed20000000000000000000004a2, type: 3}
 --- !u!1 &7151
 GameObject:
   m_ObjectHideFlags: 0
@@ -82313,7 +82361,7 @@ MonoBehaviour:
   playerRef: {fileID: 0}
   bodyRenderer: {fileID: 7164}
   baseMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000d2, type: 2}
-  avatarPrefab: {fileID: 0}
+  avatarPrefab: {fileID: 100100000, guid: c0a1fed20000000000000000000004a2, type: 3}
   visualVariants: []
 --- !u!1 &7207
 GameObject:
@@ -83076,7 +83124,7 @@ MonoBehaviour:
   playerRef: {fileID: 0}
   bodyRenderer: {fileID: 7220}
   baseMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000d3, type: 2}
-  avatarPrefab: {fileID: 0}
+  avatarPrefab: {fileID: 100100000, guid: c0a1fed20000000000000000000004a3, type: 3}
   visualVariants: []
 --- !u!1 &7263
 GameObject:
@@ -83669,7 +83717,7 @@ MonoBehaviour:
   playerRef: {fileID: 0}
   bodyRenderer: {fileID: 7276}
   baseMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000d6, type: 2}
-  avatarPrefab: {fileID: 0}
+  avatarPrefab: {fileID: 100100000, guid: c0a1fed20000000000000000000004a5, type: 3}
   visualVariants: []
 --- !u!1 &7307
 GameObject:
@@ -84262,7 +84310,7 @@ MonoBehaviour:
   playerRef: {fileID: 0}
   bodyRenderer: {fileID: 7320}
   baseMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000d7, type: 2}
-  avatarPrefab: {fileID: 0}
+  avatarPrefab: {fileID: 100100000, guid: c0a1fed20000000000000000000004a6, type: 3}
   visualVariants: []
 --- !u!1 &7351
 GameObject:
@@ -84855,7 +84903,7 @@ MonoBehaviour:
   playerRef: {fileID: 0}
   bodyRenderer: {fileID: 7364}
   baseMaterial: {fileID: 2100000, guid: c0a1fed20000000000000000000000d8, type: 2}
-  avatarPrefab: {fileID: 0}
+  avatarPrefab: {fileID: 100100000, guid: c0a1fed20000000000000000000004a7, type: 3}
   visualVariants: []
 --- !u!1 &7395
 GameObject:

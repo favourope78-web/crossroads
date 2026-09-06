@@ -116,7 +116,9 @@ namespace Crossroads.Gameplay
                 transform.Rotate(0f, Mathf.Sign(delta) * pivotTurnSpeed * Time.deltaTime, 0f);
             }
 
-            _animator.SetFloat(SpeedHash, moving ? 1f : 0f, 0.15f, Time.deltaTime);
+            // shared humanoid vocabulary: 0 idle, 0.5 walk, 1 run (ability speed boosts blend into the run)
+            float speedParam = moving ? Mathf.Clamp(0.5f * ExternalSpeedMultiplier, 0.5f, 1f) : 0f;
+            _animator.SetFloat(SpeedHash, speedParam, 0.15f, Time.deltaTime);
             _animator.SetBool(TurningHash, pivoting);
 
             // footstep cadence (audio/VFX listen to PlayerActionEvent.Footstep; ~2 steps/s at walk speed)

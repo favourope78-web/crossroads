@@ -50,15 +50,24 @@ namespace Crossroads.Gameplay
         private string _lastTitle = "";
         private int _lastBond = int.MinValue;
         private float _nextPlayerSearch;
-        private GameObject _avatarInstance;
+        private CharacterAvatar _avatar;
+        private int _lodTier;
+        private int _lodFrame;
+        private int _lodPhase;
+        private static int _lodPhaseSeed;
+        private float _accumulatedDt;
 
         public string NpcId { get { return npcId; } }
         public bool BrainReady { get { return _brain != null; } }
         public string CurrentTitle { get { return _brain != null ? _brain.CurrentTitle : (!string.IsNullOrEmpty(baseTitle) ? baseTitle : npcId); } }
         public NpcMoodState BehaviourState { get { return _logic != null ? _logic.State : NpcMoodState.Idle; } }
+        /// <summary>Distance LOD tier of this NPC (0 full, 1 reduced, 2 dormant). See CharacterAvatar.</summary>
+        public int LodTier { get { return _lodTier; } }
+        public CharacterAvatar Avatar { get { return _avatar; } }
 
         private void Start()
         {
+            _lodPhase = _lodPhaseSeed++;
             ResolvePlayer();
             if (_brain == null) BuildBrain();
             TrySpawnAvatar();
@@ -140,6 +149,7 @@ namespace Crossroads.Gameplay
             {
                 _talking = true;
                 if (_logic != null) _logic.Reset();
+                if (_avatar != null) _avatar.SetTalking(true);
             }
         }
 
@@ -149,6 +159,7 @@ namespace Crossroads.Gameplay
             {
                 _talking = false;
                 _activeEncounterId = "";
+                if (_avatar != null) _avatar.SetTalking(false);
             }
         }
 
@@ -253,6 +264,7 @@ namespace Crossroads.Gameplay
             _activeEncounterId = interaction.encounterId;
             _talking = true;
             if (_logic != null) _logic.Reset();
+            if (_avatar != null) _avatar.SetTalking(true);
             GameServices.Encounters.Run(interaction.encounterId, _brain.CurrentTitle);
             Debug.Log("[CROSSROADS] NPC " + npcId + " interaction '" + interaction.id + "' -> " + interaction.encounterId);
         }
@@ -264,8 +276,44 @@ namespace Crossroads.Gameplay
 
             Point3 playerPos = PlayerPoint();
             bool playerActive = _player != null;
-            _logic.Tick(_world, Time.deltaTime, playerPos, playerActive, _brain != null ? _brain.Profile : new NpcProfile(), _talking);
+
+            // Distance LOD (release pass): the behaviour FSM of a far NPC runs at 1/2 or 1/4 rate
+            // with the accumulated dt (routine timing stays exact), the avatar animator is throttled
+            // or frozen by CharacterAvatar. Talking NPCs are always full rate (the player is there).
+            float dist = playerActive ? Point3.Distance(_world.NpcPosition, playerPos) : 0f;
+            int tier = _talking ? 0 : CharacterAvatar.TierFor(dist, _avatar != null ? _avatar.nearDistance : CharacterAvatar.DefaultNearDistance,
+                                                                   _avatar != null ? _avatar.farDistance : CharacterAvatar.DefaultFarDistance);
+            _lodTier = tier;
+            if (_avatar != null)
+            {
+                _avatar.Tick(dist);
+                _avatar.SetSpeed(_world.MovingThisFrame ? (_brain != null && _brain.Profile.moveSpeed > 2.5f ? 1f : 0.5f) : 0f);
+            }
+            _world.MovingThisFrame = false;
+
+            _accumulatedDt += Time.deltaTime;
+            _lodFrame++;
+            int div = CharacterAvatar.BrainDivisor(tier);
+            if (div > 1 && ((_lodFrame + _lodPhase) % div) != 0) return;
+            float dt = _accumulatedDt;
+            _accumulatedDt = 0f;
+            _logic.Tick(_world, dt, playerPos, playerActive, _brain != null ? _brain.Profile : new NpcProfile(), _talking);
         }
+
+        /// <summary>Headless seam: runs the LOD/brain step with an explicit distance and dt.</summary>
+        internal int TickForTests(float distance, float dt, bool talking)
+        {
+            _talking = talking;
+            int tier = _talking ? 0 : CharacterAvatar.TierFor(distance, CharacterAvatar.DefaultNearDistance, CharacterAvatar.DefaultFarDistance);
+            _lodTier = tier;
+            _accumulatedDt += dt;
+            _lodFrame++;
+            int div = CharacterAvatar.BrainDivisor(tier);
+            if (div > 1 && ((_lodFrame + _lodPhase) % div) != 0) return tier;
+            _accumulatedDt = 0f;
+            return tier;
+        }
+        internal float AccumulatedDtForTests { get { return _accumulatedDt; } }
 
         // ---------------------------------------------------------------- player lookup
         private GameObject _player;
@@ -293,20 +341,9 @@ namespace Crossroads.Gameplay
         private void TrySpawnAvatar()
         {
             if (avatarPrefab == null) return;
-            if (_avatarInstance == null)
-            {
-                _avatarInstance = (GameObject)Instantiate(avatarPrefab);
-                _avatarInstance.name = "Avatar_" + npcId;
-                _avatarInstance.transform.SetParent(transform, false);
-                _avatarInstance.transform.localPosition = Vector3.zero;
-            }
-            // hide the placeholder primitives (Body/Head) once a real mesh exists
-            foreach (var child in transform.GetComponentsInChildren<Renderer>(true))
-            {
-                if (child == bodyRenderer) continue;
-                if (child.name.StartsWith("Body") || child.name.StartsWith("Head"))
-                    child.gameObject.SetActive(false);
-            }
+            if (_avatar == null) _avatar = new CharacterAvatar(transform);
+            _avatar.Spawn(avatarPrefab, npcId, bodyRenderer);
+            if (_world != null) _world.BindAnimator(null); // the avatar owns animation now
         }
 
         // ---------------------------------------------------------------- movement sink
@@ -317,6 +354,8 @@ namespace Crossroads.Gameplay
             private readonly NpcAgent _agent;
             private Animator _animator;
             private static readonly int SpeedHash = Animator.StringToHash("Speed");
+            /// <summary>Set by NpcMoveTowards, consumed (and cleared) by the agent's Update.</summary>
+            public bool MovingThisFrame;
 
             public AgentWorld(Transform transform, NpcAgent agent)
             {
@@ -324,6 +363,8 @@ namespace Crossroads.Gameplay
                 _agent = agent;
                 _animator = transform != null ? transform.GetComponentInChildren<Animator>() : null;
             }
+
+            public void BindAnimator(Animator animator) { _animator = animator; }
 
             public Point3 NpcPosition
             {
@@ -352,6 +393,7 @@ namespace Crossroads.Gameplay
 
             private void SetMoving(bool moving)
             {
+                MovingThisFrame = moving;
                 if (_animator != null) _animator.SetFloat(SpeedHash, moving ? 1f : 0f, 0.2f, Time.deltaTime);
             }
         }

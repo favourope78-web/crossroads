@@ -75,6 +75,7 @@ namespace UnityEngine
         public GameObject(string name, params Type[] components) { this.name = name; }
         public T GetComponent<T>() { return default(T); }
         public T GetComponentInChildren<T>() { return default(T); }
+        public T[] GetComponentsInChildren<T>(bool includeInactive) { return new T[0]; }
         public T GetComponentInParent<T>() { return default(T); }
         public T AddComponent<T>() where T : Component, new() { return new T(); }
         public void SetActive(bool v) { activeSelf = v; }
@@ -90,6 +91,7 @@ namespace UnityEngine
         public Vector3 eulerAngles { get; set; }
         public Vector3 localEulerAngles { get; set; }
         public Vector3 localPosition;
+        public Quaternion localRotation;
         public Vector3 localScale = Vector3.one;
         public Transform parent { get; set; }
         public int childCount;
