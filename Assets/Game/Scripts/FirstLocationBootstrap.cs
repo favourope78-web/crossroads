@@ -15,6 +15,9 @@ namespace Crossroads.Prototype
 
         private void Awake()
         {
+            // Polish pass: the generated scene now carries Ari as a PrefabInstance of Ari.fbx
+            // (device builds included). Only fall back to the editor prefab when she is absent.
+            if (GameObject.FindGameObjectWithTag("Player") != null) return;
 #if UNITY_EDITOR
             var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath);
             if (prefab == null)

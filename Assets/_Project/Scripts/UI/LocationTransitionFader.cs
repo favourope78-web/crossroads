@@ -35,10 +35,21 @@ namespace Crossroads.UI
         [Tooltip("Directional light the per-location sun profile drives (generated scene: 'Directional Light').")]
         [SerializeField] private string sunObjectName = "Directional Light";
 
+        [Tooltip("Extra hold on black while the location title shows (unscaled). 0 = pure blink.")]
+        [SerializeField] private float titleHoldSeconds = 0.55f;
+
         private Image _overlay;
         private CanvasGroup _group;
+        private Text _title;
+        private Text _subtitle;
         private float _phase;          // 0 idle; >0 fading out; <0 fading in
+        private float _hold;           // remaining black-hold (title card) seconds
+        private bool _moved;           // player teleported for the pending arrival
+        private Light _sun;            // cached: GameObject.Find per arrival is a scene walk
         private LocationArrivedEvent _pending;
+
+        /// <summary>Headless seam: true while the overlay is opaque or fading.</summary>
+        public bool Transitioning { get { return _phase != 0f || _hold > 0f; } }
 
         public static LocationTransitionFader Attach(RectTransform parent)
         {
@@ -63,6 +74,12 @@ namespace Crossroads.UI
             rect.anchorMax = Vector2.one;
             rect.offsetMin = rect.offsetMax = Vector2.zero;
             _overlay.rectTransform.SetAsLastSibling();
+
+            // loading card: location name + a one-line hint, centred; invisible with the overlay
+            _title = RuntimeMenuFactory.CreateText("Title", rect, "", 64, RuntimeMenuFactory.TextMain, TextAnchor.MiddleCenter, FontStyle.Bold);
+            RuntimeMenuFactory.Stretch(_title.rectTransform, 80f, 80f, 0f, 60f);
+            _subtitle = RuntimeMenuFactory.CreateText("Subtitle", rect, "", 30, RuntimeMenuFactory.Accent, TextAnchor.MiddleCenter);
+            RuntimeMenuFactory.Stretch(_subtitle.rectTransform, 80f, 80f, 120f, 0f);
         }
 
         private void OnEnable() { EventBus.Subscribe<LocationArrivedEvent>(OnArrived); }
@@ -70,12 +87,34 @@ namespace Crossroads.UI
 
         private void OnArrived(LocationArrivedEvent e)
         {
-            ApplyEnvironment(e);
-            if (_group == null) return;
+            if (_group == null)
+            {
+                // no UI (headless / boot before Build): still teleport + relight, nothing to fade
+                MovePlayerToAnchor(e);
+                ApplyEnvironment(e);
+                return;
+            }
             _pending = e;
+            _moved = false;
             _phase = fadeSeconds > 0f ? fadeSeconds : 0.0001f; // start fade-out; Update drives both halves
+            _hold = e.firstVisit ? titleHoldSeconds : titleHoldSeconds * 0.5f;
             _group.blocksRaycasts = true;                      // swallow touches mid-transition
-            MovePlayerToAnchor(e);
+            if (_title != null)
+            {
+                _title.text = string.IsNullOrEmpty(e.name) ? "" : e.name;
+                _subtitle.text = e.firstVisit ? "— new location —" : "";
+            }
+            // The move + relight happen at full black (mid-fade) so the camera never shows the
+            // pop; a zero-length fade applies them right away.
+            if (fadeSeconds <= 0f) { MidFade(); }
+        }
+
+        private void MidFade()
+        {
+            if (_moved) return;
+            _moved = true;
+            MovePlayerToAnchor(_pending);
+            ApplyEnvironment(_pending);
         }
 
         /// <summary>Content is the single source: hex "rrggbb" -> Color (no ColorUtility dependency).</summary>
@@ -95,12 +134,15 @@ namespace Crossroads.UI
             RenderSettings.fog = e.envFogDensity > 0f;
             RenderSettings.fogColor = Hex(e.envFog, RenderSettings.fogColor);
             RenderSettings.fogDensity = e.envFogDensity;
-            GameObject sun = GameObject.Find(sunObjectName);
-            Light light = sun != null ? sun.GetComponent<Light>() : null;
-            if (light != null)
+            if (_sun == null)
             {
-                light.color = Hex(e.envSun, Color.white);
-                light.intensity = e.envSunIntensity;
+                GameObject sun = GameObject.Find(sunObjectName);
+                _sun = sun != null ? sun.GetComponent<Light>() : null;
+            }
+            if (_sun != null)
+            {
+                _sun.color = Hex(e.envSun, Color.white);
+                _sun.intensity = e.envSunIntensity;
             }
             StoryLog.Log("[LOCATIONS] environment -> " + e.envProfile +
                 " (ambient " + e.envAmbient + ", fog " + e.envFogDensity + ", sun " + e.envSun + ")");
@@ -121,18 +163,34 @@ namespace Crossroads.UI
         private void Update()
         {
             if (_group == null || _phase == 0f) return;
-            float step = Time.unscaledTime > 0f ? Time.deltaTime : 0.016f; // stub: fixed 16ms
+            float step = Time.unscaledDeltaTime > 0f ? Time.unscaledDeltaTime : 0.016f; // pause-proof
             if (_phase > 0f)
             {
                 _phase -= step;
                 _group.alpha = Mathf.Clamp01(1f - _phase / Mathf.Max(fadeSeconds, 0.0001f));
-                if (_phase <= 0f) { _phase = -Mathf.Max(fadeSeconds, 0.0001f); MovePlayerToAnchor(_pending); }
+                if (_phase <= 0f)
+                {
+                    _group.alpha = 1f;
+                    MidFade();                                   // the ONE teleport, at full black
+                    if (_hold > 0f) { _phase = -0.00001f; }      // park on black while the title shows
+                    else _phase = -Mathf.Max(fadeSeconds, 0.0001f);
+                }
+            }
+            else if (_hold > 0f)
+            {
+                _hold -= step;
+                if (_hold <= 0f) { _hold = 0f; _phase = -Mathf.Max(fadeSeconds, 0.0001f); }
             }
             else
             {
                 _phase += step;
                 _group.alpha = Mathf.Clamp01(1f + _phase / Mathf.Max(fadeSeconds, 0.0001f));
-                if (_phase >= 0f) { _phase = 0f; _group.alpha = 0f; _group.blocksRaycasts = false; _pending = default(LocationArrivedEvent); }
+                if (_phase >= 0f)
+                {
+                    _phase = 0f; _group.alpha = 0f; _group.blocksRaycasts = false;
+                    if (_title != null) { _title.text = ""; _subtitle.text = ""; }
+                    _pending = default(LocationArrivedEvent);
+                }
             }
         }
     }

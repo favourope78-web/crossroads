@@ -167,6 +167,7 @@ namespace UnityEngine
             return current + d * (maxDelta / dist);
         }
         public static float Dot(Vector3 a, Vector3 b) { return a.x * b.x + a.y * b.y + a.z * b.z; }
+        public static Vector3 Cross(Vector3 a, Vector3 b) { return new Vector3(a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x); }
         public static Vector3 SmoothDamp(Vector3 current, Vector3 target, ref Vector3 vel, float smoothTime) { return target; }
         public override string ToString() { return "(" + x + ", " + y + ", " + z + ")"; }
     }
@@ -267,6 +268,16 @@ namespace UnityEngine
         public static int Clamp(int v, int min, int max) { return v < min ? min : (v > max ? max : v); }
         public static int CeilToInt(float a) { return (int)Math.Ceiling(a); }
         public static float Lerp(float a, float b, float t) { return a + (b - a) * t; }
+        public static float MoveTowards(float current, float target, float maxDelta)
+        {
+            if (Math.Abs(target - current) <= maxDelta) return target;
+            return current + Math.Sign(target - current) * maxDelta;
+        }
+        public static float Repeat(float t, float length) { return Clamp(t - (float)Math.Floor(t / length) * length, 0f, length); }
+        public static float PingPong(float t, float length) { t = Repeat(t, length * 2f); return length - Math.Abs(t - length); }
+        public static float Pow(float a, float b) { return (float)Math.Pow(a, b); }
+        public static float Exp(float a) { return (float)Math.Exp(a); }
+        public static int FloorToInt(float a) { return (int)Math.Floor(a); }
     }
 
     public enum KeyCode { E = 101, Space = 32, F = 102, LeftShift = 303 }
@@ -423,6 +434,14 @@ namespace UnityEngine
     public class RuntimeAnimatorController : Object { }
 
     public class AudioListener : Behaviour { public static float volume = 1f; }
+    public static class QualitySettings
+    {
+        private static int _level = 1;
+        public static string[] names = { "Low", "Balanced", "High" };
+        public static int GetQualityLevel() { return _level; }
+        public static void SetQualityLevel(int index, bool applyExpensiveChanges) { _level = index; }
+        public static int vSyncCount;
+    }
     public class Camera : Behaviour { public static Camera main; }
 
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
@@ -569,6 +588,7 @@ namespace UnityEngine.EventSystems
         public Vector2 delta;
         public GameObject pressedObject;
         public bool dragging;
+        public int pointerId;
     }
 }
 

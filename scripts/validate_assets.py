@@ -587,8 +587,10 @@ for block in scene_txt.split("--- !u!")[1:]:
             _ref_class_err(int(f.group(1)), 4, "Transform &%d m_Father" % bid)
         for c in re.findall(r"^  - \{fileID: (\d+)\}$", block, re.M):
             _ref_class_err(int(c), 4, "Transform &%d m_Children" % bid)
-    elif cls == 1660057539:  # SceneRoots: roots must be Transforms
+    elif cls == 1660057539:  # SceneRoots: roots must be Transforms (or PrefabInstances for prefab roots)
         for r in re.findall(r"^  - \{fileID: (\d+)\}$", block, re.M):
+            if cls_of.get(int(r)) == 1001:
+                continue
             _ref_class_err(int(r), 4, "SceneRoots.m_Roots")
     elif cls == 114:  # MonoBehaviours: entity targets are GameObjects; relocator targets are Transforms
         is_relocator = "locationKey:" in block

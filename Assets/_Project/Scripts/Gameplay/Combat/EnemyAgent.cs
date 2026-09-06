@@ -45,8 +45,15 @@ namespace Crossroads.Gameplay
         public CombatantState Combatant { get { return _combatant; } }
         public EnemyDefinitionData Definition { get { return _def; } }
 
+        /// <summary>Idle enemies farther than this from Ari update every 4th frame (dt is still exact).</summary>
+        public const float IdleLodDistance = 28f;
+        private int _lodFrame;
+        private int _lodPhase;
+        private static int _lodPhaseSeed;
+
         private void Start()
         {
+            _lodPhase = _lodPhaseSeed++; // spreads the throttled agents across frames
             if (GameServices.IsInitialized && GameServices.Content != null && GameServices.Content.Content != null)
             {
                 _def = GameServices.Content.Content.FindEnemy(enemyId);
@@ -131,6 +138,21 @@ namespace Crossroads.Gameplay
             {
                 OnDefeat();
                 return;
+            }
+
+            // Perf (mobile): story-gated encounters sleep until their activation conditions pass
+            // (EventBus wakes them - nothing to tick). Idle enemies far from the player tick at
+            // 1/4 rate: 49 agents live in the single campaign scene, only a room's worth matter.
+            EnemyState state = _brain.State;
+            if (state == EnemyState.Dormant) return;
+            if (state == EnemyState.Idle && _flashTimer <= 0f)
+            {
+                _lodFrame++;
+                if ((_lodFrame & 3) != (_lodPhase & 3))
+                {
+                    Point3 p = CombatDirector.PlayerPosition();
+                    if (Point3.Distance(_world.Position, p) > IdleLodDistance) return;
+                }
             }
 
             // hit flash restore (cheap timer, no allocations)

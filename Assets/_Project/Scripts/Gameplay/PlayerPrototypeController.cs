@@ -29,6 +29,8 @@ namespace Crossroads.Gameplay
         private Animator _animator;
         private float _turnVel;
         private Vector3 _velocity;
+        private Transform _camera;           // Camera.main is a tag lookup every call - cached, re-resolved at 0.5 Hz
+        private float _nextCameraSearch;
 
         private static readonly int SpeedHash = Animator.StringToHash("Speed");
         private static readonly int TurningHash = Animator.StringToHash("Turning");
@@ -69,11 +71,16 @@ namespace Crossroads.Gameplay
             // camera-relative movement (the camera is now a free orbit rig): joystick up
             // always means "away from the camera". Falls back to world axes headlessly.
             Vector3 moveDir = input.sqrMagnitude > 0.001f ? input.normalized : Vector3.zero;
-            var cam = Camera.main;
-            if (cam != null && moveDir.sqrMagnitude > 0.001f)
+            if (_camera == null && Time.time >= _nextCameraSearch)
             {
-                Vector3 f = cam.transform.forward; f.y = 0f;
-                Vector3 r = cam.transform.right; r.y = 0f;
+                _nextCameraSearch = Time.time + 2f;
+                var cam = Camera.main;
+                if (cam != null) _camera = cam.transform;
+            }
+            if (_camera != null && moveDir.sqrMagnitude > 0.001f)
+            {
+                Vector3 f = _camera.forward; f.y = 0f;
+                Vector3 r = _camera.right; r.y = 0f;
                 if (f.sqrMagnitude > 0.001f)
                 {
                     Vector3 rel = (r * input.x + f * input.z);

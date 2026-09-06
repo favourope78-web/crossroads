@@ -3,7 +3,17 @@ guid: c0a1fed0000000000000000000000002
 ModelImporter:
   serializedVersion: 22200
   internalIDToNameTable: []
-  externalObjects: {}
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_Ari
+    second: {fileID: 2100000, guid: c0a1fed0000000000000000000000006, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: M_Ari_Hair
+    second: {fileID: 2100000, guid: c0a1fed0000000000000000000000007, type: 2}
   materials:
     materialImportMode: 1
     materialName: 0

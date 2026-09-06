@@ -29,6 +29,7 @@ def build(g):
     emit_char_root, child_renderer_id, add_block = g["emit_char_root"], g["child_renderer_id"], g["add_block"]
     cond_yaml, eff_yaml, world_action_fields = g["cond_yaml"], g["eff_yaml"], g["world_action_fields"]
     REG, root_gids, COLLIDERS = g["REG"], g["root_gids"], g["COLLIDERS"]
+    STATIC_KIT, SHADOW_CASTERS = g["STATIC_KIT"], g["SHADOW_CASTERS"]
     CUBE, CAPSULE, SPHERE = g["CUBE"], g["CAPSULE"], g["SPHERE"]
     ROOT, HERE = g["ROOT"], g["HERE"]
     env_prefab = g["env_prefab"]
@@ -106,10 +107,10 @@ def build(g):
         for (piece, pos, yaw, matk) in pieces:
             comps = ["transform", "meshfilter", "renderer"]
             if piece in COLLIDERS: comps.append("collider")
-            gid, ids = emit_gameobject("%s_%s_%s_%s" % (piece, loc_id, pos[0], pos[2]), comps)
+            gid, ids = emit_gameobject("%s_%s_%s_%s" % (piece, loc_id, pos[0], pos[2]), comps, static_flags=STATIC_KIT)
             emit_transform(ids["transform"], gid, pos, (0, yaw, 0), (1, 1, 1))
             emit_meshfilter(ids["meshfilter"], gid, REG[piece])
-            emit_renderer(ids["renderer"], gid, REG[matk])
+            emit_renderer(ids["renderer"], gid, REG[matk], cast=piece in SHADOW_CASTERS, static=True)
             if "collider" in ids:
                 c = COLLIDERS[piece]
                 emit_boxcollider(ids["collider"], gid, c[1], c[2])

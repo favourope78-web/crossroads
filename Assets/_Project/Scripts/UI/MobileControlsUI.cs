@@ -153,26 +153,35 @@ namespace Crossroads.UI
         }
 
         // ---------------------------------------------------------------- button handlers
+        private PauseMenuUI _pauseMenu;
+        private PlayerCombatController _playerCombat;
+
         private void OnPausePressed()
         {
             InputBus.SetPressed(MobileButton.Pause);
-            var menu = FindFirstObjectByType<PauseMenuUI>();
-            if (menu != null) menu.Open();
+            if (_pauseMenu == null) _pauseMenu = FindFirstObjectByType<PauseMenuUI>();
+            if (_pauseMenu != null) _pauseMenu.Open();
+        }
+
+        /// <summary>Tag lookup + GetComponent cached after the first press (a hot path under thumb-mashing).</summary>
+        private PlayerCombatController PlayerCombat()
+        {
+            if (_playerCombat != null) return _playerCombat;
+            var player = GameObject.FindGameObjectWithTag("Player");
+            if (player == null) return null;
+            _playerCombat = player.GetComponent<PlayerCombatController>();
+            return _playerCombat;
         }
 
         private void OnAttackPressed()
         {
-            var player = GameObject.FindGameObjectWithTag("Player");
-            if (player == null) return;
-            var controller = player.GetComponent<PlayerCombatController>();
+            var controller = PlayerCombat();
             if (controller != null) controller.TryAttack();
         }
 
         private void OnDodgePressed()
         {
-            var player = GameObject.FindGameObjectWithTag("Player");
-            if (player == null) return;
-            var controller = player.GetComponent<PlayerCombatController>();
+            var controller = PlayerCombat();
             if (controller != null) controller.TryDodge();
         }
     }

@@ -139,6 +139,7 @@ DYNAMIC = {"SM_Door","SM_OrbCore","SM_OrbRing","SM_HoloPanel"}
 
 out = ["%YAML 1.1", "%TAG !u! tag:unity3d.com,2011:"]
 fid = [1000]
+SUN_LIGHT_ID = 900   # Light component id, referenced by RenderSettings.m_Sun (emitted below, out of sequence)
 blocks = []
 root_gids = []
 go2tid = {}  # GameObject id -> its Transform id (SceneRoots must reference Transforms)
@@ -166,16 +167,16 @@ RenderSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 9
   m_Fog: 1
-  m_FogColor: {r: 0.38, g: 0.27, b: 0.26, a: 1}
+  m_FogColor: {r: 0.36, g: 0.19, b: 0.24, a: 1}
   m_FogMode: 3
-  m_FogDensity: 0.012
+  m_FogDensity: 0.014
   m_LinearFogStart: 0
   m_LinearFogEnd: 300
-  m_AmbientSkyColor: {r: 0.55, g: 0.38, b: 0.36, a: 1}
-  m_AmbientEquatorColor: {r: 0.40, g: 0.33, b: 0.32, a: 1}
-  m_AmbientGroundColor: {r: 0.22, g: 0.20, b: 0.19, a: 1}
+  m_AmbientSkyColor: {r: 0.52, g: 0.30, b: 0.36, a: 1}
+  m_AmbientEquatorColor: {r: 0.34, g: 0.27, b: 0.34, a: 1}
+  m_AmbientGroundColor: {r: 0.14, g: 0.15, b: 0.19, a: 1}
   m_AmbientIntensity: 1
-  m_AmbientMode: 0
+  m_AmbientMode: 1
   m_SubtractiveShadowColor: {r: 0.42, g: 0.47, b: 0.5, a: 1}
   m_SkyboxMaterial: {fileID: 0}
   m_HaloStrength: 0.5
@@ -188,9 +189,9 @@ RenderSettings:
   m_ReflectionBounces: 1
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
-  m_Sun: {fileID: 0}
+  m_Sun: {fileID: %d}
   m_IndirectSpecularColor: {r: 0, g: 0, b: 0, a: 1}
-  m_UseRadianceAmbientProbe: 0""")
+  m_UseRadianceAmbientProbe: 0""" % SUN_LIGHT_ID)
 add_block("""--- !u!157 &3
 LightmapSettings:
   m_ObjectHideFlags: 0
@@ -275,7 +276,12 @@ NavMeshSettings:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}""")
 
-def emit_gameobject(name, comps, is_active=1):
+# StaticEditorFlags bits: ContributeGI 1, OccluderStatic 2, BatchingStatic 4, OccludeeStatic 16.
+# Kit geometry is batching-static + occluder/occludee (static batching = the single biggest
+# CPU draw-call win on Android; the profiler's draw-call estimate is derived from this flag).
+STATIC_KIT = 4 | 2 | 16
+
+def emit_gameobject(name, comps, is_active=1, static_flags=0, tag="Untagged"):
     g = fid[0] + 1
     ids = {}
     comp_lines = []
@@ -294,8 +300,11 @@ GameObject:
 %s
   m_Layer: 0
   m_Name: %s
-  m_Tag: Untagged
-  m_IsActive: %d""" % (g, "\n".join(comp_lines), name, is_active))
+  m_TagString: %s
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: %d
+  m_IsActive: %d""" % (g, "\n".join(comp_lines), name, tag, static_flags, is_active))
     go2tid[g] = ids["transform"]
     _last_gid[0] = g
     return g, ids
@@ -365,7 +374,13 @@ MeshFilter:
   m_GameObject: {fileID: %d}
   m_Mesh: %s""" % (mid, gid, m))
 
-def emit_renderer(rid, gid, matguid):
+# pieces that cast a real-time shadow on the Balanced/High tiers (floors, glazing, light
+# columns and holo panels only receive - halves the shadow-pass draw count)
+SHADOW_CASTERS = {"SM_Column", "SM_Truss", "SM_DoorFrame", "SM_Door", "SM_Railing", "SM_BalconyBlock",
+                  "SM_WallPanel", "SM_OrbCore", "SM_OrbRing"}
+
+def emit_renderer(rid, gid, matguid, cast=0, static=False):
+    # m_MotionVectors: 0 camera-only (static geometry), 1 per-object (moving things)
     add_block("""--- !u!23 &%d
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -374,11 +389,11 @@ MeshRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: %d}
   m_Enabled: 1
-  m_CastShadows: 0
+  m_CastShadows: %d
   m_ReceiveShadows: 1
   m_DynamicOccludee: 1
-  m_StaticShadowCaster: 0
-  m_MotionVectors: 1
+  m_StaticShadowCaster: %d
+  m_MotionVectors: %d
   m_LightProbeUsage: 0
   m_ReflectionProbeUsage: 0
   m_RayTracingMode: 2
@@ -407,7 +422,7 @@ MeshRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
-  m_AdditionalVertexStreams: {fileID: 0}""" % (rid, gid, matguid))
+  m_AdditionalVertexStreams: {fileID: 0}""" % (rid, gid, 1 if cast else 0, 1 if (cast and static) else 0, 0 if static else 1, matguid))
 
 def emit_boxcollider(cid, gid, size, center):
     add_block("""--- !u!65 &%d
@@ -464,7 +479,8 @@ for idx, e in enumerate(LAY["pieces"]):
     if piece in COLLIDERS and not is_open_frame: comps.append("collider")
     if e["interact"] == "Door": comps.append("door")
     if e["interact"] == "Inspect": comps.append("interact")
-    gid, ids = emit_gameobject("%s_%03d" % (piece, idx), comps)
+    is_static = piece not in DYNAMIC and "door" not in comps
+    gid, ids = emit_gameobject("%s_%03d" % (piece, idx), comps, static_flags=STATIC_KIT if is_static else 0)
     emit_transform(ids["transform"], gid, pos, (0, yaw, 0), scale)
     emit_meshfilter(ids["meshfilter"], gid, REG[piece])
     slot = {"SM_FloorTile":"Concrete","SM_Column":"Metal","SM_LightBeam":"LightColumn",
@@ -473,7 +489,7 @@ for idx, e in enumerate(LAY["pieces"]):
             "SM_OrbCore":"OrbGold","SM_OrbRing":"OrbGold","SM_HoloPanel":"Holo"}[piece]
     emit_renderer(ids["renderer"], gid, REG[{"Concrete":"M_Hall_Concrete","Metal":"M_Hall_Metal",
         "LightColumn":"M_Hall_LightColumn","Glazing":"M_Hall_Glazing","OrbGold":"M_Hall_OrbGold",
-        "Holo":"M_Hall_Holo"}[slot]])
+        "Holo":"M_Hall_Holo"}[slot]], cast=piece in SHADOW_CASTERS, static=is_static)
     if "collider" in ids:
         c = COLLIDERS[piece]
         emit_boxcollider(ids["collider"], gid, c[1], c[2])
@@ -484,8 +500,10 @@ for idx, e in enumerate(LAY["pieces"]):
     root_gids.append(gid)
 
 # --- directional light ---
-gid, ids = emit_gameobject("Directional Light", ["transform","light"])
-emit_transform(ids["transform"], gid, (0,12,0), (55,-30,0), (1,1,1))
+gid, ids = emit_gameobject("Directional Light", ["transform","light"], static_flags=1)
+ids["light"] = SUN_LIGHT_ID  # fixed id so RenderSettings.m_Sun can reference it (component list patched below)
+blocks[-1] = blocks[-1].replace("  - component: {fileID: %d}" % (fid[0]), "  - component: {fileID: %d}" % SUN_LIGHT_ID)
+emit_transform(ids["transform"], gid, (0,12,0), (42,-38,0), (1,1,1))
 add_block("""--- !u!108 &%d
 Light:
   m_ObjectHideFlags: 0
@@ -497,17 +515,17 @@ Light:
   serializedVersion: 10
   m_Type: 1
   m_Shape: 0
-  m_Color: {r: 1, g: 0.93, b: 0.85, a: 1}
-  m_Intensity: 1.1
+  m_Color: {r: 0.98, g: 0.80, b: 0.72, a: 1}
+  m_Intensity: 1.15
   m_Range: 10
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
   m_CookieSize: 10
   m_Shadows:
-    m_Type: 0
+    m_Type: 1
     m_Resolution: -1
     m_CustomResolution: -1
-    m_Strength: 1
+    m_Strength: 0.72
     m_Bias: 0.05
     m_NormalBias: 0.4
     m_NearPlane: 0.2
@@ -551,8 +569,9 @@ Light:
 root_gids.append(gid)
 
 # --- main camera + follow ---
-gid, ids = emit_gameobject("Main Camera", ["transform","camera","listener","follow"])
+gid, ids = emit_gameobject("Main Camera", ["transform","camera","listener","follow","urpcam"], tag="MainCamera")
 emit_transform(ids["transform"], gid, (0,2.6,-20.5), (12,0,0), (1,1,1))
+MAIN_CAMERA_GID = gid
 add_block("""--- !u!20 &%d
 Camera:
   m_ObjectHideFlags: 0
@@ -613,13 +632,176 @@ AudioListener:
   m_GameObject: {fileID: %d}
   m_Enabled: 1""" % (ids['listener'], gid))
 emit_monobehaviour(ids["follow"], gid, REG["ThirdPersonCameraController.cs"])
+# UniversalAdditionalCameraData: post-processing ON (global volume below), no depth/opaque
+# texture copies (mobile bandwidth), renderer 0 = URP_Renderer_Mobile, FXAA on the camera.
+add_block("""--- !u!114 &%d
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: %d}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a79441f348de89743a2939f4d699eac1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_RenderShadows: 1
+  m_RequiresDepthTextureOption: 2
+  m_RequiresOpaqueTextureOption: 2
+  m_CameraType: 0
+  m_Cameras: []
+  m_RendererIndex: -1
+  m_VolumeLayerMask:
+    serializedVersion: 2
+    m_Bits: 1
+  m_VolumeTrigger: {fileID: 0}
+  m_VolumeFrameworkUpdateModeOption: 2
+  m_RenderPostProcessing: 1
+  m_Antialiasing: 1
+  m_AntialiasingQuality: 1
+  m_StopNaN: 0
+  m_Dithering: 1
+  m_ClearDepth: 1
+  m_AllowXRRendering: 1
+  m_AllowHDROutput: 1
+  m_UseScreenCoordOverride: 0
+  m_ScreenSizeOverride: {x: 0, y: 0, z: 0, w: 0}
+  m_ScreenCoordScaleBias: {x: 0, y: 0, z: 0, w: 0}
+  m_RequiresDepthTexture: 0
+  m_RequiresColorTexture: 0
+  m_Version: 2
+  m_TaaSettings:
+    m_Quality: 3
+    m_FrameInfluence: 0.1
+    m_JitterScale: 1
+    m_MipBias: 0
+    m_VarianceClampScale: 0.9
+    m_ContrastAdaptiveSharpening: 0""" % (ids["urpcam"], gid))
 root_gids.append(gid)
 
-# --- editor bootstrap (spawns Ari in the editor) ---
+# --- global post-process volume (Assets/Settings/PostProcess_Global.asset) ---
+gid, ids = emit_gameobject("PostProcess_Global", ["transform", "volume"])
+emit_transform(ids["transform"], gid, (0, 0, 0), (0, 0, 0), (1, 1, 1))
+add_block("""--- !u!114 &%d
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: %d}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 172515602e62fb746b5d573b38a5fe58, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_IsGlobal: 1
+  priority: 0
+  blendDistance: 0
+  weight: 1
+  sharedProfile: {fileID: 11400000, guid: %s, type: 2}""" % (ids["volume"], gid, REG["PostProcess_Global.asset"]))
+root_gids.append(gid)
+
+# --- editor bootstrap (kept for the editor-only prefab path; no-op when Ari is already in the scene) ---
 gid, ids = emit_gameobject("FirstLocationBootstrap", ["transform","bootstrap"])
 emit_transform(ids["transform"], gid, tuple(LAY["spawn"]), (0,0,0), (1,1,1))
 emit_monobehaviour(ids["bootstrap"], gid, REG["FirstLocationBootstrap.cs"])
 root_gids.append(gid)
+
+# ================================================================
+# Ari - the playable character, instanced from the canonical Ari.fbx model prefab
+# (Assets/_Project/Art/Characters/Ari/Ari.fbx). Before this pass Ari only existed in the
+# editor (FirstLocationBootstrap + PrefabUtility) - device builds had NO player. The
+# PrefabInstance overrides name/position and ADDS the gameplay components to the model
+# root through stripped GameObject/Transform proxies (the same shape the editor writes).
+#   gen-2 model root ids: Transform -8679921383154817045, GameObject 919132149155446097
+# ================================================================
+ARI_FBX = "c0a1fed0000000000000000000000002"
+ARI_ROOT_T = -8679921383154817045
+ARI_ROOT_GO = 919132149155446097
+ARI_ROOT_ANIMATOR = 5866666021909216657
+ARI_CONTROLLER = "c0a1fed0000000000000000000000009"
+spawn = LAY["spawn"]
+ari_pi = nid()                      # PrefabInstance
+ari_go = nid()                      # stripped GameObject proxy (component host)
+ari_t = nid()                       # stripped Transform proxy
+ari_cc, ari_move, ari_interact, ari_combat = nid(), nid(), nid(), nid()
+
+def ari_mod(target, prop, value, objref="{fileID: 0}"):
+    return """    - target: {fileID: %d, guid: %s, type: 3}
+      propertyPath: %s
+      value: %s
+      objectReference: %s
+""" % (target, ARI_FBX, prop, value, objref)
+
+def ari_added(cid):
+    return """    - targetCorrespondingSourceObject: {fileID: %d, guid: %s, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: %d}
+""" % (ARI_ROOT_GO, ARI_FBX, cid)
+
+add_block("""--- !u!1001 &%d
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+%s    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents:
+%s  m_SourcePrefab: {fileID: 100100000, guid: %s, type: 3}""" % (
+    ari_pi,
+    ari_mod(ARI_ROOT_GO, "m_Name", "Ari") + ari_mod(ARI_ROOT_GO, "m_TagString", "Player")
+    + ari_mod(ARI_ROOT_T, "m_LocalPosition.x", spawn[0]) + ari_mod(ARI_ROOT_T, "m_LocalPosition.y", spawn[1])
+    + ari_mod(ARI_ROOT_T, "m_LocalPosition.z", spawn[2])
+    + ari_mod(ARI_ROOT_T, "m_LocalRotation.x", 0) + ari_mod(ARI_ROOT_T, "m_LocalRotation.y", 0)
+    + ari_mod(ARI_ROOT_T, "m_LocalRotation.z", 0) + ari_mod(ARI_ROOT_T, "m_LocalRotation.w", 1)
+    + ari_mod(ARI_ROOT_T, "m_LocalEulerAnglesHint.x", 0) + ari_mod(ARI_ROOT_T, "m_LocalEulerAnglesHint.y", 0)
+    + ari_mod(ARI_ROOT_T, "m_LocalEulerAnglesHint.z", 0)
+    + ari_mod(ARI_ROOT_ANIMATOR, "m_Controller", "", "{fileID: 9100000, guid: %s, type: 2}" % ARI_CONTROLLER)
+    + ari_mod(ARI_ROOT_ANIMATOR, "m_ApplyRootMotion", 0)
+    + ari_mod(ARI_ROOT_ANIMATOR, "m_CullingMode", 0),
+    ari_added(ari_cc) + ari_added(ari_move) + ari_added(ari_interact) + ari_added(ari_combat),
+    ARI_FBX))
+add_block("""--- !u!1 &%d stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: %d, guid: %s, type: 3}
+  m_PrefabInstance: {fileID: %d}
+  m_PrefabAsset: {fileID: 0}""" % (ari_go, ARI_ROOT_GO, ARI_FBX, ari_pi))
+add_block("""--- !u!4 &%d stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: %d, guid: %s, type: 3}
+  m_PrefabInstance: {fileID: %d}
+  m_PrefabAsset: {fileID: 0}""" % (ari_t, ARI_ROOT_T, ARI_FBX, ari_pi))
+# CharacterController per GAME_DESIGN §8 (matches CrossroadsPrototypeSetup: h 1.78 r 0.22)
+add_block("""--- !u!143 &%d
+CharacterController:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: %d}
+  m_Material: {fileID: 0}
+  m_IncludeGestures: 0
+  m_IsTrigger: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Height: 1.78
+  m_Radius: 0.22
+  m_SlopeLimit: 45
+  m_StepOffset: 0.3
+  m_SkinWidth: 0.04
+  m_MinMoveDistance: 0
+  m_Center: {x: 0, y: 0.89, z: 0}""" % (ari_cc, ari_go))
+emit_monobehaviour(ari_move, ari_go, "c0a1fed000000000000000000000000e")            # PlayerPrototypeController
+emit_monobehaviour(ari_interact, ari_go, REG["PlayerInteraction.cs"])
+emit_monobehaviour(ari_combat, ari_go, REG["PlayerCombatController.cs"],
+                   "  respawnPosition: {x: %s, y: 1, z: %s}" % (spawn[0], spawn[2]))
+go2tid[ari_go] = ari_pi   # SceneRoots lists the PrefabInstance for prefab roots (editor convention)
+root_gids.append(ari_go)
 
 # ================================================================
 # ================================================================
@@ -630,15 +812,18 @@ CUBE, CAPSULE, SPHERE = 10202, 10208, 10207  # built-in primitive mesh fileIDs
 def emit_char_root(root_name, comp_kinds, pos, rot_euler, is_active, primitives):
     """Root GO with primitive visual children. Returns (gid, ids, children_info) where
     children_info = [(child_name, transform_id, renderer_id), ...]."""
+    # characters (npc/enemy) move -> dynamic; markers, props, signs and dressing never move
+    # (StoryWorldState only toggles them) -> batching-static like the kit
+    moves = any(k in ("npc", "fate", "enemy") for k in comp_kinds)
     gid, ids = emit_gameobject(root_name, ["transform"] + comp_kinds, is_active=is_active)
     root_gids.append(gid)
     child_tids = []
     children_info = []
     for (cname, matkey, meshid, lpos, lscale) in primitives:
-        cgid, cids = emit_gameobject(cname, ["transform", "meshfilter", "renderer"])
+        cgid, cids = emit_gameobject(cname, ["transform", "meshfilter", "renderer"], static_flags=0 if moves else STATIC_KIT)
         emit_transform(cids["transform"], cgid, tuple(lpos), (0, 0, 0), tuple(lscale), father=ids["transform"])
         emit_meshfilter(cids["meshfilter"], cgid, None, builtin_fileid=meshid)
-        emit_renderer(cids["renderer"], cgid, REG[matkey])
+        emit_renderer(cids["renderer"], cgid, REG[matkey], cast=True, static=not moves)
         child_tids.append(cids["transform"])
         children_info.append((cname, cids["transform"], cids["renderer"]))
     emit_transform(ids["transform"], gid, tuple(pos), tuple(rot_euler), (1, 1, 1), children=child_tids)
@@ -700,10 +885,10 @@ root_gids.append(gid)
 
 # ---- wall fills sealing the north-wall flanks (scaled panels -> real doorway) ----
 for (fx, tag) in [(6.5, "L"), (-6.5, "R")]:
-    gid, ids = emit_gameobject("SM_WallPanel_flank_" + tag, ["transform", "meshfilter", "renderer", "collider"])
+    gid, ids = emit_gameobject("SM_WallPanel_flank_" + tag, ["transform", "meshfilter", "renderer", "collider"], static_flags=STATIC_KIT)
     emit_transform(ids["transform"], gid, (fx, 3, 20), (0, 0, 0), (0.7, 1, 1))
     emit_meshfilter(ids["meshfilter"], gid, REG["SM_WallPanel"])
-    emit_renderer(ids["renderer"], gid, REG["M_Hall_Concrete"])
+    emit_renderer(ids["renderer"], gid, REG["M_Hall_Concrete"], cast=True, static=True)
     emit_boxcollider(ids["collider"], gid, (10, 6, 0.55), (0, 3, 0))
     root_gids.append(gid)
 
@@ -722,12 +907,12 @@ ANNEX = [
 for (piece, pos, yaw) in ANNEX:
     comps = ["transform", "meshfilter", "renderer"]
     if piece in COLLIDERS: comps.append("collider")
-    gid, ids = emit_gameobject("%s_annex_%s_%s" % (piece, pos[0], pos[2]), comps)
+    gid, ids = emit_gameobject("%s_annex_%s_%s" % (piece, pos[0], pos[2]), comps, static_flags=STATIC_KIT)
     emit_transform(ids["transform"], gid, pos, (0, yaw, 0), (1, 1, 1))
     emit_meshfilter(ids["meshfilter"], gid, REG[piece])
     mat = {"SM_FloorTile": "M_Hall_Concrete", "SM_WallPanel": "M_Hall_Concrete",
            "SM_Column": "M_Hall_Metal", "SM_Truss": "M_Hall_Metal"}[piece]
-    emit_renderer(ids["renderer"], gid, REG[mat])
+    emit_renderer(ids["renderer"], gid, REG[mat], cast=piece in SHADOW_CASTERS, static=True)
     if "collider" in ids:
         c = COLLIDERS[piece]
         emit_boxcollider(ids["collider"], gid, c[1], c[2])
@@ -877,10 +1062,10 @@ TIDEWELL = [
 for (piece, pos, yaw, matk) in TIDEWELL:
     comps = ["transform", "meshfilter", "renderer"]
     if piece in COLLIDERS: comps.append("collider")
-    gid, ids = emit_gameobject("%s_tide_%s_%s" % (piece, pos[0], pos[2]), comps)
+    gid, ids = emit_gameobject("%s_tide_%s_%s" % (piece, pos[0], pos[2]), comps, static_flags=STATIC_KIT)
     emit_transform(ids["transform"], gid, pos, (0, yaw, 0), (1, 1, 1))
     emit_meshfilter(ids["meshfilter"], gid, REG[piece])
-    emit_renderer(ids["renderer"], gid, REG[matk])
+    emit_renderer(ids["renderer"], gid, REG[matk], cast=piece in SHADOW_CASTERS, static=True)
     if "collider" in ids:
         c = COLLIDERS[piece]
         emit_boxcollider(ids["collider"], gid, c[1], c[2])

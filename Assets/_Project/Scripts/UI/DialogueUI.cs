@@ -25,6 +25,7 @@ namespace Crossroads.UI
         private Text _body;
         private Text _hint;
         private Text _timer;
+        private int _shownTenths = -1;
         private Button _advanceTarget;
         private RectTransform _choiceArea;
         private readonly List<Button> _choiceButtons = new List<Button>();
@@ -159,6 +160,7 @@ namespace Crossroads.UI
             _timeoutIndex = e.timeoutOptionIndex;
             _speaker.text = "◆  The decision is yours";
             _hint.text = "";
+            _shownTenths = -1;
             _timer.text = e.timeLimitSeconds > 0f ? "⏱ " + e.timeLimitSeconds.ToString("0.0") : "";
             SetBodyMode(true);
             _body.text = e.promptText;
@@ -195,7 +197,13 @@ namespace Crossroads.UI
                 }
                 else
                 {
-                    _timer.text = "⏱ " + _timeLimit.ToString("0.0");
+                    // one string per visible tenth instead of one per frame (GC pressure on Android)
+                    int tenths = (int)(_timeLimit * 10f + 0.999f);
+                    if (tenths != _shownTenths)
+                    {
+                        _shownTenths = tenths;
+                        _timer.text = "⏱ " + (tenths / 10) + "." + (tenths % 10);
+                    }
                 }
             }
         }
