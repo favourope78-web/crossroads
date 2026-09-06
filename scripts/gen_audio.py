@@ -370,23 +370,49 @@ SOURCES = json.load(open(os.path.join(SRC, "SOURCES.json"))) if os.path.exists(o
 PLACEHOLDERS = []
 
 
+ALLOW_FALLBACK = os.environ.get("CROSSROADS_AUDIO_ALLOW_FALLBACK") == "1"
+
+
+def decode_ogg(path):
+    """OGG -> float64 mono at SR. Prefers ffmpeg; falls back to soundfile if installed."""
+    import subprocess, shutil
+    if shutil.which("ffmpeg"):
+        raw = subprocess.run(["ffmpeg", "-v", "quiet", "-i", path, "-f", "s16le", "-ac", "1", "-ar", str(SR), "-"],
+                             capture_output=True, check=True).stdout
+        return np.frombuffer(raw, np.int16).astype(np.float64) / 32768.0
+    try:
+        import soundfile  # optional dependency
+        x, sr = soundfile.read(path, dtype="float64", always_2d=True)
+        x = x.mean(axis=1)
+        if sr != SR:
+            idx = np.arange(0, len(x), sr / SR)
+            x = np.interp(idx, np.arange(len(x)), x)
+        return x
+    except ImportError:
+        raise OSError("no OGG decoder: install ffmpeg (apt-get install ffmpeg) or python soundfile")
+
+
 def recorded(key, fallback, peak=None):
-    """Returns a recipe: decoded recording if present, else the procedural fallback."""
+    """Returns a recipe: the decoded recording. A missing source/decoder is an ERROR for a release
+    build; set CROSSROADS_AUDIO_ALLOW_FALLBACK=1 to accept the procedural fallback (reported)."""
     def recipe():
         ogg = os.path.join(SRC, key + ".ogg")
-        if key in SOURCES and os.path.exists(ogg):
-            import subprocess
+        problem = None
+        if key not in SOURCES or not os.path.exists(ogg):
+            problem = "no recording staged for %s (reference/audio_source/%s.ogg)" % (key, key)
+        else:
             try:
-                raw = subprocess.run(["ffmpeg", "-v", "quiet", "-i", ogg, "-f", "s16le", "-ac", "1", "-ar", str(SR), "-"],
-                                     capture_output=True, check=True).stdout
-                x = np.frombuffer(raw, np.int16).astype(np.float64) / 32768.0
+                x = decode_ogg(ogg)
                 # trim leading/trailing silence (-48 dB), keep a 4 ms head
                 nz = np.where(np.abs(x) > 0.004)[0]
                 if len(nz):
                     x = x[max(0, nz[0] - int(SR * 0.004)):min(len(x), nz[-1] + int(SR * 0.05))]
                 return fade_edges(norm(x, peak or SOURCES[key].get("peak", 0.85)), 4)
-            except (OSError, subprocess.CalledProcessError):
-                pass
+            except Exception as ex:  # decoder missing / corrupt file
+                problem = "%s: %s" % (key, ex)
+        if not ALLOW_FALLBACK:
+            raise SystemExit("[AUDIO] " + problem + " - refusing to ship a synthesized stand-in "
+                             "(export CROSSROADS_AUDIO_ALLOW_FALLBACK=1 to override for local iteration)")
         PLACEHOLDERS.append(key)
         return fallback()
     recipe.__name__ = "recorded_" + key
@@ -450,6 +476,8 @@ def main():
             raise SystemExit("GUID conflict for %s" % key)
         reg[key + ".wav"] = guid
         path = os.path.join(AUD, folder, key + ".wav")
+        global rng
+        rng = np.random.default_rng(20260905 + i)   # per-clip seed: byte-identical output in any run order
         data = fade_edges(recipe()) if folder == "SFX" else recipe()
         write_wav(path, data)
         open(path + ".meta", "w").write(META.format(g=guid, load=load, q=q, preload=preload, bg=bg))
