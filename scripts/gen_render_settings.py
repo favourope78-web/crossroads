@@ -11,10 +11,13 @@ scene/registry can reference them):
   Assets/Settings/URP_Low.asset                 tier 0: 30 fps floor phones (no shadows, 0.8 render scale)
   Assets/Settings/URP_Balanced.asset            tier 1: mid-range target (soft-off shadows 20 m, 1024 map)
   Assets/Settings/URP_High.asset                tier 2: flagship (shadows 35 m, 2048 map, MSAA 2x)
-  Assets/Settings/PostProcess_Global.asset      VolumeProfile: bloom (emissive Fracture light), vignette,
-                                                colour grading (matches CHARACTER_REFERENCE dusk grade)
+  Assets/Settings/PostProcess_Global.asset      VolumeProfile (Balanced/High): bloom (emissive Fracture light),
+                                                vignette, colour grading (matches CHARACTER_REFERENCE dusk grade)
+  Assets/Settings/PostProcess_Low.asset         VolumeProfile (Low): NO bloom, light vignette + the same grade
+                                                (QualityTierApplier swaps the scene volume's profile per tier)
   ProjectSettings/GraphicsSettings.asset        default pipeline = Balanced, SRP batcher on
-  ProjectSettings/ProjectSettings.asset         QualitySettings tiers Low/Balanced/High each bound to its asset
+  ProjectSettings/QualitySettings.asset         (!u!47) tiers Low/Balanced/High each bound to its URP asset
+  ProjectSettings/DynamicsManager.asset         (!u!55) physics defaults (was mis-bundled in ProjectSettings.asset)
 
 Tier values follow GAME_DESIGN §14 (60 fps target Balanced, 30 floor Low) and DEVELOPMENT_PLAN
 0.5 (HDR off, MSAA 2x on the top tier only, render-scale hook).

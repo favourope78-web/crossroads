@@ -12,7 +12,7 @@ namespace Crossroads.Gameplay
     /// </summary>
     public class CharacterTestBootstrap : MonoBehaviour
     {
-        private const string PrefabPath = "Assets/_Project/Prefabs/Player/Ari.prefab";
+        private const string PrefabPath = "Assets/_Project/Prefabs/Characters/Ari.prefab"; // canonical (gen_character_assets.py)
 
         private void Awake()
         {
@@ -20,7 +20,7 @@ namespace Crossroads.Gameplay
             var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath);
             if (prefab == null)
             {
-                Debug.LogWarning("[CROSSROADS] Ari prefab not found. Run menu: CROSSROADS > Prototype > Build Ari Prefab & Test Scene.");
+                Debug.LogWarning("[CROSSROADS] Ari prefab not found. Run scripts/gen_character_assets.py (or menu: CROSSROADS > Prototype > Build Ari Prefab & Test Scene).");
                 return;
             }
             var inst = (GameObject)PrefabUtility.InstantiatePrefab(prefab);

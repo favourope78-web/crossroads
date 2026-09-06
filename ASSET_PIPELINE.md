@@ -120,6 +120,47 @@ AI video frames are motion-blurred/watermarked — never feed raw frames to Mesh
 
 Rationale: semi-real style costs ~+50% tris vs. original low-poly plan; paid for by cutting crowd counts (≤6 on-screen, already designed) and shipping LOD-only crowd. **GAME_DESIGN §13.1/§15 updated accordingly.**
 
+### 7.1 What is actually in the repo (release pass, `865dc15` → `c69098c`)
+
+The budgets above are the *ceilings*; the shipped first-location cast is deliberately far
+below them so the whole population fits the mobile frame budget (`docs/PERF_BUDGET.json`,
+checked by `scripts/profile_scene.py --check`).
+
+| Character (prefab `Assets/_Project/Prefabs/Characters/<Name>.prefab`) | Tris | Texture | Rig / anims |
+|---|---|---|---|
+| Ari, Mara, Mara_Dress, Dax, Archivist, Kael, Odalys, Bran, Sera, Civilian, Soldier_A/B/C (13) | 1 376 – 2 344 | 1024² atlas, ASTC | Humanoid, 22 Mixamo-named bones; 9 shared clips (Idle, Walk, Run, Talk, Alert, Attack, Hit, Dodge, Defeat) via one `Character_Controller` |
+
+Source of truth: canonical sheets in `reference/concept/` → `scripts/build_character_atlases.py`
+(atlases + `reference/concept/build_data/*_atlas.json`) → `scripts/blender_build_characters.py`
+(Blender 4.3, deterministic skinning, FBX + `build_data/models.json`) → `scripts/gen_character_assets.py`
+(Humanoid `.fbx.meta`, URP/Lit materials, controller, prefabs). One model per character, reused
+by every scene binding (`NpcAgent.avatarPrefab` / `EnemyAgent`), so a character looks identical
+in every appearance. The FBX binaries carry a Blender creation timestamp, so a rebuild is
+semantically identical but not byte-identical (verified: same node/property layout, ±16–32 B).
+
+**Render tiers** (`scripts/gen_render_settings.py`, applied at runtime by `QualityTierApplier`):
+
+| Tier | URP asset | Shadows | Render scale / LOD bias | Post volume | Frame target |
+|---|---|---|---|---|---|
+| Low | `URP_Low` | off | 0.8 / 0.7 | `PostProcess_Low` — **no bloom**, vignette 0.2, dusk grade | 30 |
+| Balanced (default) | `URP_Balanced` | hard, 20 m, 1024 | 1.0 / 1.0 | `PostProcess_Global` — bloom 0.55 / thr 1.05, vignette 0.28 | 60 |
+| High | `URP_High` | soft, 35 m, 2048, MSAA 2× | 1.0 / 1.0 | `PostProcess_Global` | 60 |
+
+Tiers are bound in `ProjectSettings/QualitySettings.asset` (!u!47; physics defaults were split
+out to `DynamicsManager.asset`); `GraphicsSettings.asset` points at Balanced. None of this YAML
+has been loaded in a Unity editor here — see `FINAL_RELEASE_REPORT.md` §6.
+
+**Audio census** (`scripts/gen_audio.py` → 27 clips, 2.8 MB, 22.05 kHz mono):
+
+| Status | Count | Clips |
+|---|---|---|
+| Recorded, CC0 (Kenney; sources + provenance in `reference/audio_source/{*.ogg,SOURCES.json,LICENSE.txt}`) | 16 | attack swing/hit, dodge, player hurt, enemy defeat/alert/windup, footstep, UI tap/confirm, decision lock, save, transition, dialogue open, objective, ability unlock |
+| **Procedural placeholder** (the only remaining production placeholders) | 11 | `sfx_ability_{ember,tide,stone,hollow}`, `amb_{hall,dusk_wind,water,hollow}`, `mus_{calm,tension,combat}` |
+
+`gen_audio.py` refuses to substitute a synthesized clip for a missing recording (hard error unless
+`CROSSROADS_AUDIO_ALLOW_FALLBACK=1`), and writes the census to `reference/audio_source/AUDIO_STATUS.json`,
+which `validate_assets.py` and test [86] check. Event → clip mapping is unchanged (`GameAudio`).
+
 ---
 
 ## 8. Priorities — what to build FIRST

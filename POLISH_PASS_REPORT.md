@@ -138,26 +138,52 @@ Notes on the numbers:
 * `Assets/_Project/Scripts/Gameplay/World/GameAudio.cs`, `Gameplay/Combat/CombatVFX.cs`, `UI/DialogueUI.cs`, `UI/ToastUI.cs`, `UI/LocationTransitionFader.cs`, `UI/VirtualJoystick.cs`, `Core/SaveSystem.cs`, `Assets/Game/Scripts/ThirdPersonCameraController.cs`, `Assets/Editor/AndroidDevBuild.cs`.
 * `scripts/unity-stub/UnityStub.cs` — extended (CanvasGroup, audio, particles) so the UI/VFX code compiles headless.
 
-## 6. Remaining issues (honest list)
+## 6. Remaining issues (honest list) — status after the release pass
 
-1. **No on-device numbers.** Unity and the Android SDK are unavailable here, so every
-   performance figure above is a static estimate. First thing to do with a device: build
-   the dev APK (CI needs `UNITY_LICENSE`), attach the Profiler, and check Batches/SetPass,
-   GPU frame time (Vulkan vs GLES3), and `EnemyAgent`/`NpcAgent` Update cost.
-2. **URP YAML unverified in the editor.** `Assets/Settings/*.asset` and
-   `GraphicsSettings.asset` were hand-authored for URP 17 (k_AssetVersion 12) from the
-   public serialisation format; if the editor re-serialises them on first open, commit that
-   diff — it is expected and harmless.
-3. **Audio is synthesised placeholder content** (procedural tones/noise). Loudness, mix
-   and event mapping are final; the clips are not.
-4. **Character rigs are primitives** for everyone except Ari. Silhouettes are now canonical
-   and consistent, but the real meshes from `CHARACTER_REFERENCE.md` still need to be built
-   (Blender scripts exist for Ari and the hall kit). `NpcAgent.avatarPrefab` is the hook.
-5. **Ari's avatar is Generic, not Humanoid** in the import settings, so retargeted clips
-   cannot be used yet; the four combat clips are authored directly.
-6. **`NpcAgent` has no distance LOD** (15 agents, full-rate); cheap to add if profiling
-   shows it matters.
-7. **Post-process volume cost on Low tier** — bloom is enabled on all tiers; if a device
-   struggles, disable post on `URP_Low` (one line in `gen_render_settings.py`).
-8. **Build test outstanding** — as above; the workflow, build script and `Configure()` are
-   ready and were kept in sync with the project settings.
+> Updated by the release pass (`865dc15` → `c69098c` → final). Each item keeps its original
+> number; **RESOLVED** items say which commit closed them and what to look at.
+> The authoritative release status is `FINAL_RELEASE_REPORT.md`.
+
+1. **No on-device numbers.** — **STILL OPEN (non-blocking, cannot be closed here).** Unity and
+   the Android SDK/adb are unavailable in this environment, and CI cannot build because the
+   repository has no `UNITY_LICENSE` secret. Every performance figure in this report and in
+   `FINAL_RELEASE_REPORT.md` §7 is a static estimate from `scripts/profile_scene.py`. First
+   thing to do with a device: add the licence secret, build the release APK, attach the
+   Profiler, and check Batches/SetPass, GPU frame time (Vulkan vs GLES3) and the
+   `EnemyAgent`/`NpcAgent` Update cost against `docs/PERF_BUDGET.json`.
+2. **URP YAML unverified in the editor.** — **STILL OPEN (non-blocking).** `Assets/Settings/*.asset`,
+   `GraphicsSettings.asset`, `QualitySettings.asset` and `DynamicsManager.asset` are generated
+   for URP 17 from the public serialisation format and cross-checked by `validate_assets.py`
+   (§7 render checks), but no Unity 6000.0.23f1 editor was available to load them. If the
+   editor re-serialises them on first open, commit that diff — expected and harmless.
+3. **Audio is synthesised placeholder content.** — **RESOLVED for all SFX (`c69098c`)**, 16 of 27
+   clips are now recorded CC0 sources (`reference/audio_source/`, provenance in
+   `SOURCES.json`, licence in `LICENSE.txt`), decoded/normalised by `gen_audio.py`. **The 11
+   remaining procedural clips are the only production placeholders left**: the four Fracture
+   ability palettes, four ambient loops and three music beds — listed by
+   `reference/audio_source/AUDIO_STATUS.json` and enforced by the validator/test [86].
+4. **Character rigs are primitives.** — **RESOLVED (`865dc15`).** 13 Humanoid character models
+   (`Assets/_Project/Art/Characters/<Name>/<Name>.fbx`, 1 376–2 344 tris, 22 Mixamo-named bones,
+   1024² atlases) built by `scripts/blender_build_characters.py` from the canonical sheets, one
+   prefab per character (`Assets/_Project/Prefabs/Characters/<Name>.prefab`) used by every
+   scene binding; identities match `CHARACTER_REFERENCE.md`.
+5. **Ari's avatar is Generic.** — **RESOLVED (`865dc15`).** All 13 FBX metas import as Humanoid;
+   the 9 shared clips (Idle, Walk, Run, Talk, Alert, Attack, Hit, Dodge, Defeat) retarget through
+   the single `Character_Controller`.
+6. **`NpcAgent` has no distance LOD.** — **RESOLVED (`865dc15`).** `CharacterAvatar` tiers:
+   < 14 m full rate; 14–32 m animator + brain at ½ rate, no shadow casting; ≥ 32 m animator
+   frozen + brain at ¼ rate; a talking NPC is always tier 0. Covered by test [86].
+7. **Post-process volume cost on Low tier.** — **RESOLVED (`c69098c`).** `PostProcess_Low.asset`
+   (no bloom, vignette 0.2, same grade) is swapped in by `QualityTierApplier` on the Low tier;
+   Balanced/High keep `PostProcess_Global`. Quality tiers now live in a proper
+   `ProjectSettings/QualitySettings.asset` (+ `DynamicsManager.asset`), default Balanced.
+8. **Build test outstanding.** — **STILL OPEN (non-blocking, cannot be closed here).** No Android
+   APK was produced: no Unity editor/Android SDK locally, and every CI run fails at
+   `game-ci/unity-builder@v4` with "Missing Unity License File and no Serial" (0 repository
+   secrets). What *was* verified from a clean clone is listed in `FINAL_RELEASE_REPORT.md` §9.
+
+Found and fixed during the release QA (P6, `c69098c`): after the prologue Mara's bond is ≥ 8,
+so her `confide` interaction (authored before `talk`, gated only on bond) shadowed the First
+Light conversation — a real progression blocker on a fresh save. `confide` now also requires
+`dec_c1_hall_first_light` to be resolved (`scripts/story_content.json` + `StoryContentBuilder.cs`),
+caught by the new end-to-end test [87] `TestReleaseQaSequence`.

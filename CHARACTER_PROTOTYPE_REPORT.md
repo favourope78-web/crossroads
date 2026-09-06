@@ -37,7 +37,7 @@ Hand-authored, GUID-consistent Unity assets (all cross-references machine-verifi
 - FBX metas: base mesh (no anim) + `Ari_Idle/Walk/Turn.fbx` with clip ranges matched to real takes (2–61 / 2–37 / 2–31), loopTime 1/1/0.
 - `Ari_Controller.controller`: params `Speed` (float), `Turning` (bool); states Idle/Walk/Turn; transitions Idle⇄Walk on Speed, →Turn on Turning, Turn→Idle/Walk on exit+conditions. Parses clean; clip refs use fileID 7400002 per FBX.
 - `CharacterTest.unity`: camera (FOV 50, 10° down), warm directional light, 20 m ground plane (M_Ground), `PrototypeBootstrap` object.
-- `CrossroadsPrototypeSetup.cs` (menu **CROSSROADS ▸ Prototype ▸ Build Ari Prefab & Test Scene**): builds `Prefabs/Player/Ari.prefab` with Animator+controller, **CharacterController** (h 1.78, center 0.89, radius 0.22 — per GAME_DESIGN §8; no Rigidbody, by design), prototype locomotion component, material slot reassignment; places an instance in the test scene and saves it.
+- `CrossroadsPrototypeSetup.cs` (menu **CROSSROADS ▸ Prototype ▸ Build Ari Prefab & Test Scene**): places the canonical generated `Prefabs/Characters/Ari.prefab` (release pass; the legacy build-from-FBX path remains as a fallback) with Animator+controller, **CharacterController** (h 1.78, center 0.89, radius 0.22 — per GAME_DESIGN §8; no Rigidbody, by design), prototype locomotion component, material slot reassignment; places an instance in the test scene and saves it.
 - Validation run: 57 meta GUIDs; 11 asset refs resolved (only "unresolved" GUID is the URP Lit shader living in the URP package — expected); scene/controller/materials YAML parse clean.
 
 ## 5. Movement test result — ✅ PASS in Blender / ⏳ pending Unity runtime

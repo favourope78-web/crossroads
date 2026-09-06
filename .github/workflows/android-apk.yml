@@ -10,12 +10,14 @@
 #      (Settings -> Secrets and variables -> Actions -> New repository secret)
 #      - or, for Unity 6 personal, add UNITY_EMAIL + UNITY_PASSWORD (+ UNITY_SERIAL for Pro).
 #   3. Push (or Actions -> android-dev-apk -> Run workflow) - the APK appears under Artifacts.
-#   Status: as of the campaign content pass no secret is configured on this repository, so every
-#   run so far stopped inside game-ci before Unity started (see CAMPAIGN_CONTENT_REPORT.md).
+#   Status: as of the release pass NO secret is configured on this repository (0 repository
+#   secrets), so every run so far stopped inside game-ci with "Missing Unity License File and no
+#   Serial" before Unity started (see FINAL_RELEASE_REPORT.md section 9). Both jobs below run
+#   unchanged once UNITY_LICENSE (or UNITY_EMAIL/UNITY_PASSWORD) is added.
 #
 # The first successful run also proves the Android launch path end-to-end:
 # Unity 6 LTS + IL2CPP + ARM64, FirstLocation scene, same content pipeline.
-name: android-dev-apk
+name: android-apk
 
 on:
   push:
@@ -55,7 +57,6 @@ jobs:
         with:
           targetPlatform: Android
           androidTargetSdkVersion: 34
-          androidBuildType: development
           androidSymbolType: none
           # Semantic versioning walks git tags and refuses to run on a "dirty" tree (the LFS
           # smudge/clean normalisation made every binary look modified in earlier runs). The dev
@@ -78,4 +79,38 @@ jobs:
           path: |
             build/**/*.apk
             build/*.apk
+          if-no-files-found: warn
+
+  build-release:
+    name: Build release APK (Unity 6, IL2CPP/ARM64, non-development)
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: false
+      - uses: actions/cache@v4
+        with:
+          path: |
+            Library
+          key: unity-library-${{ runner.os }}-${{ hashFiles('Packages/manifest.json', 'ProjectSettings/ProjectVersion.txt') }}
+      - uses: game-ci/unity-builder@v4
+        with:
+          targetPlatform: Android
+          androidTargetSdkVersion: 34
+          androidSymbolType: none
+          versioning: None
+          allowDirtyBuild: true
+          buildName: Crossroads
+          # release pass: the project's own build method - Configure() (IL2CPP Master, stripping,
+          # Vulkan+GLES3, ASTC, Balanced tier) + BuildOptions.None (no dev/profiler hooks).
+          buildMethod: Crossroads.EditorTools.AndroidDevBuild.BuildReleaseApk
+          customParameters: -nographics
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Crossroads-Release-APK
+          path: |
+            Builds/Crossroads.apk
+            build/**/*.apk
           if-no-files-found: warn

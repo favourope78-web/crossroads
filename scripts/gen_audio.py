@@ -1,15 +1,21 @@
 #!/usr/bin/env python3
 """
-CROSSROADS audio pass - procedural placeholder SFX / ambient loops / music beds.
+CROSSROADS audio pass - 27 clips: 16 recorded CC0 SFX + 11 clearly-marked procedural beds.
 
-The repo shipped with ZERO audio files. Final audio (recorded foley, composed score) cannot
-be produced here, so every clip is synthesised deterministically (numpy, fixed seed) in the
-sanctioned palette: Ember = warm crackle, Tide = glassy shimmer, Stone = low impact,
-Hollow = detuned drone, UI = short cyan blips. Everything is 22.05 kHz mono 16-bit WAV
-(small, decodes cheaply on Android); metas set Vorbis + DecompressOnLoad for SFX,
-CompressedInMemory for ambient loops, Streaming for music beds.
+Release state (see reference/audio_source/AUDIO_STATUS.json, written by this script):
+  * RECORDED (CC0, Kenney - reference/audio_source/*.ogg + SOURCES.json/LICENSE.txt): every
+    combat / UI / dialogue / save / transition / objective / unlock one-shot. Decoded with
+    ffmpeg (or python soundfile), silence-trimmed, peak-normalised, resampled to 22.05 kHz mono.
+    A missing recording or decoder is a hard error (CROSSROADS_AUDIO_ALLOW_FALLBACK=1 overrides
+    for local iteration and records the substitution as a placeholder).
+  * PROCEDURAL PLACEHOLDERS (the only remaining ones): the four Fracture ability palettes
+    (Ember crackle / Tide shimmer / Stone impact / Hollow drone), 4 ambient loops and 3 music
+    beds - no licensed recording fits them, so they are synthesised deterministically (numpy,
+    per-clip seed) until composed audio exists. They are listed in AUDIO_STATUS.json.
+Everything is 22.05 kHz mono 16-bit WAV (small, decodes cheaply on Android); metas set Vorbis +
+DecompressOnLoad for SFX, CompressedInMemory for ambient loops, Streaming for music beds.
 
-Outputs (idempotent, registry-tracked GUIDs 0x300..):
+Outputs (idempotent - byte-identical on every run, registry-tracked GUIDs 0x300..):
   Assets/_Project/Audio/SFX/sfx_*.wav       one-shots (mono)
   Assets/_Project/Audio/Ambient/amb_*.wav   seamless 8 s loops
   Assets/_Project/Audio/Music/mus_*.wav     seamless 8-bar placeholder beds

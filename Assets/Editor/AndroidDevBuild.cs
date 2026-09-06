@@ -2,9 +2,10 @@
 // CROSSROADS Android development-APK builder (task 15). Editor-only script.
 //
 // One-click: Unity menu  Build -> CROSSROADS Dev APK (Android)
+//                        Build -> CROSSROADS Release APK (Android)   (release pass)
 // Batchmode: Unity -batchmode -projectPath <repo> -executeMethod
-//            Crossroads.EditorTools.AndroidDevBuild.BuildDevApk -quit
-//            [-logFile build/android-build.log]
+//            Crossroads.EditorTools.AndroidDevBuild.BuildDevApk|BuildReleaseApk -quit
+//            [-logFile Builds/android-build.log]
 //
 // Configure() enforces EVERY Android-relevant player setting programmatically
 // (the YAML seed in ProjectSettings/ is belt-and-braces; this is authoritative),
@@ -21,6 +22,7 @@ namespace Crossroads.EditorTools
     public static class AndroidDevBuild
     {
         private const string ApkPath = "Builds/CrossroadsDev.apk";
+        private const string ReleaseApkPath = "Builds/Crossroads.apk";
 
         public static void Configure()
         {
@@ -79,9 +81,18 @@ namespace Crossroads.EditorTools
         }
 
         [MenuItem("Build/CROSSROADS Dev APK (Android)")]
-        public static void BuildDevApk()
+        public static void BuildDevApk() { BuildApk(false); }
+
+        /// <summary>Release-pass entry point: identical player settings, NON-development build
+        /// (no profiler hook, no debug symbols, IL2CPP Master + stripping as configured above).
+        /// Batchmode: -executeMethod Crossroads.EditorTools.AndroidDevBuild.BuildReleaseApk</summary>
+        [MenuItem("Build/CROSSROADS Release APK (Android)")]
+        public static void BuildReleaseApk() { BuildApk(true); }
+
+        private static void BuildApk(bool release)
         {
             Configure();
+            string apkPath = release ? ReleaseApkPath : ApkPath;
 
             // scene list = the prototype scene (scene GUID comes from the generator registry)
             var sceneGuids = new[]
@@ -92,7 +103,7 @@ namespace Crossroads.EditorTools
             for (int i = 0; i < sceneGuids.Length; i++) scenes[i] = new EditorBuildSettingsScene(sceneGuids[i], true);
             EditorBuildSettings.scenes = scenes;
 
-            string abs = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), ApkPath));
+            string abs = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), apkPath));
             Directory.CreateDirectory(Path.GetDirectoryName(abs));
 
             var options = new BuildPlayerOptions
@@ -100,13 +111,13 @@ namespace Crossroads.EditorTools
                 scenes = new[] { "Assets/Scenes/Prototype/FirstLocation.unity" },
                 locationPathName = abs,
                 target = BuildTarget.Android,
-                options = BuildOptions.Development | BuildOptions.ConnectWithProfiler
+                options = release ? BuildOptions.None : (BuildOptions.Development | BuildOptions.ConnectWithProfiler)
             };
 
             var report = BuildPipeline.BuildPlayer(options);
             if (report.summary.result == UnityEditor.Build.Reporting.BuildResult.Succeeded)
             {
-                Debug.Log("[CROSSROADS] DEV APK BUILT: " + abs + " (" + report.summary.totalSize / (1024 * 1024) + " MB)");
+                Debug.Log("[CROSSROADS] " + (release ? "RELEASE" : "DEV") + " APK BUILT: " + abs + " (" + report.summary.totalSize / (1024 * 1024) + " MB)");
                 EditorApplication.Exit(0);
             }
             else
