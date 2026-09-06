@@ -26,6 +26,13 @@ namespace Crossroads.UI
         private Text _hint;
         private Text _timer;
         private int _shownTenths = -1;
+        private CanvasGroup _sheetGroup;      // sheet slide/fade (unscaled, 0.18 s)
+        private Image _speakerStrip;          // accent strip coloured by speaker line
+        private float _slide;                 // 0 hidden .. 1 shown
+        private float _slideTarget;
+        private float _choiceReveal;          // staggered decision-card reveal timer
+        private const float SlideSeconds = 0.18f;
+        private const float CardStagger = 0.07f;
         private Button _advanceTarget;
         private RectTransform _choiceArea;
         private readonly List<Button> _choiceButtons = new List<Button>();
@@ -55,6 +62,19 @@ namespace Crossroads.UI
             _sheet.offsetMin = new Vector2(36f, 28f);
             _sheet.offsetMax = new Vector2(-36f, 0f);
             _sheet.sizeDelta = new Vector2(0f, 400f);
+
+            _sheetGroup = sheetPanel.gameObject.AddComponent<CanvasGroup>();
+            _sheetGroup.alpha = 0f;
+
+            // speaker accent strip (left edge): Ari cyan, Mara tide, Dax stone, Archivist white, Choir hollow
+            _speakerStrip = RuntimeMenuFactory.CreatePanel("SpeakerStrip", _sheet, RuntimeMenuFactory.Accent);
+            var strip = _speakerStrip.rectTransform;
+            strip.anchorMin = new Vector2(0f, 0f);
+            strip.anchorMax = new Vector2(0f, 1f);
+            strip.pivot = new Vector2(0f, 0.5f);
+            strip.offsetMin = new Vector2(0f, 0f);
+            strip.offsetMax = new Vector2(10f, 0f);
+            _speakerStrip.raycastTarget = false;
 
             // tap surface: whole sheet advances the dialogue (disabled in decision mode)
             var tap = RuntimeMenuFactory.CreateButton("TapToAdvance", _sheet, "", 12, new Color(0f, 0f, 0f, 0f), Color.white);
@@ -129,6 +149,9 @@ namespace Crossroads.UI
             ClearChoices();
             _sheet.gameObject.SetActive(true);
             _sheet.sizeDelta = new Vector2(0f, 400f);
+            _slideTarget = 1f;
+            if (_slide <= 0f) ApplySlide(0f);
+            if (_speakerStrip != null) _speakerStrip.color = RuntimeMenuFactory.Accent;
             SetBodyMode(false);
             _speaker.text = "";
             _titleChip.text = string.IsNullOrEmpty(e.npcTitle) ? "" : "· " + e.npcTitle;
@@ -143,6 +166,9 @@ namespace Crossroads.UI
             _decisionMode = false;
             ClearChoices();
             _speaker.text = string.IsNullOrEmpty(e.speaker) ? "" : e.speaker;
+            Color line = SpeakerColor(e.speaker);
+            _speaker.color = line;
+            if (_speakerStrip != null) _speakerStrip.color = line;
             _titleChip.text = "";
             _timer.text = "";
             _hint.text = e.hasNext ? "tap to continue  ▼" : "tap  ▼";
@@ -159,6 +185,9 @@ namespace Crossroads.UI
             _timeLimit = e.timeLimitSeconds;
             _timeoutIndex = e.timeoutOptionIndex;
             _speaker.text = "◆  The decision is yours";
+            _speaker.color = RuntimeMenuFactory.Stone;
+            if (_speakerStrip != null) _speakerStrip.color = RuntimeMenuFactory.Stone;
+            _choiceReveal = 0f;
             _hint.text = "";
             _shownTenths = -1;
             _timer.text = e.timeLimitSeconds > 0f ? "⏱ " + e.timeLimitSeconds.ToString("0.0") : "";
@@ -171,7 +200,32 @@ namespace Crossroads.UI
         {
             _running = false;
             _decisionMode = false;
-            HideSilently();
+            _slideTarget = 0f; // Update slides the sheet out, then deactivates it
+        }
+
+        /// <summary>Speaker -> line colour (UI parity with the character palette; narration = cyan).</summary>
+        public static Color SpeakerColor(string speaker)
+        {
+            if (string.IsNullOrEmpty(speaker)) return RuntimeMenuFactory.Accent;
+            string s = speaker.ToLowerInvariant();
+            if (s.StartsWith("ari")) return RuntimeMenuFactory.Accent;
+            if (s.StartsWith("mara")) return RuntimeMenuFactory.Tide;
+            if (s.StartsWith("dax")) return RuntimeMenuFactory.Stone;
+            if (s.StartsWith("archivist") || s.StartsWith("system")) return RuntimeMenuFactory.TextMain;
+            if (s.StartsWith("kael")) return RuntimeMenuFactory.Ember;
+            if (s.StartsWith("odalys")) return RuntimeMenuFactory.Tide;
+            if (s.StartsWith("bran")) return RuntimeMenuFactory.Stone;
+            if (s.Contains("choir") || s.Contains("hollow") || s.Contains("cantor") || s.Contains("warden")) return new Color(0.62f, 0.32f, 0.78f, 1f);
+            return RuntimeMenuFactory.TextDim;
+        }
+
+        private void ApplySlide(float t)
+        {
+            _slide = t;
+            if (_sheetGroup != null) _sheetGroup.alpha = t;
+            // ease-out slide from 60 px below the resting offset
+            float ease = 1f - (1f - t) * (1f - t);
+            _sheet.offsetMin = new Vector2(36f, 28f - 60f * (1f - ease));
         }
 
         // ------------------------------------------------------------------ input
@@ -185,6 +239,27 @@ namespace Crossroads.UI
 
         private void Update()
         {
+            // sheet slide/fade (unscaled so a paused game still settles the UI)
+            if (_slide != _slideTarget && _sheet.gameObject.activeSelf)
+            {
+                float step = (Time.unscaledDeltaTime > 0f ? Time.unscaledDeltaTime : 0.016f) / SlideSeconds;
+                float next = _slideTarget > _slide ? Mathf.Min(_slideTarget, _slide + step) : Mathf.Max(_slideTarget, _slide - step);
+                ApplySlide(next);
+                if (_slide <= 0f && _slideTarget <= 0f) _sheet.gameObject.SetActive(false);
+            }
+            // decision cards reveal one after another (top to bottom)
+            if (_decisionMode && _choiceButtons.Count > 0 && _choiceReveal < _choiceButtons.Count * CardStagger + 0.01f)
+            {
+                _choiceReveal += Time.unscaledDeltaTime > 0f ? Time.unscaledDeltaTime : 0.016f;
+                for (int i = 0; i < _choiceButtons.Count; i++)
+                {
+                    var b = _choiceButtons[i];
+                    if (b == null) continue;
+                    bool on = _choiceReveal >= i * CardStagger;
+                    if (b.gameObject.activeSelf != on) b.gameObject.SetActive(on);
+                }
+            }
+
             if (_decisionMode && _timeLimit > 0f && !_timedOut)
             {
                 _timeLimit -= Time.deltaTime;
@@ -246,6 +321,7 @@ namespace Crossroads.UI
                 rect.offsetMax = new Vector2(-44f, y + slotH);
                 string optionId = choice.optionId;
                 btn.onClick.AddListener(() => OnChoice(optionId));
+                if (i > 0) btn.gameObject.SetActive(false); // revealed by the stagger in Update
                 _choiceButtons.Add(btn);
             }
         }
@@ -320,6 +396,8 @@ namespace Crossroads.UI
 
         public void HideSilently()
         {
+            _slideTarget = 0f;
+            ApplySlide(0f);
             _sheet.gameObject.SetActive(false);
             _running = false;
         }

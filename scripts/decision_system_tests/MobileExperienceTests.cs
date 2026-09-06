@@ -180,6 +180,15 @@ namespace Crossroads.Tests
             var fader = new LocationTransitionFader();
             Check(!fader.Transitioning, "fader: idle before any arrival");
 
+            // ---- dialogue speaker palette: recurring characters keep their line colour everywhere
+            Check(DialogueUI.SpeakerColor("Mara").g == RuntimeMenuFactory.Tide.g && DialogueUI.SpeakerColor("Mara (older)").b == RuntimeMenuFactory.Tide.b,
+                  "dialogue: Mara -> tide colour in every appearance");
+            Check(DialogueUI.SpeakerColor("Dax").r == RuntimeMenuFactory.Stone.r, "dialogue: Dax -> stone colour");
+            Check(DialogueUI.SpeakerColor("Ari").g == RuntimeMenuFactory.Accent.g, "dialogue: Ari -> accent cyan");
+            Check(DialogueUI.SpeakerColor("").g == RuntimeMenuFactory.Accent.g, "dialogue: narration -> accent cyan");
+            Check(DialogueUI.SpeakerColor("Choir Cantor").b > 0.7f, "dialogue: Choir speakers -> hollow violet");
+            Check(DialogueUI.SpeakerColor("Kael").r == RuntimeMenuFactory.Ember.r, "dialogue: Kael -> ember");
+
             EventBus.Clear();
         }
 

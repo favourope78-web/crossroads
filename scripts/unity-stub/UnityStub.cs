@@ -437,6 +437,12 @@ namespace UnityEngine
 
     public class RuntimeAnimatorController : Object { }
 
+    public class CanvasGroup : Behaviour
+    {
+        public float alpha = 1f;
+        public bool interactable = true;
+        public bool blocksRaycasts = true;
+    }
     public class AudioListener : Behaviour { public static float volume = 1f; }
     public class AudioClip : Object { public float length = 1f; }
     public class AudioSource : Behaviour
@@ -554,13 +560,6 @@ namespace UnityEngine.UI
     }
 
     public class GraphicRaycaster : UnityEngine.Behaviour { }
-
-    public class CanvasGroup : UnityEngine.Behaviour
-    {
-        public float alpha = 1f;
-        public bool interactable = true;
-        public bool blocksRaycasts = true;
-    }
 
     // world expansion phase: environment application (locations) uses the real Unity APIs
     // below; the headless stub mirrors just the surface the prototype touches.

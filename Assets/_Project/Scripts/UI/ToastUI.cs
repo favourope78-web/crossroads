@@ -14,8 +14,13 @@ namespace Crossroads.UI
     public class ToastUI : MonoBehaviour
     {
         private UnityEngine.UI.Text _text;
+        private UnityEngine.UI.Image _panel;
+        private CanvasGroup _group;
         private Coroutine _fade;
         private string _pendingBody = "";
+        private float _lift;                 // 0 hidden .. 1 resting
+        private float _liftTarget;
+        private const float LiftSeconds = 0.16f;
 
         public static ToastUI Attach(RectTransform parent)
         {
@@ -35,6 +40,10 @@ namespace Crossroads.UI
             rect.offsetMax = new Vector2(560f, 700f);
             _text = RuntimeMenuFactory.CreateText("Text", rect, "", 30, RuntimeMenuFactory.TextMain, TextAnchor.MiddleCenter);
             RuntimeMenuFactory.Stretch(_text.rectTransform, 28f, 28f, 14f, 14f);
+            _panel = panel;
+            _group = panel.gameObject.AddComponent<CanvasGroup>();
+            _group.alpha = 0f;
+            _group.blocksRaycasts = false;
             panel.gameObject.SetActive(false);
         }
 
@@ -91,14 +100,9 @@ namespace Crossroads.UI
             if (_text == null) return;
             _text.text = message;
             _text.color = RuntimeMenuFactory.TextMain;
-            if (gameObject.activeSelf)
-            {
-                if (_fade != null) StopCoroutine(_fade);
-            }
-            else
-            {
-                gameObject.SetActive(true);
-            }
+            if (_panel != null && !_panel.gameObject.activeSelf) _panel.gameObject.SetActive(true);
+            if (_fade != null) StopCoroutine(_fade);
+            _liftTarget = 1f;
             _fade = StartCoroutine(FadeAndHide());
         }
 
@@ -107,8 +111,21 @@ namespace Crossroads.UI
             yield return new WaitForSecondsRealtime(3.4f);
             if (_text != null) _text.color = RuntimeMenuFactory.TextDim;
             yield return new WaitForSecondsRealtime(0.4f);
-            gameObject.SetActive(false);
+            _liftTarget = 0f; // Update fades/drops the card, then deactivates it
             _fade = null;
+        }
+
+        private void Update()
+        {
+            if (_group == null || _lift == _liftTarget) return;
+            float step = (Time.unscaledDeltaTime > 0f ? Time.unscaledDeltaTime : 0.016f) / LiftSeconds;
+            _lift = _liftTarget > _lift ? Mathf.Min(_liftTarget, _lift + step) : Mathf.Max(_liftTarget, _lift - step);
+            float ease = 1f - (1f - _lift) * (1f - _lift);
+            _group.alpha = _lift;
+            var rect = _panel.rectTransform;
+            rect.offsetMin = new Vector2(-560f, 440f - 40f * (1f - ease));
+            rect.offsetMax = new Vector2(560f, 700f - 40f * (1f - ease));
+            if (_lift <= 0f && _liftTarget <= 0f) _panel.gameObject.SetActive(false);
         }
     }
 }

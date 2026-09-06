@@ -45,7 +45,9 @@ ensure("Env_Tidewell.prefab", g32(0xc5))
 CAMPAIGN_MATS = ["M_Char_Mara", "M_Char_Mara_Dress", "M_Char_Mara_Hoodie", "M_Char_Dax_Blazer", "M_Char_Dax_Hair", "M_Char_Dax_Tee",
                  "M_Char_Kael", "M_Char_Odalys", "M_Char_Bran", "M_Char_Archivist", "M_Char_Hair_Silver",
                  "M_Choir_Grunt", "M_Choir_Bruiser", "M_Choir_Elite", "M_Choir_Hit", "M_Boss_Echo", "M_Boss_Choirmaster", "M_Hollow",
-                 "M_Env_Summer", "M_Env_Water", "M_Env_Ruin", "M_Env_Rebuilt", "M_Env_Contested"]
+                 "M_Env_Summer", "M_Env_Water", "M_Env_Ruin", "M_Env_Rebuilt", "M_Env_Contested",
+                 # polish pass: canonical skin / tops / plates (0xe7..0xea)
+                 "M_Char_Skin", "M_Char_White_Top", "M_Char_Trousers", "M_Char_Archivist_Plate"]
 for i, m in enumerate(CAMPAIGN_MATS): ensure(m, g32(0xd0 + i))
 CAMPAIGN_KITS = ["LastSummer", "FractureNight", "UnderSpire", "InterludeBecoming", "ContestedDocks", "Sanctuary", "LongWall",
                  "DaxArena", "InterludeReckoning", "OldMarket", "SpireAscent", "Choirmaster", "Epilogue"]
@@ -838,7 +840,14 @@ def child_renderer_id(children_info, name):
 mara_gid, mara_ids, mara_children = emit_char_root("Mara_NPC", ["collider", "npc", "fate"],
     (6.5, 0, -8), (0, 180, 0), 1, [
     ("Body", "M_Npc_Mara", CAPSULE, (0, 0.78, 0), (0.55, 0.72, 0.55)),
-    ("Head", "M_Npc_Mara", SPHERE, (0, 1.62, 0), (0.34, 0.34, 0.34)),
+    ("Head", "M_Char_Skin", SPHERE, (0, 1.62, 0), (0.34, 0.34, 0.34)),
+    # canonical Mara silhouette (REF-02): dark hair mass + high bun/tail, grey hood, white top, dark trousers
+    ("Hair", "M_Char_Mara", SPHERE, (0, 1.72, -0.04), (0.36, 0.26, 0.36)),
+    ("Hair_Bun", "M_Char_Mara", SPHERE, (0, 1.86, -0.10), (0.22, 0.20, 0.22)),
+    ("Hair_Tail", "M_Char_Mara", CAPSULE, (0, 1.62, -0.20), (0.12, 0.22, 0.12)),
+    ("Hood", "M_Char_Mara_Hoodie", SPHERE, (0, 1.42, -0.16), (0.40, 0.22, 0.34)),
+    ("Top", "M_Char_White_Top", CUBE, (0, 1.05, 0.20), (0.24, 0.40, 0.06)),
+    ("Legs", "M_Char_Trousers", CUBE, (0, 0.40, 0), (0.38, 0.80, 0.30)),
 ])
 emit_capsulecollider(mara_ids["collider"], mara_gid, 0.35, 1.7, (0, 0.85, 0))
 emit_monobehaviour(mara_ids["npc"], mara_gid, REG["NpcInteractable.cs"],
@@ -862,9 +871,9 @@ m_stone = emit_marker("Seq_Stone_Marker", "M_Seq_Stone", (0, 0, 3.2))
 # ---- tide bystanders (the twins; exist only on the Tide path) ----
 by_gid, by_ids, _ = emit_char_root("Seq_Tide_Bystanders", [], (14.5, 0, 0), (0, -90, 0), 0, [
     ("Civilian_1", "M_Npc_Civilian", CAPSULE, (0, 0.78, 0), (0.5, 0.66, 0.5)),
-    ("Civilian_1_Head", "M_Npc_Civilian", SPHERE, (0, 1.5, 0), (0.30, 0.30, 0.30)),
+    ("Civilian_1_Head", "M_Char_Skin", SPHERE, (0, 1.5, 0), (0.30, 0.30, 0.30)),
     ("Civilian_2", "M_Npc_Civilian", CAPSULE, (1.1, 0.78, 0), (0.5, 0.62, 0.5)),
-    ("Civilian_2_Head", "M_Npc_Civilian", SPHERE, (1.1, 1.44, 0), (0.28, 0.28, 0.28)),
+    ("Civilian_2_Head", "M_Char_Skin", SPHERE, (1.1, 1.44, 0), (0.28, 0.28, 0.28)),
 ])
 
 # ---- story bootstrappers (services + UI) ----
@@ -981,7 +990,9 @@ emit_monobehaviour(shrine_ids["shrine"], shrine_gid, REG["StoryEventInteractable
 sera_gid, sera_ids, sera_children = emit_char_root("Sera_NPC", ["collider", "npc", "fate"],
     (17.5, 0, 2.5), (0, -90, 0), 1, [
     ("Body", "M_Npc_Civilian", CAPSULE, (0, 0.72, 0), (0.5, 0.66, 0.5)),
-    ("Head", "M_Npc_Civilian", SPHERE, (0, 1.5, 0), (0.3, 0.3, 0.3)),
+    ("Head", "M_Char_Skin", SPHERE, (0, 1.5, 0), (0.3, 0.3, 0.3)),
+    ("Hair", "M_Char_Dax_Hair", SPHERE, (0, 1.6, -0.04), (0.32, 0.22, 0.32)),   # Sera: chestnut civilian kit (REF-04/07)
+    ("Legs", "M_Char_Trousers", CUBE, (0, 0.36, 0), (0.34, 0.72, 0.26)),
 ])
 emit_capsulecollider(sera_ids["collider"], sera_gid, 0.32, 1.6, (0, 0.8, 0))
 emit_monobehaviour(sera_ids["npc"], sera_gid, REG["NpcInteractable.cs"],
@@ -1195,9 +1206,9 @@ emit_monobehaviour(crate_ids["action"], crate_gid, REG["WorldActionInteractable.
 # ---- Calm twins (spawned when the keepsake is returned; replaces the anxious pair) ----
 calm_gid, _, _ = emit_char_root("Seq_Tide_Calm", [], (14.5, 0, 0), (0, -90, 0), 0, [
     ("Civilian_1", "M_Npc_Civilian", CAPSULE, (0, 0.40, 0), (0.5, 0.33, 0.5)),
-    ("Civilian_1_Head", "M_Npc_Civilian", SPHERE, (0, 0.94, 0), (0.30, 0.30, 0.30)),
+    ("Civilian_1_Head", "M_Char_Skin", SPHERE, (0, 0.94, 0), (0.30, 0.30, 0.30)),
     ("Civilian_2", "M_Npc_Civilian", CAPSULE, (1.1, 0.40, 0), (0.5, 0.31, 0.5)),
-    ("Civilian_2_Head", "M_Npc_Civilian", SPHERE, (1.1, 0.90, 0), (0.28, 0.28, 0.28)),
+    ("Civilian_2_Head", "M_Char_Skin", SPHERE, (1.1, 0.90, 0), (0.28, 0.28, 0.28)),
 ])
 
 # ---- Twins return point (child of the tide bystanders; exists when they do) ----

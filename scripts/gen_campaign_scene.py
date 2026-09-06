@@ -69,6 +69,11 @@ def build(g):
         "M_Env_Ruin":        ((0.30, 0.26, 0.22), (0.0, 0.0, 0.0)),         # ruined dressing
         "M_Env_Rebuilt":     ((0.78, 0.66, 0.48), (0.30, 0.20, 0.08)),      # rebuilt lantern wood
         "M_Env_Contested":   ((0.36, 0.24, 0.30), (0.25, 0.05, 0.20)),      # Choir graffiti tint
+        # polish pass: canonical skin + civilian tops (CHARACTER_REFERENCE colour table)
+        "M_Char_Skin":       ((0.941, 0.886, 0.847), (0.0, 0.0, 0.0)),      # REF porcelain/fair #F0E2D8
+        "M_Char_White_Top":  ((0.945, 0.941, 0.929), (0.02, 0.02, 0.02)),   # REF white tee/top #F1F0ED
+        "M_Char_Trousers":   ((0.16, 0.16, 0.19), (0.0, 0.0, 0.0)),         # REF dark trousers
+        "M_Char_Archivist_Plate": ((0.659, 0.769, 0.831), (0.10, 0.20, 0.24)), # REF-05 plates #A8C4D4 semi-matte
     }
     MAT_DIR = os.path.join(ROOT, "Assets/Game/Environment/Materials")
     seq = open(os.path.join(MAT_DIR, "M_Seq_Tide.mat")).read()
@@ -157,13 +162,65 @@ BoxCollider:
         if entity_key: entity_bindings.append((entity_key, gid, active))
         return gid
 
+    # ---- canonical silhouettes (CHARACTER_REFERENCE REF-02/03/05 + mentors) ----
+    # Every appearance of a recurring character is built from the SAME recipe so Mara in the
+    # prologue, C2 and C3 reads as one person (hair mass, accessory, outfit layer); only the
+    # outfit material changes where the reference says it does (Mara dress -> hoodie).
+    def rig_mara(h, outfit):
+        hoodie = outfit == "M_Char_Mara_Hoodie"
+        prims = [("Hair_Bun", "M_Char_Mara", SPHERE, (0, 1.86 * h, -0.10), (0.22, 0.20, 0.22)),          # high bun/ponytail
+                 ("Hair_Tail", "M_Char_Mara", CAPSULE, (0, 1.62 * h, -0.20), (0.12, 0.22 * h, 0.12)),
+                 ("Legs", "M_Char_Trousers" if hoodie else outfit, CUBE, (0, 0.40 * h, 0), (0.38, 0.80 * h, 0.30))]
+        if hoodie:
+            prims.append(("Hood", "M_Char_Mara_Hoodie", SPHERE, (0, 1.42 * h, -0.16), (0.40, 0.22, 0.34)))
+            prims.append(("Top", "M_Char_White_Top", CUBE, (0, 1.05 * h, 0.20), (0.24, 0.40 * h, 0.06)))
+        else:
+            prims.append(("Skirt", outfit, CUBE, (0, 0.62 * h, 0), (0.62, 0.36 * h, 0.52)))
+        return prims
+
+    def rig_dax(h):
+        return [("Hair_Sweep", "M_Char_Dax_Hair", SPHERE, (0.06, 1.80 * h, 0.04), (0.30, 0.16, 0.34)),   # side-swept volume
+                ("Glasses", "M_Hall_Glazing", CUBE, (0, 1.62 * h, 0.17), (0.32, 0.06, 0.06)),
+                ("Glasses_Bridge", "M_Hall_Metal", CUBE, (0, 1.62 * h, 0.17), (0.34, 0.02, 0.02)),
+                ("Tee", "M_Char_White_Top", CUBE, (0, 1.02 * h, 0.21), (0.26, 0.46 * h, 0.06)),
+                ("Legs", "M_Char_Trousers", CUBE, (0, 0.40 * h, 0), (0.36, 0.80 * h, 0.28))]
+
+    def rig_archivist(h):
+        return [("Hair_Fall", "M_Char_Hair_Silver", CAPSULE, (0, 1.05 * h, -0.24), (0.34, 0.95 * h, 0.16)),  # floor-length
+                ("Plate_Chest", "M_Char_Archivist_Plate", CUBE, (0, 1.22 * h, 0.22), (0.42, 0.34 * h, 0.08)),
+                ("Plate_L", "M_Char_Archivist_Plate", SPHERE, (-0.34, 1.42 * h, 0), (0.22, 0.14, 0.22)),
+                ("Plate_R", "M_Char_Archivist_Plate", SPHERE, (0.34, 1.42 * h, 0), (0.22, 0.14, 0.22)),
+                ("Gem_Line", "M_Hall_Holo", CUBE, (0, 1.16 * h, 0.27), (0.05, 0.42 * h, 0.03)),
+                ("Ring_A", "M_Hall_Holo", CUBE, (0, 1.25 * h, -0.45), (1.3, 0.04, 0.04)),                     # holo coils
+                ("Ring_B", "M_Hall_Holo", CUBE, (0, 1.25 * h, -0.45), (0.04, 1.3, 0.04)),
+                ("Ring_C", "M_Hall_Holo", CUBE, (0, 1.25 * h, -0.55), (0.92, 0.92, 0.03))]
+
+    def rig_mentor(h, line):
+        token = {"kael": "M_Seq_Ember", "odalys": "M_Seq_Tide", "bran": "M_Seq_Stone"}[line]
+        return [("Token", token, SPHERE, (0.3, 1.2 * h, 0.2), (0.14, 0.14, 0.14)),
+                ("Coat", {"kael": "M_Char_Kael", "odalys": "M_Char_Odalys", "bran": "M_Char_Bran"}[line], CUBE, (0, 0.72 * h, 0), (0.62, 0.9 * h, 0.5)),
+                ("Legs", "M_Char_Trousers", CUBE, (0, 0.34 * h, 0), (0.36, 0.68 * h, 0.28))]
+
+    CANON = {
+        "mara_young": lambda h, body: rig_mara(h, body), "mara_c2": lambda h, body: rig_mara(h, body),
+        "mara_c3": lambda h, body: rig_mara(h, body), "mara": lambda h, body: rig_mara(h, body),
+        "dax": lambda h, body: rig_dax(h),
+        "archivist": lambda h, body: rig_archivist(h),
+        "kael": lambda h, body: rig_mentor(h, "kael"), "odalys": lambda h, body: rig_mentor(h, "odalys"),
+        "bran": lambda h, body: rig_mentor(h, "bran"),
+    }
+
     def human(name, npc_id, pos, yaw, body_mat, hair_mat, prompt, accent=None, height=1.0, active=1, entity_key=None, extra_prims=None):
-        """<Name>_NPC root: NpcInteractable + NpcAgent, primitives in the character's canonical palette."""
+        """<Name>_NPC root: NpcInteractable + NpcAgent, primitives in the character's canonical palette.
+        Recurring characters (CANON) get their signature silhouette on top of the shared base."""
         prims = [("Body", body_mat, CAPSULE, (0, 0.78 * height, 0), (0.55, 0.72 * height, 0.55)),
-                 ("Head", "M_Npc_Civilian", SPHERE, (0, 1.62 * height, 0), (0.34, 0.34, 0.34)),
+                 ("Head", "M_Char_Skin", SPHERE, (0, 1.62 * height, 0), (0.34, 0.34, 0.34)),
                  ("Hair", hair_mat, SPHERE, (0, 1.72 * height, -0.04), (0.36, 0.26, 0.36))]
-        if accent: prims.append(accent)
-        if extra_prims: prims += extra_prims
+        if npc_id in CANON:
+            prims += CANON[npc_id](height, body_mat)
+        elif accent:
+            prims.append(accent)
+        if extra_prims and npc_id not in CANON: prims += extra_prims
         gid, ids, children = emit_char_root(name, ["collider", "npc", "fate"], pos, (0, yaw, 0), active, prims)
         emit_capsulecollider(ids["collider"], gid, 0.35, 1.7 * height, (0, 0.85 * height, 0))
         emit_monobehaviour(ids["npc"], gid, REG["NpcInteractable.cs"],
