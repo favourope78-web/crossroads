@@ -15,7 +15,6 @@ MonoBehaviour:
   debugShaders:
     debugReplacementPS: {fileID: 0}
     hdrDebugViewPS: {fileID: 0}
-    probeVolumeSamplingDebugComputeShader: {fileID: 0}
   m_RendererFeatures: []
   m_RendererFeatureMap: 
   m_UseNativeRenderPass: 1
@@ -38,7 +37,5 @@ MonoBehaviour:
   m_RenderingMode: 0
   m_DepthPrimingMode: 0
   m_CopyDepthMode: 1
-  m_DepthAttachmentFormat: 0
-  m_DepthTextureFormat: 0
   m_AccurateGbufferNormals: 0
   m_IntermediateTextureMode: 1

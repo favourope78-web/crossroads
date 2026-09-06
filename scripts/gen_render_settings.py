@@ -78,7 +78,6 @@ MonoBehaviour:
   debugShaders:
     debugReplacementPS: {fileID: 0}
     hdrDebugViewPS: {fileID: 0}
-    probeVolumeSamplingDebugComputeShader: {fileID: 0}
   m_RendererFeatures: []
   m_RendererFeatureMap: 
   m_UseNativeRenderPass: 1
@@ -101,8 +100,6 @@ MonoBehaviour:
   m_RenderingMode: 0
   m_DepthPrimingMode: 0
   m_CopyDepthMode: 1
-  m_DepthAttachmentFormat: 0
-  m_DepthTextureFormat: 0
   m_AccurateGbufferNormals: 0
   m_IntermediateTextureMode: 1
 """ % {"script": URP_RENDERER_SCRIPT, "ppd": POSTPROCESS_DATA}
@@ -163,7 +160,6 @@ MonoBehaviour:
   m_AdditionalLightsShadowResolutionTierHigh: 512
   m_ReflectionProbeBlending: 0
   m_ReflectionProbeBoxProjection: 0
-  m_ReflectionProbeAtlas: 0
   m_ShadowDistance: %(shadowdist)s
   m_ShadowCascadeCount: %(cascades)d
   m_Cascade2Split: 0.25
@@ -186,7 +182,6 @@ MonoBehaviour:
   m_SupportsLightLayers: 0
   m_DebugLevel: 0
   m_StoreActionsOptimization: 1
-  m_EnableRenderGraph: 0
   m_UseAdaptivePerformance: 1
   m_ColorGradingMode: 0
   m_ColorGradingLutSize: 16
@@ -497,11 +492,9 @@ def tier(name, shadows, shadow_res_enum, shadow_dist, aniso, lod_bias, mip_limit
     softVegetation: 0
     realtimeReflectionProbes: 0
     billboardsFaceCameraPosition: 0
-    adaptiveVsync: 0
     useLegacyDetailDistribution: 0
     vSyncCount: 0
     realtimeGICPUUsage: 25
-    adaptiveVsyncType: 0
     lodBias: %(lod)s
     maximumLODLevel: 0
     enableLODCrossFade: 1
