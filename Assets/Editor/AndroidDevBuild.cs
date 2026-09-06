@@ -15,6 +15,7 @@
 #if UNITY_EDITOR
 using System.IO;
 using UnityEditor;
+using UnityEditor.Build;   // NamedBuildTarget (Unity 2021.2+; the BuildTargetGroup overloads are obsolete in Unity 6)
 using UnityEngine;
 
 namespace Crossroads.EditorTools
@@ -28,7 +29,7 @@ namespace Crossroads.EditorTools
         {
             PlayerSettings.companyName = "favourope78-web";
             PlayerSettings.productName = "CROSSROADS";
-            PlayerSettings.SetApplicationIdentifier(BuildTargetGroup.Android, "com.favourope78.crossroads");
+            PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Android, "com.favourope78.crossroads");
 
             // orientation: landscape only (third-person action layout is designed wide)
             PlayerSettings.defaultInterfaceOrientation = UIOrientation.LandscapeLeft;
@@ -41,27 +42,27 @@ namespace Crossroads.EditorTools
             // target; IL2CPP + ARM64 (Play requirement), ARMv7 kept for old test phones.
             PlayerSettings.Android.minSdkVersion = AndroidSdkVersions.AndroidApiLevel24;
             PlayerSettings.Android.targetArchitectures = AndroidArchitecture.ARMv7 | AndroidArchitecture.ARM64;
-            PlayerSettings.SetScriptingBackend(BuildTargetGroup.Android, ScriptingImplementation.IL2CPP);
+            PlayerSettings.SetScriptingBackend(NamedBuildTarget.Android, ScriptingImplementation.IL2CPP);
             PlayerSettings.Android.preferredInstallLocation = AndroidPreferredInstallLocation.Auto;
             PlayerSettings.Android.forceSDCardPermission = false;
             PlayerSettings.Android.blitType = AndroidBlitType.Auto;
 
             // input: BOTH handlers (the code compiles under either define; auto-switching
             // between the touch rig and desktop fallbacks works in editor + device)
-            PlayerSettings.activeInputHandling = ActiveInputHandling.Both;
+            SetActiveInputHandling(InputHandlingBoth);
 
             // mobile performance budget (GAME_DESIGN §14): 30 fps floor, no vsync stall
             Application.targetFrameRate = 60;
             QualitySettings.vSyncCount = 0;
 
             // graphics jobs off on Adreno/Mali drivers for stability; URP does the work
-            PlayerSettings.SetMobileMTRendering(BuildTargetGroup.Android, true);
+            PlayerSettings.SetMobileMTRendering(NamedBuildTarget.Android, true);
 
             // ---- production polish pass: performance / size / battery ----
             // IL2CPP "Master" optimises for runtime speed (Release keeps build time down; Master is
             // what ships), C++ compiler config + managed stripping shrink the APK and cold-start time.
-            PlayerSettings.SetIl2CppCompilerConfiguration(BuildTargetGroup.Android, Il2CppCompilerConfiguration.Master);
-            PlayerSettings.SetManagedStrippingLevel(BuildTargetGroup.Android, ManagedStrippingLevel.Medium);
+            PlayerSettings.SetIl2CppCompilerConfiguration(NamedBuildTarget.Android, Il2CppCompilerConfiguration.Master);
+            PlayerSettings.SetManagedStrippingLevel(NamedBuildTarget.Android, ManagedStrippingLevel.Medium);
             PlayerSettings.stripEngineCode = true;
             // Vulkan first (Adreno 6xx/Mali-G7x: fewer draw-call submissions, SRP batcher shines), GLES3 fallback
             PlayerSettings.SetUseDefaultGraphicsAPIs(BuildTarget.Android, false);
@@ -78,6 +79,39 @@ namespace Crossroads.EditorTools
                 if (groupNames[i] == "Balanced") { QualitySettings.SetQualityLevel(i, true); break; }
 
             Debug.Log("[CROSSROADS] Android player settings configured (API24+, ARM64/ARMv7, IL2CPP Master, Vulkan+GLES3, ASTC, landscape)");
+        }
+
+        // "Active Input Handling" has no public PlayerSettings API in any Unity version (6000.0.x
+        // included): it is only the serialized field `activeInputHandler` of ProjectSettings.asset
+        // (0 = Input Manager (Old), 1 = Input System Package (New), 2 = Both), which the Player
+        // Settings inspector - and the Input System package itself - edit through SerializedObject.
+        // The value also drives the ENABLE_LEGACY_INPUT_MANAGER / ENABLE_INPUT_SYSTEM defines, so a
+        // change only takes effect after a script recompile (which Build Automation does anyway).
+        private const int InputHandlingBoth = 2;
+        private const string ActiveInputHandlerProperty = "activeInputHandler";
+
+        private static void SetActiveInputHandling(int mode)
+        {
+            var settingsAsset = AssetDatabase.LoadAllAssetsAtPath("ProjectSettings/ProjectSettings.asset");
+            if (settingsAsset == null || settingsAsset.Length == 0 || settingsAsset[0] == null)
+            {
+                Debug.LogWarning("[CROSSROADS] ProjectSettings.asset not loadable - Active Input Handling left as serialized (expected 2 = Both)");
+                return;
+            }
+            var so = new SerializedObject(settingsAsset[0]);
+            so.UpdateIfRequiredOrScript();
+            var prop = so.FindProperty(ActiveInputHandlerProperty);
+            if (prop == null)
+            {
+                Debug.LogWarning("[CROSSROADS] PlayerSettings has no '" + ActiveInputHandlerProperty + "' property - Active Input Handling left unchanged");
+                return;
+            }
+            if (prop.intValue == mode) return;
+            int previous = prop.intValue;
+            prop.intValue = mode;
+            so.ApplyModifiedPropertiesWithoutUndo();
+            AssetDatabase.SaveAssets();
+            Debug.Log("[CROSSROADS] Active Input Handling changed " + previous + " -> " + mode + " (2 = Both); input defines refresh on the next script compile");
         }
 
         /// <summary>The shipped scene list: the single FirstLocation scene (all rooms live in it).

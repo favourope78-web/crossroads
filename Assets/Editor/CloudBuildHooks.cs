@@ -16,6 +16,7 @@
 using System;
 using System.IO;
 using UnityEditor;
+using UnityEditor.Build;   // NamedBuildTarget
 using UnityEngine;
 
 namespace Crossroads.EditorTools
@@ -49,9 +50,9 @@ namespace Crossroads.EditorTools
                 File.WriteAllText(Path.Combine(dir, "crossroads-build-info.txt"),
                     "CROSSROADS Android build\n" +
                     "unity            : " + Application.unityVersion + "\n" +
-                    "bundle id        : " + PlayerSettings.GetApplicationIdentifier(BuildTargetGroup.Android) + "\n" +
+                    "bundle id        : " + PlayerSettings.GetApplicationIdentifier(NamedBuildTarget.Android) + "\n" +
                     "version          : " + PlayerSettings.bundleVersion + " (code " + PlayerSettings.Android.bundleVersionCode + ")\n" +
-                    "scripting backend: " + PlayerSettings.GetScriptingBackend(BuildTargetGroup.Android) + "\n" +
+                    "scripting backend: " + PlayerSettings.GetScriptingBackend(NamedBuildTarget.Android) + "\n" +
                     "architectures    : " + PlayerSettings.Android.targetArchitectures + "\n" +
                     "min sdk          : " + PlayerSettings.Android.minSdkVersion + "\n" +
                     "development      : " + EditorUserBuildSettings.development + "\n" +
