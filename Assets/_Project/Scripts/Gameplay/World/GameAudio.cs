@@ -45,6 +45,8 @@ namespace Crossroads.Gameplay
         public AudioClip transition;
         public AudioClip dialogueOpen;
         public AudioClip footstep;
+        public AudioClip objectiveChime;     // objective started / completed
+        public AudioClip abilityUnlock;      // new ability line unlocked
 
         [Header("Ambient beds (looping)")]
         public AudioClip ambHall;
@@ -110,7 +112,10 @@ namespace Crossroads.Gameplay
             EventBus.Subscribe<EnemyStateChangedEvent>(OnEnemyState);
             EventBus.Subscribe<AbilityUsedEvent>(OnAbility);
             EventBus.Subscribe<DialogueStartedEvent>(OnDialogueStarted);
+            EventBus.Subscribe<ObjectiveChangedEvent>(OnObjective);
+            EventBus.Subscribe<AbilityUnlockedEvent>(OnAbilityUnlocked);
             EventBus.Subscribe<DecisionResolvedEvent>(OnDecisionResolved);
+            EventBus.Subscribe<DecisionPromptEvent>(OnDecisionPrompt);
             EventBus.Subscribe<SaveCompletedEvent>(OnSaved);
             EventBus.Subscribe<LocationArrivedEvent>(OnArrived);
             EventBus.Subscribe<LocationDepartedEvent>(OnDeparted);
@@ -125,7 +130,10 @@ namespace Crossroads.Gameplay
             EventBus.Unsubscribe<EnemyStateChangedEvent>(OnEnemyState);
             EventBus.Unsubscribe<AbilityUsedEvent>(OnAbility);
             EventBus.Unsubscribe<DialogueStartedEvent>(OnDialogueStarted);
+            EventBus.Unsubscribe<ObjectiveChangedEvent>(OnObjective);
+            EventBus.Unsubscribe<AbilityUnlockedEvent>(OnAbilityUnlocked);
             EventBus.Unsubscribe<DecisionResolvedEvent>(OnDecisionResolved);
+            EventBus.Unsubscribe<DecisionPromptEvent>(OnDecisionPrompt);
             EventBus.Unsubscribe<SaveCompletedEvent>(OnSaved);
             EventBus.Unsubscribe<LocationArrivedEvent>(OnArrived);
             EventBus.Unsubscribe<LocationDepartedEvent>(OnDeparted);
@@ -181,7 +189,17 @@ namespace Crossroads.Gameplay
 
         private void OnDefeated(CombatantDefeatedEvent e)
         {
-            if (!e.isPlayer) PlayOneShot(enemyDefeat, 0.9f, Vary(0.05f));
+            if (!e.isPlayer) { PlayOneShot(enemyDefeat, 0.9f, Vary(0.05f)); return; }
+            // player down: heavy low hit + the music falls back to calm (the respawn plays the transition)
+            PlayOneShot(playerHurt, 1f, 0.72f);
+            PlayOneShot(enemyDefeat, 0.6f, 0.6f);
+            SetMusic(MusicState.Calm, false);
+        }
+
+        private void OnDecisionPrompt(DecisionPromptEvent e)
+        {
+            // a decision opens: soft confirm ping (timed prompts get a slightly higher, urgent pitch)
+            PlayOneShot(uiConfirm, 0.55f, e.timeLimitSeconds > 0f ? 1.12f : 1f);
         }
 
         private void OnEnemyState(EnemyStateChangedEvent e)
@@ -236,6 +254,21 @@ namespace Crossroads.Gameplay
         }
 
         private void OnDialogueStarted(DialogueStartedEvent e) { PlayOneShot(dialogueOpen, 0.7f, 1f); }
+        private void OnAbilityUnlocked(AbilityUnlockedEvent e) { PlayOneShot(abilityUnlock, 0.9f, 1f); }
+        private void OnObjective(ObjectiveChangedEvent e)
+        {
+            if (!ObjectiveChimes(e.phase, e.previousPhase)) return;
+            PlayOneShot(objectiveChime, 0.7f, e.phase == ObjectivePhase.Completed ? 1f : 0.92f);
+        }
+
+        /// <summary>Only phase entries the player should notice chime: a new objective (Active) and
+        /// its completion. Progress ticks and failures stay silent here (the HUD + decision-lock
+        /// cover them) so back-to-back state churn never stacks stings.</summary>
+        public static bool ObjectiveChimes(ObjectivePhase phase, ObjectivePhase previous)
+        {
+            if (phase == previous) return false;
+            return phase == ObjectivePhase.Active || phase == ObjectivePhase.Completed;
+        }
         private void OnDecisionResolved(DecisionResolvedEvent e) { PlayOneShot(decisionLock, 0.9f, 1f); }
         private void OnSaved(SaveCompletedEvent e) { if (e.ok) PlayOneShot(saveDone, 0.5f, 1f); }
         private void OnDeparted(LocationDepartedEvent e) { PlayOneShot(transition, 0.7f, 1f); }

@@ -359,26 +359,73 @@ AudioImporter:
   assetBundleVariant: 
 """
 
+# ---------------------------------------------------------------- recorded sources (release pass P4)
+# Production SFX come from CC0 recordings staged in reference/audio_source (Kenney.nl Impact Sounds /
+# RPG Audio / Interface Sounds - see SOURCES.json + LICENSE.txt there). They are decoded with ffmpeg
+# to the project's 22.05 kHz mono format, trimmed of leading silence, peak-normalised and edge-faded
+# so the runtime mix (GameAudio) is unchanged. Where a recording is missing (or ffmpeg is absent)
+# the procedural recipe below is used instead and the clip is reported as a PLACEHOLDER.
+SRC = os.path.join(ROOT, "reference", "audio_source")
+SOURCES = json.load(open(os.path.join(SRC, "SOURCES.json"))) if os.path.exists(os.path.join(SRC, "SOURCES.json")) else {}
+PLACEHOLDERS = []
+
+
+def recorded(key, fallback, peak=None):
+    """Returns a recipe: decoded recording if present, else the procedural fallback."""
+    def recipe():
+        ogg = os.path.join(SRC, key + ".ogg")
+        if key in SOURCES and os.path.exists(ogg):
+            import subprocess
+            try:
+                raw = subprocess.run(["ffmpeg", "-v", "quiet", "-i", ogg, "-f", "s16le", "-ac", "1", "-ar", str(SR), "-"],
+                                     capture_output=True, check=True).stdout
+                x = np.frombuffer(raw, np.int16).astype(np.float64) / 32768.0
+                # trim leading/trailing silence (-48 dB), keep a 4 ms head
+                nz = np.where(np.abs(x) > 0.004)[0]
+                if len(nz):
+                    x = x[max(0, nz[0] - int(SR * 0.004)):min(len(x), nz[-1] + int(SR * 0.05))]
+                return fade_edges(norm(x, peak or SOURCES[key].get("peak", 0.85)), 4)
+            except (OSError, subprocess.CalledProcessError):
+                pass
+        PLACEHOLDERS.append(key)
+        return fallback()
+    recipe.__name__ = "recorded_" + key
+    return recipe
+
+
+def sfx_objective():        # procedural fallback: two-note rising chime
+    a = sine(660, 0.18) * env(int(SR * 0.18), 0.003, 0.08, 0.3, 0.08)
+    b = sine(990, 0.30) * env(int(SR * 0.30), 0.003, 0.12, 0.3, 0.14)
+    return norm(np.concatenate([a, b]) * 0.8)
+
+
+def sfx_ability_unlock():   # procedural fallback: low bell + shimmer
+    bell = sine(220, 1.1) * env(int(SR * 1.1), 0.002, 0.5, 0.2, 0.5) + 0.4 * sine(440.5, 1.1) * env(int(SR * 1.1), 0.002, 0.3, 0.1, 0.4)
+    return norm(bell * 0.8)
+
+
 CLIPS = [
     # (key, folder, recipe, loadType 0 DecompressOnLoad / 1 CompressedInMemory / 2 Streaming, quality, preload, loadInBackground)
-    ("sfx_attack_swing", "SFX", sfx_attack_swing, 0, 0.6, 1, 0),
-    ("sfx_attack_hit", "SFX", sfx_attack_hit, 0, 0.6, 1, 0),
-    ("sfx_dodge", "SFX", sfx_dodge, 0, 0.6, 1, 0),
-    ("sfx_player_hurt", "SFX", sfx_player_hurt, 0, 0.6, 1, 0),
-    ("sfx_enemy_defeat", "SFX", sfx_enemy_defeat, 0, 0.6, 1, 0),
+    ("sfx_attack_swing", "SFX", recorded("sfx_attack_swing", sfx_attack_swing), 0, 0.6, 1, 0),
+    ("sfx_attack_hit", "SFX", recorded("sfx_attack_hit", sfx_attack_hit), 0, 0.6, 1, 0),
+    ("sfx_dodge", "SFX", recorded("sfx_dodge", sfx_dodge), 0, 0.6, 1, 0),
+    ("sfx_player_hurt", "SFX", recorded("sfx_player_hurt", sfx_player_hurt), 0, 0.6, 1, 0),
+    ("sfx_enemy_defeat", "SFX", recorded("sfx_enemy_defeat", sfx_enemy_defeat), 0, 0.6, 1, 0),
+    # ability palette: no suitable licensed recordings exist for the Fracture lines - designed
+    # synth layers stay (they are the remaining marked audio placeholders, see FINAL_RELEASE_REPORT)
     ("sfx_ability_ember", "SFX", sfx_ability_ember, 0, 0.7, 1, 0),
     ("sfx_ability_tide", "SFX", sfx_ability_tide, 0, 0.7, 1, 0),
     ("sfx_ability_stone", "SFX", sfx_ability_stone, 0, 0.7, 1, 0),
     ("sfx_ability_hollow", "SFX", sfx_ability_hollow, 0, 0.7, 1, 0),
-    ("sfx_ui_tap", "SFX", sfx_ui_tap, 0, 0.5, 1, 0),
-    ("sfx_ui_confirm", "SFX", sfx_ui_confirm, 0, 0.5, 1, 0),
-    ("sfx_decision_lock", "SFX", sfx_decision_lock, 0, 0.7, 1, 0),
-    ("sfx_save", "SFX", sfx_save, 0, 0.5, 1, 0),
-    ("sfx_transition", "SFX", sfx_transition, 0, 0.6, 1, 0),
-    ("sfx_dialogue_open", "SFX", sfx_dialogue_open, 0, 0.5, 1, 0),
-    ("sfx_enemy_alert", "SFX", sfx_enemy_alert, 0, 0.6, 1, 0),
-    ("sfx_enemy_windup", "SFX", sfx_enemy_windup, 0, 0.6, 1, 0),
-    ("sfx_footstep", "SFX", sfx_footstep, 0, 0.5, 1, 0),
+    ("sfx_ui_tap", "SFX", recorded("sfx_ui_tap", sfx_ui_tap), 0, 0.5, 1, 0),
+    ("sfx_ui_confirm", "SFX", recorded("sfx_ui_confirm", sfx_ui_confirm), 0, 0.5, 1, 0),
+    ("sfx_decision_lock", "SFX", recorded("sfx_decision_lock", sfx_decision_lock), 0, 0.7, 1, 0),
+    ("sfx_save", "SFX", recorded("sfx_save", sfx_save), 0, 0.5, 1, 0),
+    ("sfx_transition", "SFX", recorded("sfx_transition", sfx_transition), 0, 0.6, 1, 0),
+    ("sfx_dialogue_open", "SFX", recorded("sfx_dialogue_open", sfx_dialogue_open), 0, 0.5, 1, 0),
+    ("sfx_enemy_alert", "SFX", recorded("sfx_enemy_alert", sfx_enemy_alert), 0, 0.6, 1, 0),
+    ("sfx_enemy_windup", "SFX", recorded("sfx_enemy_windup", sfx_enemy_windup), 0, 0.6, 1, 0),
+    ("sfx_footstep", "SFX", recorded("sfx_footstep", sfx_footstep), 0, 0.5, 1, 0),
     ("amb_hall", "Ambient", amb_hall, 1, 0.5, 0, 1),
     ("amb_dusk_wind", "Ambient", amb_dusk_wind, 1, 0.5, 0, 1),
     ("amb_water", "Ambient", amb_water, 1, 0.5, 0, 1),
@@ -386,7 +433,12 @@ CLIPS = [
     ("mus_calm", "Music", mus_calm, 2, 0.6, 0, 1),
     ("mus_tension", "Music", mus_tension, 2, 0.6, 0, 1),
     ("mus_combat", "Music", mus_combat, 2, 0.6, 0, 1),
+    # release pass additions (guids continue the 0x300 family: index 25, 26)
+    ("sfx_objective", "SFX", recorded("sfx_objective", sfx_objective), 0, 0.5, 1, 0),
+    ("sfx_ability_unlock", "SFX", recorded("sfx_ability_unlock", sfx_ability_unlock), 0, 0.6, 1, 0),
 ]
+SYNTH_BEDS = ["sfx_ability_ember", "sfx_ability_tide", "sfx_ability_stone", "sfx_ability_hollow",
+              "amb_hall", "amb_dusk_wind", "amb_water", "amb_hollow", "mus_calm", "mus_tension", "mus_combat"]
 
 
 def main():
@@ -410,7 +462,13 @@ def main():
         if not os.path.exists(meta):
             open(meta, "w").write("fileFormatVersion: 2\nguid: %s\nfolderAsset: yes\nDefaultImporter:\n  externalObjects: {}\n  userData: \n  assetBundleName: \n  assetBundleVariant: \n" % hashlib.md5(("folder:" + d).encode()).hexdigest())
     json.dump(reg, open(REG_PATH, "w"), indent=1)
-    print("[AUDIO] %d clips, %.1f MB total" % (len(CLIPS), total / 1e6))
+    recorded_n = len([1 for k, _f, r, *_ in CLIPS if r.__name__.startswith("recorded_") and k not in PLACEHOLDERS])
+    status = {"recorded": recorded_n, "procedural_placeholders": sorted(set(SYNTH_BEDS) | set(PLACEHOLDERS)),
+              "fallbacks_used": PLACEHOLDERS}
+    json.dump(status, open(os.path.join(SRC, "AUDIO_STATUS.json"), "w"), indent=1)
+    print("[AUDIO] %d clips, %.1f MB total; %d recorded (CC0), %d procedural placeholders%s" % (
+        len(CLIPS), total / 1e6, recorded_n, len(status["procedural_placeholders"]),
+        (" (FALLBACK for %s)" % PLACEHOLDERS) if PLACEHOLDERS else ""))
 
 
 if __name__ == "__main__":

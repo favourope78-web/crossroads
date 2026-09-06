@@ -1,0 +1,82 @@
+{
+ "sfx_attack_swing": {
+  "source": "Kenney.nl rpg-audio / knifeSlice.ogg",
+  "license": "CC0 1.0",
+  "peak": 0.85
+ },
+ "sfx_attack_hit": {
+  "source": "Kenney.nl impact-sounds / impactPunch_heavy_000.ogg",
+  "license": "CC0 1.0",
+  "peak": 0.9
+ },
+ "sfx_dodge": {
+  "source": "Kenney.nl rpg-audio / cloth2.ogg",
+  "license": "CC0 1.0",
+  "peak": 0.8
+ },
+ "sfx_player_hurt": {
+  "source": "Kenney.nl impact-sounds / impactSoft_heavy_000.ogg",
+  "license": "CC0 1.0",
+  "peak": 0.9
+ },
+ "sfx_enemy_defeat": {
+  "source": "Kenney.nl impact-sounds / impactBell_heavy_000.ogg",
+  "license": "CC0 1.0",
+  "peak": 0.9
+ },
+ "sfx_ui_tap": {
+  "source": "Kenney.nl interface-sounds / click_001.ogg",
+  "license": "CC0 1.0",
+  "peak": 0.8
+ },
+ "sfx_ui_confirm": {
+  "source": "Kenney.nl interface-sounds / confirmation_001.ogg",
+  "license": "CC0 1.0",
+  "peak": 0.85
+ },
+ "sfx_decision_lock": {
+  "source": "Kenney.nl rpg-audio / metalLatch.ogg",
+  "license": "CC0 1.0",
+  "peak": 0.9
+ },
+ "sfx_save": {
+  "source": "Kenney.nl interface-sounds / glass_001.ogg",
+  "license": "CC0 1.0",
+  "peak": 0.8
+ },
+ "sfx_transition": {
+  "source": "Kenney.nl rpg-audio / doorOpen_1.ogg",
+  "license": "CC0 1.0",
+  "peak": 0.85
+ },
+ "sfx_dialogue_open": {
+  "source": "Kenney.nl rpg-audio / bookOpen.ogg",
+  "license": "CC0 1.0",
+  "peak": 0.8
+ },
+ "sfx_enemy_alert": {
+  "source": "Kenney.nl interface-sounds / question_001.ogg",
+  "license": "CC0 1.0",
+  "peak": 0.8
+ },
+ "sfx_enemy_windup": {
+  "source": "Kenney.nl rpg-audio / drawKnife2.ogg",
+  "license": "CC0 1.0",
+  "peak": 0.85
+ },
+ "sfx_footstep": {
+  "source": "Kenney.nl rpg-audio / footstep00.ogg",
+  "license": "CC0 1.0",
+  "peak": 0.7
+ },
+ "sfx_objective": {
+  "source": "Kenney.nl interface-sounds / confirmation_002.ogg",
+  "license": "CC0 1.0",
+  "peak": 0.85
+ },
+ "sfx_ability_unlock": {
+  "source": "Kenney.nl impact-sounds / impactBell_heavy_001.ogg",
+  "license": "CC0 1.0",
+  "peak": 0.9
+ }
+}

@@ -8579,6 +8579,12 @@
        "key": "mara",
        "value": "",
        "amount": 8
+      },
+      {
+       "type": 6,
+       "key": "dec_c1_hall_first_light",
+       "value": "",
+       "amount": 0
       }
      ]
     },

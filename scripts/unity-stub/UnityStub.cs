@@ -487,6 +487,8 @@ namespace UnityEngine
 namespace UnityEngine.Rendering
 {
     public enum ShadowCastingMode { Off, On, TwoSided, ShadowsOnly }
+    public class VolumeProfile : ScriptableObject { }
+    public class Volume : MonoBehaviour { public VolumeProfile sharedProfile; public bool isGlobal = true; }
 }
 
 namespace UnityEngine

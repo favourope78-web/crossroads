@@ -185,7 +185,7 @@ def profile():
                          "android_max": max_size, "mipmaps": mip, "bytes": os.path.getsize(tp)})
 
     # quality + pipeline
-    ps = open(os.path.join(ROOT, "ProjectSettings/ProjectSettings.asset"), encoding="utf-8").read()
+    ps = open(os.path.join(ROOT, "ProjectSettings/QualitySettings.asset"), encoding="utf-8").read()
     tiers = re.findall(r"- serializedVersion: \d+\n    name: (\w+)", ps)
     # every quality tier must bind a pipeline asset (Unity 6 field name: customRenderPipeline)
     tier_pipelines = re.findall(r"customRenderPipeline: \{fileID: (\d+)(?:, guid: ([0-9a-f]+))?", ps)
@@ -211,7 +211,7 @@ def profile():
         n_mats = len(re.findall(r"type: UnityEngine:Material", open(fbx_meta).read())) if fbx_meta else 2
         prefab_mats[g] = {"name": os.path.basename(pf)[:-7], "submeshes": max(1, n_mats),
                           "tris": None, "fbx_bytes": os.path.getsize(fbx_meta[:-5]) if fbx_meta else 0}
-    models_json = os.path.join(ROOT, "reference/concept/build/models.json")
+    models_json = os.path.join(ROOT, "reference/concept/build_data/models.json")
     if os.path.exists(models_json):
         for name, info in json.load(open(models_json)).items():
             for pm in prefab_mats.values():

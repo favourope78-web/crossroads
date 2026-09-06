@@ -12,7 +12,7 @@ ankle) so blender_build_characters.py builds every body to its own sheet.
 
 Outputs (per character <Name>):
   Assets/_Project/Art/Characters/<Name>/<Name>_Albedo.png (+ .meta, Android ASTC 6x6, max 1024)
-  reference/concept/build/<name>_atlas.json   (uv rects + proportions; consumed by Blender)
+  reference/concept/build_data/<name>_atlas.json   (uv rects + proportions; consumed by Blender)
 
 Idempotent; deterministic. Run: python3 scripts/build_character_atlases.py
 """
@@ -24,7 +24,7 @@ from scipy import ndimage
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 CONCEPT = os.path.join(ROOT, "reference", "concept")
-BUILD = os.path.join(CONCEPT, "build")
+BUILD = os.path.join(CONCEPT, "build_data")
 ART = os.path.join(ROOT, "Assets", "_Project", "Art", "Characters")
 ATLAS = 1024           # square atlas, two 512 x 1024 cells
 CELL_W, CELL_H = ATLAS // 2, ATLAS

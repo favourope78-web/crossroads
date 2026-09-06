@@ -42,6 +42,7 @@ def g32(n): return ("c0a1fed2" + ("%024x" % n))[:32]
 GUID_RENDERER = g32(0x200)
 GUID_LOW, GUID_BAL, GUID_HIGH = g32(0x201), g32(0x202), g32(0x203)
 GUID_VOLUME = g32(0x204)
+GUID_VOLUME_LOW = g32(0x205)   # Low tier: no bloom (saves the 4-iteration downsample chain), lighter vignette
 
 META = """fileFormatVersion: 2
 guid: %s
@@ -526,7 +527,9 @@ def tier(name, shadows, shadow_res_enum, shadow_dist, aniso, lod_bias, mip_limit
 """ % {"name": name, "shadows": shadows, "sres": shadow_res_enum, "sdist": shadow_dist, "skin": skin, "mip": mip_limit,
        "aniso": aniso, "lod": lod_bias, "pbudget": particle_budget, "guid": asset_guid}
 
-QUALITY = """--- !u!19 &1
+QUALITY = """%%YAML 1.1
+%%TAG !u! tag:unity3d.com,2011:
+--- !u!47 &1
 QualitySettings:
   m_ObjectHideFlags: 0
   serializedVersion: 5
@@ -542,6 +545,23 @@ QualitySettings:
        "high": tier("High", 1, 3, 35, 1, 1.2, 0, 32, 4, GUID_HIGH, 60)}
 
 
+def volume_low():
+    """Low-tier profile (release pass P3): same colour grade / tonemap so the dusk look holds, but no
+    Bloom component at all (bloom is the one screen-space pass that scales with resolution on a
+    2019-class GPU) and a cheaper vignette. QualityTierApplier swaps the global Volume to this
+    profile when QualitySettings level 0 is active."""
+    txt = VOLUME.replace("m_Name: PostProcess_Global", "m_Name: PostProcess_Low")
+    # drop the Bloom component block (first component, fileID ...0001)
+    start = txt.index("--- !u!114 &-8000000000000000001")
+    end = txt.index("--- !u!114 &-8000000000000000002")
+    txt = txt[:start] + txt[end:]
+    txt = txt.replace("  - {fileID: -8000000000000000001}\n", "")
+    # lighter vignette on Low (intensity 0.28 -> 0.20) - it is a full-screen multiply either way
+    txt = txt.replace("  intensity:\n    m_OverrideState: 1\n    m_Value: 0.28", "  intensity:\n    m_OverrideState: 1\n    m_Value: 0.2", 1)
+    assert "m_Name: Bloom" not in txt
+    return txt
+
+
 def main():
     write(os.path.join(SET, "URP_Renderer_Mobile.asset"), RENDERER, GUID_RENDERER)
     # Low: 30 fps floor phones - no shadows, per-vertex additional lights, render scale 0.8
@@ -551,24 +571,37 @@ def main():
     # High: flagship - shadows 35 m, 2048 map, 2 cascades, MSAA 2x, soft shadows
     write(os.path.join(SET, "URP_High.asset"), urp_asset("URP_High", True, 35, 2048, 2, "1", True, 2, 1, 1), GUID_HIGH)
     write(os.path.join(SET, "PostProcess_Global.asset"), VOLUME, GUID_VOLUME)
+    write(os.path.join(SET, "PostProcess_Low.asset"), volume_low(), GUID_VOLUME_LOW)
     open(os.path.join(ROOT, "ProjectSettings/GraphicsSettings.asset"), "w", encoding="utf-8", newline="\n").write(GRAPHICS)
 
-    # QualitySettings block inside ProjectSettings.asset (the repo keeps every settings doc in one file)
+    # Unity keeps one settings object per file: ProjectSettings.asset = PlayerSettings (!u!129) only,
+    # QualitySettings.asset = !u!47, DynamicsManager.asset = PhysicsManager (!u!55). Earlier passes
+    # appended QualitySettings/PhysicsManager docs to ProjectSettings.asset under wrong class ids
+    # (!u!19 / !u!40) which the editor would silently discard - split them out (release pass P3).
     ps_path = os.path.join(ROOT, "ProjectSettings/ProjectSettings.asset")
     ps = open(ps_path, encoding="utf-8").read()
-    m = re.search(r"--- !u!19 &1\nQualitySettings:.*?(?=\n--- !u!|\Z)", ps, re.S)
-    if m:
-        ps = ps[:m.start()] + QUALITY.rstrip("\n") + ps[m.end():]
-    else:
-        ps = ps.rstrip("\n") + "\n" + QUALITY
-    open(ps_path, "w", encoding="utf-8", newline="\n").write(ps)
+    docs = re.split(r"(?=^--- !u!)", ps, flags=re.M)
+    header, bodies = docs[0], docs[1:]
+    keep, physics = [], None
+    for d in bodies:
+        if d.startswith("--- !u!129 "):
+            keep.append(d)
+        elif "\nPhysicsManager:" in d:
+            physics = re.sub(r"^--- !u!\d+ &1", "--- !u!55 &1", d.rstrip("\n") + "\n")
+        # QualitySettings docs are dropped here and rewritten to their own file below
+    open(ps_path, "w", encoding="utf-8", newline="\n").write(header + "".join(k.rstrip("\n") + "\n" for k in keep))
+    open(os.path.join(ROOT, "ProjectSettings/QualitySettings.asset"), "w", encoding="utf-8", newline="\n").write(QUALITY)
+    dyn_path = os.path.join(ROOT, "ProjectSettings/DynamicsManager.asset")
+    if physics is not None:
+        open(dyn_path, "w", encoding="utf-8", newline="\n").write("%YAML 1.1\n%TAG !u! tag:unity3d.com,2011:\n" + physics)
 
     # registry entries so validate_assets.py resolves the new GUIDs
     reg_path = os.path.join(ROOT, "scripts/hall_guids.json")
     import json
     reg = json.load(open(reg_path))
     for k, v in (("URP_Renderer_Mobile.asset", GUID_RENDERER), ("URP_Low.asset", GUID_LOW), ("URP_Balanced.asset", GUID_BAL),
-                 ("URP_High.asset", GUID_HIGH), ("PostProcess_Global.asset", GUID_VOLUME)):
+                 ("URP_High.asset", GUID_HIGH), ("PostProcess_Global.asset", GUID_VOLUME),
+                 ("PostProcess_Low.asset", GUID_VOLUME_LOW)):
         if k in reg and reg[k] != v:
             raise SystemExit("GUID conflict for %s" % k)
         reg[k] = v

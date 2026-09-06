@@ -118,12 +118,14 @@ def model_meta(guid, name, materials, humanoid=True, clips=None, avatar_source=N
     isReadable: 0
 """ % (cn, tn, iid, f0, f1, 1 if loop else 0) for (cn, tn, f0, f1, loop, iid) in clips)
     avatar_src = "{instanceID: 0}" if avatar_source is None else ("{fileID: 9000000, guid: %s, type: 3}" % avatar_source)
+    id_table = "  internalIDToNameTable: []\n"
+    if clips:
+        id_table = "  internalIDToNameTable:\n" + "".join("  - first:\n      74: %d\n    second: %s\n" % (iid, cn) for (cn, tn, f0, f1, loop, iid) in clips)
     return """fileFormatVersion: 2
 guid: %s
 ModelImporter:
   serializedVersion: 22200
-  internalIDToNameTable: []
-%s  materials:
+%s%s  materials:
     materialImportMode: %d
     materialName: 0
     materialSearch: 1
@@ -223,7 +225,7 @@ ModelImporter:
   userData: 
   assetBundleName: 
   assetBundleVariant: 
-""" % (guid, ext, 1 if materials else 0, clip_yaml, 1 if clips else 0, avatar_src,
+""" % (guid, id_table, ext, 1 if materials else 0, clip_yaml, 1 if clips else 0, avatar_src,
        3 if humanoid else 2, 2 if avatar_source else 1)
 
 
@@ -534,7 +536,7 @@ def main():
         # frame range = what Blender baked (frame_start..frame_end); the meta clip covers it all
         rng = CLIP_RANGES[clip]
         changed += write(fbx + ".meta", model_meta(g, clip, [], humanoid=True,
-                                                    clips=[(clip, "Dax_Rig|Scene", rng[0], rng[1], CLIPS[clip], 7400002)],
+                                                    clips=[(clip, "Dax_Rig|Scene", rng[0], rng[1], CLIPS[clip], 7400000)],
                                                     avatar_source=None))
     ctrl_guid = ensure("Character_Controller.controller", g32(0x4e0))
     changed += write(os.path.join(anim_dir, "Character_Controller.controller"), controller(clip_guids))

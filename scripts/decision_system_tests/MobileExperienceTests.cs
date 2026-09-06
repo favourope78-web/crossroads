@@ -178,6 +178,31 @@ namespace Crossroads.Tests
             }
             CheckEq(ticks, 40, "npc lod: near NPC ticks every frame");
             CheckEq(agent.TickForTests(90f, 0.0166f, true), 0, "npc lod: a talking NPC is always full tier regardless of distance");
+
+            // quality tier policy (P3): Low = no-bloom profile + 30 fps cap; Balanced/High = standard + 60
+            var std = new UnityEngine.Rendering.VolumeProfile { name = "PostProcess_Global" };
+            var low = new UnityEngine.Rendering.VolumeProfile { name = "PostProcess_Low" };
+            CheckEq(QualityTierApplier.ProfileFor(0, std, low).name, "PostProcess_Low", "tier: Low -> no-bloom profile");
+            CheckEq(QualityTierApplier.ProfileFor(1, std, low).name, "PostProcess_Global", "tier: Balanced -> standard profile");
+            CheckEq(QualityTierApplier.ProfileFor(2, std, low).name, "PostProcess_Global", "tier: High -> standard profile");
+            CheckEq(QualityTierApplier.ProfileFor(0, std, null).name, "PostProcess_Global", "tier: Low without a low profile falls back to standard");
+            CheckEq(QualityTierApplier.TargetFrameRate(0), 30, "tier: Low caps at 30 fps");
+            CheckEq(QualityTierApplier.TargetFrameRate(1), 60, "tier: Balanced 60 fps");
+            CheckEq(QualityTierApplier.TargetFrameRate(2), 60, "tier: High 60 fps");
+
+            // audio event coverage (P4): the recorded set + the two new stings map to the right moments
+            Check(GameAudio.ObjectiveChimes(ObjectivePhase.Active, ObjectivePhase.Available), "audio: new objective chimes");
+            Check(GameAudio.ObjectiveChimes(ObjectivePhase.Completed, ObjectivePhase.Active), "audio: completed objective chimes");
+            Check(!GameAudio.ObjectiveChimes(ObjectivePhase.Failed, ObjectivePhase.Active), "audio: failure stays silent (decision-lock / HUD cover it)");
+            Check(!GameAudio.ObjectiveChimes(ObjectivePhase.Active, ObjectivePhase.Active), "audio: progress ticks do not re-chime");
+            Check(!GameAudio.ObjectiveChimes(ObjectivePhase.Hidden, ObjectivePhase.Cancelled), "audio: hidden/cancelled churn is silent");
+            var ga = new GameAudio();
+            ga.objectiveChime = new UnityEngine.AudioClip { name = "objective" };
+            ga.abilityUnlock = new UnityEngine.AudioClip { name = "unlock" };
+            ga.uiConfirm = new UnityEngine.AudioClip { name = "confirm" };
+            ga.playerHurt = new UnityEngine.AudioClip { name = "hurt" };
+            ga.enemyDefeat = new UnityEngine.AudioClip { name = "defeat" };
+            Check(ga.objectiveChime != null && ga.abilityUnlock != null, "audio: objective + ability-unlock clips are first-class GameAudio fields");
         }
 
         // ---------------------------------------------------------------- polish pass: presentation layer

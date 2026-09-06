@@ -2,7 +2,7 @@
 
 One rigged, skinned, textured humanoid per cast member, built with the SAME method that produced
 the approved Ari prototype (scripts/blender_build_ari.py): body proportions measured row by row
-from that character's turnaround sheet (reference/concept/build/<name>_atlas.json, written by
+from that character's turnaround sheet (reference/concept/build_data/<name>_atlas.json, written by
 scripts/build_character_atlases.py), ortho front/back UV projection onto the character's albedo
 atlas, a Mixamo-named humanoid skeleton (Hips/Spine/Spine1/Spine2/Neck/Head/L|R Shoulder/Arm/
 ForeArm/Hand/UpLeg/Leg/Foot/ToeBase) so Unity's Humanoid avatar maps it automatically, auto
@@ -25,7 +25,7 @@ from mathutils import Vector
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
-BUILD = os.path.join(ROOT, "reference", "concept", "build")
+BUILD = os.path.join(ROOT, "reference", "concept", "build_data")
 ART = os.path.join(ROOT, "Assets", "_Project", "Art", "Characters")
 RENDER = os.path.join(ROOT, "reference", "prototype_renders")
 os.makedirs(RENDER, exist_ok=True)

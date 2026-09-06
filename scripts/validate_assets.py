@@ -87,8 +87,16 @@ if os.path.isdir(set_dir):
     for f in sorted(os.listdir(set_dir)):
         if f.endswith(".asset"):
             check_text_refs(os.path.join(set_dir, f), "Settings/" + f)
-for pf in ["ProjectSettings/GraphicsSettings.asset", "ProjectSettings/ProjectSettings.asset"]:
+for pf in ["ProjectSettings/GraphicsSettings.asset", "ProjectSettings/ProjectSettings.asset", "ProjectSettings/QualitySettings.asset"]:
     check_text_refs(os.path.join(ROOT, pf), pf)
+# one Unity settings object per file with its real class id (the editor discards mis-tagged docs)
+for pf, cls in (("ProjectSettings/ProjectSettings.asset", "129"), ("ProjectSettings/QualitySettings.asset", "47"),
+                ("ProjectSettings/GraphicsSettings.asset", "30"), ("ProjectSettings/DynamicsManager.asset", "55"),
+                ("ProjectSettings/EditorBuildSettings.asset", "1045")):
+    txt = open(os.path.join(ROOT, pf)).read()
+    heads = re.findall(r"^--- !u!(\d+) &1", txt, re.M)
+    if heads != [cls]:
+        errors.append("%s must contain exactly one !u!%s document (found %s)" % (pf, cls, heads))
 
 for name, g in registry.items():
     if name.endswith(".cs") and g not in meta_guids:
@@ -780,6 +788,27 @@ for scene_file in glob.glob(os.path.join(ROOT, "Assets/Scenes/**/*.unity"), recu
             errors.append("%s: avatarPrefab guid %s is not a character prefab" % (os.path.basename(scene_file), m.group(1)))
 print("Character set: %d humanoid models, %d shared clips, %d scene avatar bindings" % (len(CAST), len(CAST_CLIPS), scene_avatar_refs))
 
+# ---------------------------------------------------------------- 6b. quality tiers x post-processing (release pass)
+# Low must not run bloom; the scene's QualityTierApplier must reference both profiles.
+pp_low = os.path.join(ROOT, "Assets/Settings/PostProcess_Low.asset")
+pp_std = os.path.join(ROOT, "Assets/Settings/PostProcess_Global.asset")
+for pth in (pp_low, pp_std):
+    if not os.path.exists(pth):
+        errors.append("missing post profile " + os.path.relpath(pth, ROOT))
+if os.path.exists(pp_low) and "m_Name: Bloom" in open(pp_low).read():
+    errors.append("PostProcess_Low.asset still contains a Bloom component (Low tier must not bloom)")
+if os.path.exists(pp_std) and "m_Name: Bloom" not in open(pp_std).read():
+    errors.append("PostProcess_Global.asset lost its Bloom component (Balanced/High keep the Fracture glow)")
+scene_txt = open(os.path.join(ROOT, "Assets/Scenes/Prototype/FirstLocation.unity")).read()
+low_guid = re.search(r"^guid: ([0-9a-f]{32})", open(pp_low + ".meta").read(), re.M).group(1) if os.path.exists(pp_low + ".meta") else None
+if low_guid and ("lowProfile: {fileID: 11400000, guid: %s, type: 2}" % low_guid) not in scene_txt:
+    errors.append("scene QualityTierApplier does not reference PostProcess_Low.asset")
+qs = open(os.path.join(ROOT, "ProjectSettings/QualitySettings.asset")).read()
+for tier_name in ("Low", "Balanced", "High"):
+    if ("name: %s" % tier_name) not in qs:
+        errors.append("QualitySettings.asset missing tier " + tier_name)
+print("Quality tiers: Low (no bloom, 30 fps) / Balanced / High profiles wired")
+
 # ---------------------------------------------------------------- 7. audio + presentation wiring (polish pass)
 # Every AudioClip the GameAudio component references must exist as a WAV with a meta whose guid
 # matches the registry; the scene must carry GameAudio, CombatVFX, the Ari PrefabInstance, a
@@ -815,6 +844,18 @@ for k in audio_keys:
         errors.append("scene does not reference audio clip " + k)
 if audio_bytes > 6 * 1024 * 1024:
     warns.append("audio placeholder set is %.1f MB (>6 MB budget)" % (audio_bytes / 1e6))
+# every public AudioClip field of GameAudio must be bound in the scene (no silent events by omission)
+ga_src = open(os.path.join(ROOT, "Assets/_Project/Scripts/Gameplay/World/GameAudio.cs")).read()
+ga_fields = re.findall(r"^\s*public AudioClip (\w+);", ga_src, re.M)
+ga_block = re.search(r"m_Script: \{fileID: 11500000, guid: %s, type: 3\}.*?(?=\n--- !u!)" % registry["GameAudio.cs"], scene_txt, re.S)
+for f in ga_fields:
+    if not ga_block or not re.search(r"^  %s: \{fileID: 8300000, guid: [0-9a-f]{32}, type: 3\}" % f, ga_block.group(0), re.M):
+        errors.append("GameAudio.%s is not bound to a clip in the scene" % f)
+# recorded vs placeholder census (reference/audio_source/AUDIO_STATUS.json, written by gen_audio.py)
+status_path = os.path.join(ROOT, "reference/audio_source/AUDIO_STATUS.json")
+audio_status = json.load(open(status_path)) if os.path.exists(status_path) else {"recorded": 0, "procedural_placeholders": list(audio_keys)}
+if audio_status.get("fallbacks_used"):
+    warns.append("audio fallbacks used for recorded clips: %s" % audio_status["fallbacks_used"])
 for needle in ["m_TagString: MainCamera", "propertyPath: m_TagString\n      value: Player", "PrefabInstance:",
                "m_SourcePrefab: {fileID: 100100000, guid: c0a1fed0000000000000000000000002, type: 3}",
                "guid: a79441f348de89743a2939f4d699eac1", "guid: 172515602e62fb746b5d573b38a5fe58"]:
@@ -823,7 +864,8 @@ for needle in ["m_TagString: MainCamera", "propertyPath: m_TagString\n      valu
 for script_key in ["GameAudio.cs", "CombatVFX.cs", "PlayerCombatController.cs", "PlayerInteraction.cs"]:
     if registry[script_key] not in scene_txt:
         errors.append("scene does not reference %s" % script_key)
-print("Audio + presentation: %d clips (%.1f MB), Ari prefab instance, camera/volume wiring OK" % (len(audio_keys), audio_bytes / 1e6))
+print("Audio + presentation: %d clips (%.1f MB; %d recorded CC0, %d procedural placeholders), %d GameAudio fields bound, Ari prefab instance, camera/volume wiring OK"
+      % (len(audio_keys), audio_bytes / 1e6, audio_status.get("recorded", 0), len(audio_status.get("procedural_placeholders", [])), len(ga_fields)))
 
 print("=" * 60)
 if errors:

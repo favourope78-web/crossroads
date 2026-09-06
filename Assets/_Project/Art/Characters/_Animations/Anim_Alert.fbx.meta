@@ -2,7 +2,10 @@ fileFormatVersion: 2
 guid: c0a1fed20000000000000000000004c4
 ModelImporter:
   serializedVersion: 22200
-  internalIDToNameTable: []
+  internalIDToNameTable:
+  - first:
+      74: 7400000
+    second: Anim_Alert
   externalObjects: {}
   materials:
     materialImportMode: 0
@@ -37,7 +40,7 @@ ModelImporter:
   - serializedVersion: 16
     name: Anim_Alert
     takeName: Dax_Rig|Scene
-    internalID: 7400002
+    internalID: 7400000
     firstFrame: 1
     lastFrame: 18
     wrapMode: 0

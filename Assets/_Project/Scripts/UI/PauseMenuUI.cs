@@ -1,4 +1,5 @@
 using Crossroads.Core;
+using Crossroads.Gameplay;
 using Crossroads.Gameplay.Input;
 using Crossroads.Narrative;
 using UnityEngine;
@@ -152,11 +153,13 @@ namespace Crossroads.UI
         {
             InputSettings s = InputSettingsStore.Current;
             AudioListener.volume = s.audioVolume;
-            Application.targetFrameRate = s.qualityLevel == 0 ? 30 : 60; // Low caps battery burn
-            // Quality tiers are real now (ProjectSettings: Low / Balanced / High, each bound to its
-            // own URP asset - shadows, render scale, MSAA). Index == the settings value by design.
+            // Quality tiers are real (ProjectSettings: Low / Balanced / High, each bound to its own
+            // URP asset - shadows, render scale, MSAA). Index == the settings value by design.
+            // QualityTierApplier also swaps the post profile (Low = no bloom) and the fps cap.
             int tier = Mathf.Clamp(s.qualityLevel, 0, QualitySettings.names.Length - 1);
+            Application.targetFrameRate = QualityTierApplier.TargetFrameRate(tier);
             if (QualitySettings.GetQualityLevel() != tier) QualitySettings.SetQualityLevel(tier, true);
+            QualityTierApplier.ApplyTier(tier);
             var rig = FindFirstObjectByType<MobileControlsUI>();
             if (rig != null) rig.ApplySettings();
         }

@@ -1,0 +1,17 @@
+{
+ "recorded": 16,
+ "procedural_placeholders": [
+  "amb_dusk_wind",
+  "amb_hall",
+  "amb_hollow",
+  "amb_water",
+  "mus_calm",
+  "mus_combat",
+  "mus_tension",
+  "sfx_ability_ember",
+  "sfx_ability_hollow",
+  "sfx_ability_stone",
+  "sfx_ability_tide"
+ ],
+ "fallbacks_used": []
+}

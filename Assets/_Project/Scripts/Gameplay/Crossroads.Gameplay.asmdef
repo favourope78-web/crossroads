@@ -5,7 +5,8 @@
         "Crossroads.Core",
         "Crossroads.Narrative",
         "Crossroads.Input",
-        "Unity.InputSystem"
+        "Unity.InputSystem",
+        "Unity.RenderPipelines.Core.Runtime"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

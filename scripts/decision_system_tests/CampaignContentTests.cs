@@ -558,10 +558,139 @@ namespace Crossroads.Tests
             Directory.Delete(dir, true);
         }
 
+        // ================================================================ 87. release QA: the required clean-save sequence, in order
+        // New Game -> tutorial -> exploration -> NPC interaction -> dialogue -> decision -> branching
+        // consequence -> objective -> ability unlock -> ability use -> combat (REAL EnemyBrain ticks,
+        // not a scripted defeat) -> world-state change -> NPC reaction -> location transition -> save
+        // -> restart -> restored state. Everything goes through the runtime services the scene uses.
+        private sealed class ProbeWorld : IEnemyWorld
+        {
+            public Point3 P;
+            public Point3 Position { get { return P; } }
+            public void MoveTowards(Point3 target, float speed, float dt)
+            {
+                float dx = target.x - P.x, dz = target.z - P.z;
+                float d = (float)Math.Sqrt(dx * dx + dz * dz);
+                if (d < 0.001f) return;
+                float step = Math.Min(d, speed * dt);
+                P = new Point3(P.x + dx / d * step, P.y, P.z + dz / d * step);
+            }
+            public void FaceTowards(Point3 target, float turnSpeed, float dt) { }
+        }
+
+        private static void TestReleaseQaSequence()
+        {
+            Log.Add("[87] Release QA: clean save -> tutorial -> ... -> combat (live brain) -> save -> restart -> restored");
+            string dir = TempDir("releaseqa");
+            var unlocked = new List<string>();
+            var npcTitles = new List<NpcStatusChangedEvent>();
+            EventBus.Subscribe<AbilityUnlockedEvent>(e => unlocked.Add(e.abilityId));
+            EventBus.Subscribe<NpcStatusChangedEvent>(e => npcTitles.Add(e));
+            NewRun(dir);
+
+            // 1. NEW GAME from a clean save directory
+            Check(!File.Exists(Path.Combine(dir, "save.json")) || S.GetFlag("ch1_complete") == "", "new game: no prior progress");
+            CheckEq(S.DecisionOption(StoryContentBuilder.DecisionFirstLight), "", "new game: first decision unmade");
+            CheckEq(LocationServices.Locations.CurrentLocationId, "hall", "new game: starts in the hall hub");
+
+            // 2. TUTORIAL (memory pier): movement + talk objectives
+            Check(Travel("last_summer"), "tutorial: travel to The Last Summer");
+            CheckEq(Phase("obj_tut_move"), ObjectivePhase.Active, "tutorial: movement objective offered");
+            S.SetFlag("tut_moved", "1");
+            CheckEq(Phase("obj_tut_move"), ObjectivePhase.Completed, "tutorial: movement objective completes");
+            Check(Play("p1_kite", "fly") && Play("p1_pier", "jump") && Play("p1_summer_end", "hero"), "tutorial: three prologue scenes play");
+            Check(S.GetFlag("prologue_complete") == "1", "tutorial: prologue complete");
+
+            // 3. EXPLORATION back to the hub; 4. NPC INTERACTION -> 5. DIALOGUE -> 6. DECISION
+            Check(Travel("hall"), "exploration: back to the hall");
+            NpcBrain mara = new NpcBrain(Content.FindNpc("mara"), GameServices.Progress);
+            NpcInteractionData talk = mara.DefaultInteraction();
+            Check(talk != null && talk.encounterId == StoryContentBuilder.EncounterFirstLight, "npc interaction: Mara offers First Light");
+            int unlockedBefore = unlocked.Count;
+            Check(Play(StoryContentBuilder.EncounterFirstLight, "tide_clear"), "dialogue + decision: First Light resolved on the Tide option");
+            CheckEq(S.DecisionOption(StoryContentBuilder.DecisionFirstLight), "tide_clear", "decision recorded");
+
+            // 7. BRANCHING CONSEQUENCE + 8. OBJECTIVE + 9. ABILITY UNLOCK
+            CheckEq(Phase(StoryContentBuilder.ObjectiveWardenHunt), ObjectivePhase.Active, "objective: warden hunt tracked");
+            Check(Phase(StoryContentBuilder.ObjectiveEmberBeacon) != ObjectivePhase.Active, "branch: the Ember path objective is NOT offered on the Tide branch");
+            Check(S.HasAbility(StoryContentBuilder.AbilityTide) && !S.HasAbility(StoryContentBuilder.AbilityEmber), "ability unlock: tide line only");
+            Check(unlocked.Count > unlockedBefore && unlocked.Contains(StoryContentBuilder.AbilityTide), "ability unlock event fired (audio sting + HUD)");
+
+            // 10. ABILITY USE through the real manager
+            var mgr = GameServices.Abilities;
+            float clock = 100f;
+            mgr.Now = () => clock;
+            CheckEq(mgr.Activate(StoryContentBuilder.AbilityTide), AbilityActivation.Ok, "ability use: tide activates");
+            Check(mgr.Activate(StoryContentBuilder.AbilityTide) != AbilityActivation.Ok, "ability use: cooldown blocks an immediate re-cast");
+
+            // 11. COMBAT with the LIVE enemy brain (the same class the EnemyAgent ticks)
+            EnemyDefinitionData wardenDef = Content.FindEnemy(StoryContentBuilder.EnemyChoirWarden);
+            Check(ConditionEvaluator.Evaluate(wardenDef.activationConditions, S), "combat: the warden is active after the decision");
+            CombatantState warden = CombatantState.ForEnemy(wardenDef);
+            var brain = new EnemyBrain(wardenDef, warden);
+            brain.Activate();
+            var world = new ProbeWorld { P = new Point3(0f, 0f, 20f) };
+            Point3 player = new Point3(0f, 0f, 0f);
+            CheckEq((int)brain.State, (int)EnemyState.Idle, "combat: warden idles while the player is far");
+            brain.Tick(world, 0.05f, player, true, false);
+            CheckEq((int)brain.State, (int)EnemyState.Idle, "combat: 20 m is outside detection");
+            player = new Point3(0f, 0f, 20f - wardenDef.detectionRadius + 0.5f);
+            brain.Tick(world, 0.05f, player, true, false);
+            CheckEq((int)brain.State, (int)EnemyState.Alert, "combat: detection -> Alert (NPC reaction cue)");
+            int strikes = 0, ticks = 0;
+            while (ticks++ < 2000 && strikes == 0)
+            {
+                var r = brain.Tick(world, 0.05f, player, true, false);
+                if (r == EnemyTickResult.Strike) strikes++;
+            }
+            Check(strikes == 1, "combat: the warden approaches and lands a strike after its windup (" + ticks + " ticks)");
+            Check(Point3.Distance(world.P, player) <= wardenDef.attackRange + 0.05f, "combat: it struck from inside attack range");
+            CombatSettingsData settings = Content.combat;
+            brain.OnDamaged();
+            CheckEq((int)brain.State, (int)EnemyState.Stagger, "combat: our hit staggers it");
+            int swings = 0;
+            while (warden.Alive && swings++ < 200) warden.ApplyDamage(settings.basicAttack.damageType, settings.basicAttack.baseDamage);
+            Check(!warden.Alive && swings < 200, "combat: basic strikes defeat the warden (" + swings + " swings)");
+            brain.OnDefeated();
+            CheckEq((int)brain.State, (int)EnemyState.Defeat, "combat: brain enters Defeat (defeat animation + sink)");
+            CombatResolution.DefeatEnemy(wardenDef, S);
+
+            // 12. WORLD-STATE CHANGE + 13. NPC REACTION
+            CheckEq(Phase(StoryContentBuilder.ObjectiveWardenHunt), ObjectivePhase.Completed, "world: hunt objective completes");
+            Check(S.GetEntity("warden_wreckage", false), "world: wreckage entity spawned");
+            Check(S.GetEntity("choir_warden", true) == false, "world: warden entity retired");
+            NpcBrain sera = new NpcBrain(Content.FindNpc("sera"), GameServices.Progress);
+            CheckEq(sera.CurrentTitle, "Sera · Shieldmate", "npc reaction: Sera's title reflects the fight");
+            CheckEq(S.GetBond("sera"), 5, "npc reaction: Sera bond +5");
+
+            // 14. LOCATION TRANSITION + 15. SAVE
+            Check(Travel("annex") || Travel("last_summer"), "location transition after the fight");
+            string where = LocationServices.Locations.CurrentLocationId;
+            S.SetVar(settings.healthVarKey, 61);
+            GameServices.PersistNow(autosaveMirror: true);
+            Check(File.Exists(GameServices.Save.SavePath), "save: file written (" + Path.GetFileName(GameServices.Save.SavePath) + ")");
+
+            // 16. RESTART -> 17. RESTORED STATE
+            Shutdown();
+            NewRun(dir);
+            CheckEq(S.DecisionOption(StoryContentBuilder.DecisionFirstLight), "tide_clear", "restored: decision");
+            Check(S.HasAbility(StoryContentBuilder.AbilityTide) && !S.HasAbility(StoryContentBuilder.AbilityEmber), "restored: ability ownership");
+            CheckEq(Phase(StoryContentBuilder.ObjectiveWardenHunt), ObjectivePhase.Completed, "restored: objective phase");
+            Check(S.GetEntity("warden_wreckage", false) && !S.GetEntity("choir_warden", true), "restored: world entities");
+            CheckEq(S.GetBond("sera"), 5, "restored: NPC bond");
+            CheckEq(S.GetVar(settings.healthVarKey, -1), 61, "restored: player hp");
+            CheckEq(LocationServices.Locations.CurrentLocationId, where, "restored: current location");
+            Check(S.GetFlag("prologue_complete") == "1" && S.State.CampaignChapterCompleted("ch_prologue"), "restored: tutorial/prologue progress");
+            Check(!ConditionEvaluator.Evaluate(wardenDef.activationConditions, S) || !S.GetEntity("choir_warden", true), "restored: the warden does not respawn");
+            Shutdown();
+            Directory.Delete(dir, true);
+        }
+
         public static void RunAll(out int passed, out int failed)
         {
             Console.WriteLine();
             TestContentContracts();
+            TestReleaseQaSequence();
             TestPlaythroughAshenCrown();
             TestPlaythroughTidesEmbrace();
             TestPlaythroughUnmovedAndRefusal();

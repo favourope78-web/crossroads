@@ -264,5 +264,9 @@
  "M_Soldier_C.mat": "c0a1fed200000000000000000000044c",
  "M_Soldier_C_Hair.mat": "c0a1fed200000000000000000000046c",
  "Soldier_C.prefab": "c0a1fed20000000000000000000004ac",
- "CharacterAvatar.cs": "c0a1fed20000000000000000000000c8"
+ "CharacterAvatar.cs": "c0a1fed20000000000000000000000c8",
+ "PostProcess_Low.asset": "c0a1fed2000000000000000000000205",
+ "QualityTierApplier.cs": "c0a1fed20000000000000000000000c9",
+ "sfx_objective.wav": "c0a1fed2000000000000000000000319",
+ "sfx_ability_unlock.wav": "c0a1fed200000000000000000000031a"
 }

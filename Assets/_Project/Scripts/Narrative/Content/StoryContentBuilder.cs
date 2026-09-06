@@ -771,8 +771,15 @@ namespace Crossroads.Narrative
                                 new DecisionConditionData { type = ConditionType.ObjectiveCompleted, key = ObjectiveTideKeepsake },
                                 new DecisionConditionData { type = ConditionType.DecisionNotMade, key = DecisionTideReport }
                             } },
+                        // release QA: the memory-pier prologue can raise Mara's bond past 8 before chapter one;
+                        // confide is the payoff of the FIRST LIGHT relationship path, so it also waits for that decision
+                        // (otherwise it would shadow "Talk to Mara" and chapter one could never start from her).
                         new NpcInteractionData { id = "confide", label = "Comfort Mara", encounterId = EncounterMaraConfide,
-                            conditions = new List<DecisionConditionData> { new DecisionConditionData { type = ConditionType.BondAtLeast, key = NpcMara, amount = 8 } } },
+                            conditions = new List<DecisionConditionData>
+                            {
+                                new DecisionConditionData { type = ConditionType.BondAtLeast, key = NpcMara, amount = 8 },
+                                new DecisionConditionData { type = ConditionType.DecisionWas, key = DecisionFirstLight }
+                            } },
                         new NpcInteractionData { id = "talk", label = "Talk to Mara", encounterId = EncounterFirstLight }
                     },
                     routine = new List<NpcStopData>

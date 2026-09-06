@@ -683,8 +683,12 @@ MonoBehaviour:
 root_gids.append(gid)
 
 # --- global post-process volume (Assets/Settings/PostProcess_Global.asset) ---
-gid, ids = emit_gameobject("PostProcess_Global", ["transform", "volume"])
+gid, ids = emit_gameobject("PostProcess_Global", ["transform", "volume", "tier"])
 emit_transform(ids["transform"], gid, (0, 0, 0), (0, 0, 0), (1, 1, 1))
+# release pass P3: QualityTierApplier swaps the profile to PostProcess_Low (no bloom) on the Low tier
+emit_monobehaviour(ids["tier"], gid, REG["QualityTierApplier.cs"],
+    "  globalVolume: {fileID: %d}\n  standardProfile: {fileID: 11400000, guid: %s, type: 2}\n  lowProfile: {fileID: 11400000, guid: %s, type: 2}"
+    % (ids["volume"], REG["PostProcess_Global.asset"], REG["PostProcess_Low.asset"]))
 add_block("""--- !u!114 &%d
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1321,7 +1325,7 @@ AUDIO_FIELDS = [
     ("abilityHollow", "sfx_ability_hollow"),
     ("uiTap", "sfx_ui_tap"), ("uiConfirm", "sfx_ui_confirm"), ("decisionLock", "sfx_decision_lock"),
     ("saveDone", "sfx_save"), ("transition", "sfx_transition"), ("dialogueOpen", "sfx_dialogue_open"),
-    ("footstep", "sfx_footstep"),
+    ("footstep", "sfx_footstep"), ("objectiveChime", "sfx_objective"), ("abilityUnlock", "sfx_ability_unlock"),
     ("ambHall", "amb_hall"), ("ambWind", "amb_dusk_wind"), ("ambWater", "amb_water"), ("ambHollow", "amb_hollow"),
     ("musicCalm", "mus_calm"), ("musicTension", "mus_tension"), ("musicCombat", "mus_combat"),
 ]
