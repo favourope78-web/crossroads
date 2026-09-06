@@ -20,8 +20,8 @@
 name: android-apk
 
 on:
-  push:
-    branches: [main]
+  # Manual only: Unity Build Automation (UNITY_CLOUD_BUILD_SETUP.md) is the release build path.
+  # Re-enable `push` once a UNITY_LICENSE secret exists, if a GitHub-side build is still wanted.
   workflow_dispatch: {}
 
 env:

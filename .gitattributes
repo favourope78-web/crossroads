@@ -45,57 +45,6 @@
 *.mixer     text merge=unityyamlmerge eol=lf
 *.shadervariants text merge=unityyamlmerge eol=lf
 
-# =============================================
-# Git LFS — binary assets
-# =============================================
-
-# Images
-*.png  filter=lfs diff=lfs merge=lfs -text
-*.jpg  filter=lfs diff=lfs merge=lfs -text
-*.jpeg filter=lfs diff=lfs merge=lfs -text
-*.gif  filter=lfs diff=lfs merge=lfs -text
-*.bmp  filter=lfs diff=lfs merge=lfs -text
-*.tga  filter=lfs diff=lfs merge=lfs -text
-*.tif  filter=lfs diff=lfs merge=lfs -text
-*.tiff filter=lfs diff=lfs merge=lfs -text
-*.exr  filter=lfs diff=lfs merge=lfs -text
-*.hdr  filter=lfs diff=lfs merge=lfs -text
-*.psd  filter=lfs diff=lfs merge=lfs -text
-*.ai   filter=lfs diff=lfs merge=lfs -text
-
-# Audio
-*.wav  filter=lfs diff=lfs merge=lfs -text
-*.mp3  filter=lfs diff=lfs merge=lfs -text
-*.ogg  filter=lfs diff=lfs merge=lfs -text
-*.aif  filter=lfs diff=lfs merge=lfs -text
-*.aiff filter=lfs diff=lfs merge=lfs -text
-*.flac filter=lfs diff=lfs merge=lfs -text
-
-# Video
-*.mp4  filter=lfs diff=lfs merge=lfs -text
-*.mov  filter=lfs diff=lfs merge=lfs -text
-*.webm filter=lfs diff=lfs merge=lfs -text
-
-# 3D models & animation sources
-*.fbx  filter=lfs diff=lfs merge=lfs -text
-*.FBX  filter=lfs diff=lfs merge=lfs -text
-*.obj  filter=lfs diff=lfs merge=lfs -text
-*.blend filter=lfs diff=lfs merge=lfs -text
-*.max  filter=lfs diff=lfs merge=lfs -text
-*.ma   filter=lfs diff=lfs merge=lfs -text
-*.mb   filter=lfs diff=lfs merge=lfs -text
-
-# Fonts
-*.ttf  filter=lfs diff=lfs merge=lfs -text
-*.otf  filter=lfs diff=lfs merge=lfs -text
-
-# Libraries & packed assets
-*.dll  filter=lfs diff=lfs merge=lfs -text
-*.so   filter=lfs diff=lfs merge=lfs -text
-*.a    filter=lfs diff=lfs merge=lfs -text
-*.aar  filter=lfs diff=lfs merge=lfs -text
-*.unitypackage filter=lfs diff=lfs merge=lfs -text
-
-# Build outputs (if ever committed to a release branch)
-*.apk  filter=lfs diff=lfs merge=lfs -text
-*.aab  filter=lfs diff=lfs merge=lfs -text
+# NOTE (release pass): the former Git LFS rules were removed - every binary in this repository is a
+# plain git blob (no LFS objects exist), and cloud builders (Unity Build Automation, game-ci) must
+# check the tree out byte-identically without an LFS smudge step.

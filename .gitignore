@@ -96,3 +96,7 @@ scripts/decision_system_tests/crossroads/
 # Python bytecode caches
 __pycache__/
 *.pyc
+
+# Android signing keys - never commit (see UNITY_CLOUD_BUILD_SETUP.md section 5)
+*.keystore
+*.jks

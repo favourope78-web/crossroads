@@ -80,6 +80,17 @@ namespace Crossroads.EditorTools
             Debug.Log("[CROSSROADS] Android player settings configured (API24+, ARM64/ARMv7, IL2CPP Master, Vulkan+GLES3, ASTC, landscape)");
         }
 
+        /// <summary>The shipped scene list: the single FirstLocation scene (all rooms live in it).
+        /// EditorBuildSettingsScene takes a PATH - the previous code passed the scene GUID string,
+        /// which only worked because BuildPlayerOptions.scenes was set explicitly; Unity Build
+        /// Automation reads EditorBuildSettings, so this must be the real path.</summary>
+        public const string MainScenePath = "Assets/Scenes/Prototype/FirstLocation.unity";
+
+        public static void ApplySceneList()
+        {
+            EditorBuildSettings.scenes = new[] { new EditorBuildSettingsScene(MainScenePath, true) };
+        }
+
         [MenuItem("Build/CROSSROADS Dev APK (Android)")]
         public static void BuildDevApk() { BuildApk(false); }
 
@@ -92,23 +103,15 @@ namespace Crossroads.EditorTools
         private static void BuildApk(bool release)
         {
             Configure();
+            ApplySceneList();
             string apkPath = release ? ReleaseApkPath : ApkPath;
-
-            // scene list = the prototype scene (scene GUID comes from the generator registry)
-            var sceneGuids = new[]
-            {
-                "c0a1fed200000000000000000000005a" // Assets/Scenes/Prototype/FirstLocation.unity
-            };
-            var scenes = new EditorBuildSettingsScene[sceneGuids.Length];
-            for (int i = 0; i < sceneGuids.Length; i++) scenes[i] = new EditorBuildSettingsScene(sceneGuids[i], true);
-            EditorBuildSettings.scenes = scenes;
 
             string abs = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), apkPath));
             Directory.CreateDirectory(Path.GetDirectoryName(abs));
 
             var options = new BuildPlayerOptions
             {
-                scenes = new[] { "Assets/Scenes/Prototype/FirstLocation.unity" },
+                scenes = new[] { MainScenePath },
                 locationPathName = abs,
                 target = BuildTarget.Android,
                 options = release ? BuildOptions.None : (BuildOptions.Development | BuildOptions.ConnectWithProfiler)
