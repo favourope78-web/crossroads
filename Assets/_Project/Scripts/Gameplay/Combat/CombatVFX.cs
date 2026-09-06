@@ -46,6 +46,19 @@ namespace Crossroads.Gameplay
         private static readonly Color Spark = new Color(1.0f, 0.92f, 0.70f, 1f);
         private static readonly Color[] Palette = { Ember, Tide, Stone, Hollow, Crimson, Spark };
 
+        private struct Reaction
+        {
+            public Transform t;
+            public Vector3 baseScale;
+            public float age, life;
+            public int kind;      // 0 hit squash, 1 windup lean, 2 alert hop, 3 defeat sink
+            public bool live;
+        }
+        private const int MaxReactions = 12;
+        private readonly Reaction[] _reactions = new Reaction[MaxReactions];
+        private int _liveReactions;
+        public int LiveReactions { get { return _liveReactions; } }
+
         private readonly Shard[] _pool = new Shard[PoolSize];
         private Material[] _mats;
         private int _liveCount;
@@ -159,6 +172,7 @@ namespace Crossroads.Gameplay
             if (e.dodged) { Streak(at, t.right, 1, 3); return; }
             Burst(at, e.amount >= 20f ? 8 : 6, 5, 2.6f, 0.34f);
             Burst(at, 3, PaletteFor(e.damageType.ToString().ToLowerInvariant()), 1.6f, 0.45f);
+            React(t, 0, 0.22f);
         }
 
         private void OnDefeated(CombatantDefeatedEvent e)
@@ -168,14 +182,15 @@ namespace Crossroads.Gameplay
             if (t == null) return;
             Ring(t.position + Vector3.up * 0.05f, 3, 2.2f, 0.7f);
             Motes(t.position + Vector3.up * 0.6f, 10, 0, 1.1f);
+            React(t, 3, 1.1f);
         }
 
         private void OnEnemyState(EnemyStateChangedEvent e)
         {
             Transform t = Enemy(e.enemyId);
             if (t == null) return;
-            if (e.state == EnemyState.Alert) Pillar(t.position + Vector3.up * 2.6f, 1, 0.5f, 0.35f);
-            else if (e.state == EnemyState.AttackWindup) Ring(t.position + Vector3.up * 0.05f, 4, 1.9f, 0.45f);
+            if (e.state == EnemyState.Alert) { Pillar(t.position + Vector3.up * 2.6f, 1, 0.5f, 0.35f); React(t, 2, 0.3f); }
+            else if (e.state == EnemyState.AttackWindup) { Ring(t.position + Vector3.up * 0.05f, 4, 1.9f, 0.45f); React(t, 1, 0.4f); }
         }
 
         private void OnPlayerAction(PlayerActionEvent e)
@@ -281,10 +296,85 @@ namespace Crossroads.Gameplay
                 Spawn(at + dir * (k * 0.25f), dir * 1.5f, new Vector3(0.25f, 0.9f, 0.08f), 0.28f + k * 0.04f, palette, 0f);
         }
 
+        /// <summary>
+        /// Procedural body reaction on a primitive rig root: the enemy archetypes have no
+        /// skeleton, so "animation" is squash/lean/hop/sink on the root transform scale
+        /// (children primitives follow). Restores the exact base scale when finished.
+        /// </summary>
+        public void React(Transform target, int kind, float life)
+        {
+            if (target == null) return;
+            int slot = -1;
+            for (int i = 0; i < MaxReactions; i++)
+            {
+                if (_reactions[i].live && _reactions[i].t == target)
+                {
+                    if (_reactions[i].kind == 3) return;          // defeat sink wins
+                    target.localScale = _reactions[i].baseScale;  // restart cleanly
+                    slot = i; _liveReactions--; break;
+                }
+                if (slot < 0 && !_reactions[i].live) slot = i;
+            }
+            if (slot < 0) return;
+            _reactions[slot].t = target;
+            _reactions[slot].baseScale = target.localScale;
+            _reactions[slot].age = 0f;
+            _reactions[slot].life = life;
+            _reactions[slot].kind = kind;
+            _reactions[slot].live = true;
+            _liveReactions++;
+        }
+
+        private void TickReactions(float dt)
+        {
+            for (int i = 0; i < MaxReactions; i++)
+            {
+                ref Reaction r = ref _reactions[i];
+                if (!r.live) continue;
+                r.age += dt;
+                if (r.t == null) { r.live = false; _liveReactions--; continue; }
+                float k = Mathf.Clamp01(r.age / Mathf.Max(r.life, 0.01f));
+                Vector3 b = r.baseScale;
+                switch (r.kind)
+                {
+                    case 0: // hit: squash then overshoot back (volume-ish preserving)
+                    {
+                        float p = Mathf.Sin(k * Mathf.PI);
+                        r.t.localScale = new Vector3(b.x * (1f + 0.18f * p), b.y * (1f - 0.22f * p), b.z * (1f + 0.18f * p));
+                        break;
+                    }
+                    case 1: // windup: stretch tall + lean into the strike (anticipation)
+                    {
+                        float p = Mathf.Sin(k * Mathf.PI);
+                        r.t.localScale = new Vector3(b.x * (1f - 0.08f * p), b.y * (1f + 0.14f * p), b.z * (1f - 0.08f * p));
+                        break;
+                    }
+                    case 2: // alert: quick hop (scale pop)
+                    {
+                        float p = Mathf.Sin(k * Mathf.PI);
+                        r.t.localScale = b * (1f + 0.10f * p);
+                        break;
+                    }
+                    default: // defeat: crumple toward the ground
+                    {
+                        float e = k * k;
+                        r.t.localScale = new Vector3(b.x * (1f + 0.25f * e), b.y * Mathf.Max(0.05f, 1f - 0.9f * e), b.z * (1f + 0.25f * e));
+                        break;
+                    }
+                }
+                if (k >= 1f)
+                {
+                    if (r.kind != 3) r.t.localScale = b; // defeated bodies stay crumpled until deactivated
+                    r.live = false; _liveReactions--;
+                }
+            }
+        }
+
         private void Update()
         {
-            if (_liveCount == 0) return;
             float dt = Time.deltaTime;
+            if (_liveReactions > 0) TickReactions(dt);
+            if (_liveCount == 0) return;
             for (int i = 0; i < PoolSize; i++)
             {
                 ref Shard s = ref _pool[i];

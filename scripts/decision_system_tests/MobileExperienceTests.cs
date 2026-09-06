@@ -160,6 +160,16 @@ namespace Crossroads.Tests
             CheckEq(CombatVFX.PaletteFor("kinetic"), 5, "vfx: kinetic -> neutral spark");
             var vfx = new CombatVFX();
             CheckEq(vfx.LiveShards, 0, "vfx: pool idle before any event");
+            var body = new UnityEngine.Transform();
+            body.localScale = new UnityEngine.Vector3(1f, 1.2f, 1f);
+            vfx.React(body, 0, 0.2f);
+            CheckEq(vfx.LiveReactions, 1, "reactions: hit squash registered on the rig root");
+            vfx.React(body, 3, 0.5f);
+            CheckEq(vfx.LiveReactions, 1, "reactions: one reaction per body (defeat replaces hit)");
+            vfx.React(body, 0, 0.2f);
+            CheckEq(vfx.LiveReactions, 1, "reactions: defeat sink cannot be interrupted by a hit");
+            vfx.React(null, 0, 0.2f);
+            CheckEq(vfx.LiveReactions, 1, "reactions: null target ignored");
 
             // ---- player action events flow from the combat controller verbs
             int actions = 0; PlayerAction last = PlayerAction.Interact;
