@@ -716,6 +716,51 @@ for trig in ("Attack", "Dodge", "Hit", "Defeat"):
 check_text_refs(os.path.join(ari_dir, "Ari_Controller.controller"), "Ari_Controller")
 print("Player combat animations: Attack/Dodge/Hit/Defeat wired")
 
+# ---------------------------------------------------------------- 7. audio + presentation wiring (polish pass)
+# Every AudioClip the GameAudio component references must exist as a WAV with a meta whose guid
+# matches the registry; the scene must carry GameAudio, CombatVFX, the Ari PrefabInstance, a
+# MainCamera-tagged camera and a Player-tagged Ari (device builds have no editor bootstrap).
+import wave as _wave
+audio_keys = [k for k in registry if k.endswith(".wav")]
+audio_root = os.path.join(ROOT, "Assets/_Project/Audio")
+audio_files = {}
+for dp, _dn, fns in os.walk(audio_root):
+    for fn in fns:
+        if fn.endswith(".wav"):
+            audio_files[fn] = os.path.join(dp, fn)
+audio_bytes = 0
+for k in audio_keys:
+    path = audio_files.get(k)
+    if path is None:
+        errors.append("audio clip in registry but missing on disk: " + k)
+        continue
+    meta = path + ".meta"
+    m = re.search(r"^guid: ([0-9a-f]{32})", open(meta).read(), re.M) if os.path.exists(meta) else None
+    if not m or m.group(1) != registry[k]:
+        errors.append("audio meta guid mismatch: " + k)
+    try:
+        with _wave.open(path) as w:
+            if w.getnchannels() != 1 or w.getframerate() > 22050:
+                warns.append("audio not mono/<=22.05kHz (mobile budget): " + k)
+            if w.getnframes() == 0:
+                errors.append("empty audio clip: " + k)
+    except Exception as ex:
+        errors.append("unreadable WAV %s: %s" % (k, ex))
+    audio_bytes += os.path.getsize(path)
+    if registry[k] not in scene_txt:
+        errors.append("scene does not reference audio clip " + k)
+if audio_bytes > 6 * 1024 * 1024:
+    warns.append("audio placeholder set is %.1f MB (>6 MB budget)" % (audio_bytes / 1e6))
+for needle in ["m_TagString: MainCamera", "propertyPath: m_TagString\n      value: Player", "PrefabInstance:",
+               "m_SourcePrefab: {fileID: 100100000, guid: c0a1fed0000000000000000000000002, type: 3}",
+               "guid: a79441f348de89743a2939f4d699eac1", "guid: 172515602e62fb746b5d573b38a5fe58"]:
+    if needle not in scene_txt:
+        errors.append("scene missing presentation wiring: " + needle.replace("\n", " "))
+for script_key in ["GameAudio.cs", "CombatVFX.cs", "PlayerCombatController.cs", "PlayerInteraction.cs"]:
+    if registry[script_key] not in scene_txt:
+        errors.append("scene does not reference %s" % script_key)
+print("Audio + presentation: %d clips (%.1f MB), Ari prefab instance, camera/volume wiring OK" % (len(audio_keys), audio_bytes / 1e6))
+
 print("=" * 60)
 if errors:
     for e in errors:

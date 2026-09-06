@@ -397,13 +397,17 @@ namespace UnityEngine
         public Material material { get; set; }
         public Material sharedMaterial { get; set; }
         public bool enabled = true;
+        public UnityEngine.Rendering.ShadowCastingMode shadowCastingMode;
+        public bool receiveShadows = true;
     }
 
     public class Material : Object
     {
         public Color color { get; set; }
         public Color mainColor { get { return color; } }
+        public bool enableInstancing;
         public void SetColor(string name, Color value) { }
+        public void SetFloat(string name, float value) { }
         public Material(Shader shader) { }
     }
     public class Shader : Object
@@ -434,6 +438,24 @@ namespace UnityEngine
     public class RuntimeAnimatorController : Object { }
 
     public class AudioListener : Behaviour { public static float volume = 1f; }
+    public class AudioClip : Object { public float length = 1f; }
+    public class AudioSource : Behaviour
+    {
+        public AudioClip clip;
+        public bool playOnAwake = true, loop;
+        public float volume = 1f, pitch = 1f, spatialBlend;
+        public bool isPlaying { get; private set; }
+        public void Play() { isPlaying = clip != null; }
+        public void Stop() { isPlaying = false; }
+        public void PlayOneShot(AudioClip c, float v) { }
+    }
+    public static class Random
+    {
+        private static readonly System.Random Rng = new System.Random(7);
+        public static float value { get { return (float)Rng.NextDouble(); } }
+        public static float Range(float a, float b) { return a + (b - a) * value; }
+        public static int Range(int a, int b) { return Rng.Next(a, b); }
+    }
     public static class QualitySettings
     {
         private static int _level = 1;
@@ -452,6 +474,11 @@ namespace UnityEngine
     public class HideInInspector : Attribute { }
     public class RangeAttribute : Attribute { public RangeAttribute(float a, float b) { } }
     public class SpaceAttribute : Attribute { }
+}
+
+namespace UnityEngine.Rendering
+{
+    public enum ShadowCastingMode { Off, On, TwoSided, ShadowsOnly }
 }
 
 namespace UnityEngine

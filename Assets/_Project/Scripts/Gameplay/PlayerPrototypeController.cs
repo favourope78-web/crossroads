@@ -1,3 +1,4 @@
+using Crossroads.Core;
 using UnityEngine;
 
 namespace Crossroads.Gameplay
@@ -117,6 +118,19 @@ namespace Crossroads.Gameplay
 
             _animator.SetFloat(SpeedHash, moving ? 1f : 0f, 0.15f, Time.deltaTime);
             _animator.SetBool(TurningHash, pivoting);
+
+            // footstep cadence (audio/VFX listen to PlayerActionEvent.Footstep; ~2 steps/s at walk speed)
+            if (moving && _cc.isGrounded)
+            {
+                _stepPhase += Time.deltaTime * walkSpeed * ExternalSpeedMultiplier * 0.95f;
+                if (_stepPhase >= 1f)
+                {
+                    _stepPhase -= 1f;
+                    EventBus.Publish(new PlayerActionEvent { action = PlayerAction.Footstep });
+                }
+            }
+            else _stepPhase = 0.6f; // first step lands quickly after standing still
         }
+        private float _stepPhase = 0.6f;
     }
 }

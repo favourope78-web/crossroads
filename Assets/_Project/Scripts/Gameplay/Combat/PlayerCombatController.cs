@@ -152,6 +152,7 @@ namespace Crossroads.Gameplay
             float facing = transform.eulerAngles.y;
 
             List<EnemyAgent> hits = CombatDirector.QueryEnemies(origin, facing, attack.range, attack.arcDegrees);
+            EventBus.Publish(new PlayerActionEvent { action = PlayerAction.Attack, connected = hits.Count > 0 });
             if (hits.Count == 0)
             {
                 EventBus.Publish(new NoticeRequestEvent { text = "Your strike cuts empty air" });
@@ -189,6 +190,7 @@ namespace Crossroads.Gameplay
             var guard = GameServices.Content != null && GameServices.Content.Content != null
                 ? GameServices.Content.Content.FindStatusEffect(_settings.dodgeStatusId) : null;
             if (guard != null) _combatant.ApplyStatus(guard);
+            EventBus.Publish(new PlayerActionEvent { action = PlayerAction.Dodge });
             EventBus.Publish(new NoticeRequestEvent { text = "You flow aside" });
             return true;
         }
@@ -209,6 +211,7 @@ namespace Crossroads.Gameplay
         private void OnDefeated()
         {
             CombatResolution.DefeatPlayer(_settings, GameServices.State);
+            EventBus.Publish(new PlayerActionEvent { action = PlayerAction.Respawn });
             EventBus.Publish(new NoticeRequestEvent { text = "The hall goes dark - and puts you back on your feet" });
 
             // revive at the checkpoint, full health (save untouched beyond the authored effects)

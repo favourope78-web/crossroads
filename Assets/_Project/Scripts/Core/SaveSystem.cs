@@ -63,12 +63,44 @@ namespace Crossroads.Core
         }
 
         /// <summary>Loads a slot. Returns null when missing/corrupt (corrupt -> logged, caller decides).</summary>
+        /// <summary>Which file the last successful Load came from ("slot", "backup", "autosave" or "").</summary>
+        public string LastLoadSource { get; private set; }
+
+        /// <summary>
+        /// Load order (production hardening): slot file -> slot .bak (previous good write,
+        /// rotated by Persist) -> autosave mirror. A torn/corrupt primary therefore costs the
+        /// player at most one save step instead of the whole run. Each candidate is parsed and
+        /// sanity-checked independently; failures are logged, never thrown.
+        /// </summary>
         public SaveData Load(int slot = 0)
         {
             if (_paths == null) return null;
+            LastLoadSource = "";
             string path = _paths.Resolve(string.Format(SlotPrefix, slot));
-            return LoadPath(path);
+            SaveData data = LoadPath(path);
+            if (data != null) { LastLoadSource = "slot"; return data; }
+
+            bool primaryExists = File.Exists(path);
+            data = LoadPath(path + BackupSuffix);
+            if (data != null)
+            {
+                LastLoadSource = "backup";
+                if (primaryExists) StoryLog.LogWarning("[CROSSROADS] Save slot " + slot + " unreadable - recovered from " + BackupSuffix);
+                _fileName = Path.GetFileName(path); // keep persisting to the slot, not the backup
+                return data;
+            }
+            data = LoadPath(_paths.Resolve(AutosaveFileName));
+            if (data != null)
+            {
+                LastLoadSource = "autosave";
+                if (primaryExists) StoryLog.LogWarning("[CROSSROADS] Save slot " + slot + " unreadable - recovered from autosave mirror");
+                _fileName = Path.GetFileName(path);
+                return data;
+            }
+            return null;
         }
+
+        public const string BackupSuffix = ".bak";
 
         private SaveData LoadPath(string path)
         {
@@ -76,6 +108,12 @@ namespace Crossroads.Core
             {
                 if (!File.Exists(path)) return null;
                 string json = File.ReadAllText(path, Encoding.UTF8);
+                // torn write / zero-byte file (battery pull mid-write): reject before parsing
+                if (json == null || json.Length < 8 || json.TrimStart()[0] != '{' || json.TrimEnd()[json.TrimEnd().Length - 1] != '}')
+                {
+                    StoryLog.LogWarning("[CROSSROADS] Save file is truncated or not JSON - ignoring " + path);
+                    return null;
+                }
                 SaveData data = _json.FromJson<SaveData>(json);
                 if (data == null || data.schemaVersion < 1 || data.schemaVersion > SaveData.CurrentSchemaVersion)
                 {
@@ -168,25 +206,35 @@ namespace Crossroads.Core
 
         private SaveReport WriteAtomic(string path, string json)
         {
+            string tmp = path + ".tmp";
             try
             {
                 if (_paths != null) System.IO.Directory.CreateDirectory(_paths.Directory);
-                string tmp = path + ".tmp";
                 File.WriteAllText(tmp, json, Encoding.UTF8);
-                File.Replace(tmp, path, null);          // atomic on same volume; throws if target missing
+                if (File.Exists(path))
+                {
+                    // atomic swap that also rotates the previous good file into .bak (same volume)
+                    File.Replace(tmp, path, path + BackupSuffix, true);
+                }
+                else
+                {
+                    File.Move(tmp, path);              // first save: nothing to rotate
+                }
                 return SaveReport.Success(path);
             }
             catch (Exception e)
             {
-                // First save: target may not exist yet; fall back to plain move
+                // Replace/Move unsupported on this volume (some Android external storage): copy path
                 try
                 {
-                    File.Copy(path + ".tmp", path, true);
-                    File.Delete(path + ".tmp");
+                    if (File.Exists(path)) File.Copy(path, path + BackupSuffix, true);
+                    File.Copy(tmp, path, true);
+                    File.Delete(tmp);
                     return SaveReport.Success(path);
                 }
                 catch (Exception e2)
                 {
+                    try { if (File.Exists(tmp)) File.Delete(tmp); } catch (Exception) { }
                     return SaveReport.Failure(path, e.Message + " / " + e2.Message);
                 }
             }
@@ -199,10 +247,12 @@ namespace Crossroads.Core
             try
             {
                 if (File.Exists(path)) File.Delete(path);
+                if (File.Exists(path + BackupSuffix)) File.Delete(path + BackupSuffix);
                 if (_paths != null)
                 {
                     string auto = _paths.Resolve(AutosaveFileName);
                     if (File.Exists(auto)) File.Delete(auto);
+                    if (File.Exists(auto + BackupSuffix)) File.Delete(auto + BackupSuffix);
                 }
                 return SaveReport.Success(path);
             }

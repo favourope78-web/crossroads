@@ -365,12 +365,34 @@ namespace Crossroads.Tests
             Check(loaded != null && loaded.gameState != null, "round-trip load ok");
             CheckEq(loaded.gameState.GetFlag("k"), "v", "state survived the JSON round-trip");
 
+            // second persist rotates the first good file into .bak
+            save2.Current.gameState.flags.Add(new StringEntry("k2", "v2"));
+            Check(save2.Persist(autosaveMirror: true).ok, "second persist ok");
+            Check(File.Exists(Path.Combine(dir, "save_slot_0.json.bak")), "previous good save rotated to .bak");
+
             File.WriteAllText(Path.Combine(dir, "save_slot_0.json"), "{corrupt!!");
             var save3 = new SaveSystem(json, paths);
-            Check(save3.Load(0) == null, "corrupt save -> null (no crash)");
+            var recovered = save3.Load(0);
+            Check(recovered != null, "corrupt primary -> recovered (no crash)");
+            CheckEq(save3.LastLoadSource, "backup", "recovery order: .bak before autosave");
+            CheckEq(recovered != null ? recovered.gameState.GetFlag("k") : "", "v", "backup content is the previous good save");
+            Check(save3.Persist(autosaveMirror: false).ok, "persisting after recovery rewrites the slot");
+            Check(new SaveSystem(json, paths).Load(0) != null, "slot readable again after recovery persist");
 
-            var del = save3.Delete(0);
-            Check(del.ok && !save3.Exists(0), "delete clears slot + autosave");
+            File.WriteAllText(Path.Combine(dir, "save_slot_0.json"), "{corrupt!!");
+            File.WriteAllText(Path.Combine(dir, "save_slot_0.json.bak"), "");
+            var save4 = new SaveSystem(json, paths);
+            var fromMirror = save4.Load(0);
+            Check(fromMirror != null && save4.LastLoadSource == "autosave", "corrupt slot + empty .bak -> autosave mirror");
+
+            File.WriteAllText(Path.Combine(dir, "autosave.json"), "{corrupt!!");
+            File.Delete(Path.Combine(dir, "autosave.json.bak"));
+            var save5 = new SaveSystem(json, paths);
+            Check(save5.Load(0) == null, "everything corrupt -> null (no crash)");
+
+            var del = save5.Delete(0);
+            Check(del.ok && !save5.Exists(0), "delete clears slot + autosave");
+            Check(!File.Exists(Path.Combine(dir, "save_slot_0.json.bak")), "delete clears .bak too");
             Directory.Delete(dir, true);
         }
 

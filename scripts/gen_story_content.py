@@ -75,6 +75,9 @@ NEW_GUIDS = {
     "MapHUD.cs":                  g32(0xc0),
     "M_Tide_Pool":                g32(0xc1),
     "M_Tidewell_Stone":           g32(0xc2),
+    # production polish pass (audio director + combat VFX)
+    "GameAudio.cs":               g32(0xc6),
+    "CombatVFX.cs":               g32(0xc7),
 }
 
 REGISTRY = {}
@@ -168,6 +171,8 @@ SCRIPT_META_PATHS = {
     "LocationServices.cs": "Assets/_Project/Scripts/Gameplay/Locations",
     "LocationTransitionFader.cs": "Assets/_Project/Scripts/UI",
     "MapHUD.cs":           "Assets/_Project/Scripts/UI",
+    "GameAudio.cs":        "Assets/_Project/Scripts/Gameplay/World",
+    "CombatVFX.cs":        "Assets/_Project/Scripts/Gameplay/Combat",
 }
 NPC_DIR = os.path.join(ROOT, "Assets/_Project/Scripts/Gameplay/NPC")
 os.makedirs(NPC_DIR, exist_ok=True)

@@ -1293,10 +1293,36 @@ warden_wreck_gid, _, _ = emit_char_root("WardenWreckage", [], (0, 0, 26.5), (0, 
 ])
 
 # ---- Combat director (ability->attack routing + enemy registry + player bridge) ----
-director_gid, director_ids = emit_gameobject("CombatDirector", ["transform", "director"])
+director_gid, director_ids = emit_gameobject("CombatDirector", ["transform", "director", "vfx"])
 emit_transform(director_ids["transform"], director_gid, (0, 0, 0), (0, 0, 0), (1, 1, 1))
 emit_monobehaviour(director_ids["director"], director_gid, REG["CombatDirector.cs"])
+emit_monobehaviour(director_ids["vfx"], director_gid, REG["CombatVFX.cs"])   # pooled hit/defeat/telegraph/decision VFX
 root_gids.append(director_gid)
+
+# ---- audio director (procedural placeholder clips from scripts/gen_audio.py) ----
+def clip_ref(key):
+    return "{fileID: 8300000, guid: %s, type: 3}" % REG[key + ".wav"]
+AUDIO_FIELDS = [
+    ("attackSwing", "sfx_attack_swing"), ("attackHit", "sfx_attack_hit"), ("dodge", "sfx_dodge"),
+    ("playerHurt", "sfx_player_hurt"), ("enemyDefeat", "sfx_enemy_defeat"), ("enemyAlert", "sfx_enemy_alert"),
+    ("enemyWindup", "sfx_enemy_windup"),
+    ("abilityEmber", "sfx_ability_ember"), ("abilityTide", "sfx_ability_tide"), ("abilityStone", "sfx_ability_stone"),
+    ("abilityHollow", "sfx_ability_hollow"),
+    ("uiTap", "sfx_ui_tap"), ("uiConfirm", "sfx_ui_confirm"), ("decisionLock", "sfx_decision_lock"),
+    ("saveDone", "sfx_save"), ("transition", "sfx_transition"), ("dialogueOpen", "sfx_dialogue_open"),
+    ("footstep", "sfx_footstep"),
+    ("ambHall", "amb_hall"), ("ambWind", "amb_dusk_wind"), ("ambWater", "amb_water"), ("ambHollow", "amb_hollow"),
+    ("musicCalm", "mus_calm"), ("musicTension", "mus_tension"), ("musicCombat", "mus_combat"),
+]
+missing_audio = [k for _f, k in AUDIO_FIELDS if k + ".wav" not in REG]
+if missing_audio:
+    raise SystemExit("registry missing audio %s - run scripts/gen_audio.py first" % missing_audio)
+audio_gid, audio_ids = emit_gameobject("GameAudio", ["transform", "audio"])
+emit_transform(audio_ids["transform"], audio_gid, (0, 0, 0), (0, 0, 0), (1, 1, 1))
+emit_monobehaviour(audio_ids["audio"], audio_gid, REG["GameAudio.cs"],
+    "\n".join("  %s: %s" % (f, clip_ref(k)) for f, k in AUDIO_FIELDS)
+    + "\n  sfxVolume: 0.9\n  ambientVolume: 0.55\n  musicVolume: 0.45\n  ambientCrossfade: 1.6\n  musicCrossfade: 1.2\n  combatCooldown: 4")
+root_gids.append(audio_gid)
 
 def env_prefab(kit_dir, prefab_name, go_name, light_rgb, intensity):
     kd = os.path.join(ROOT, "Assets/Game/Locations", kit_dir)

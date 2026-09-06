@@ -55,6 +55,15 @@ namespace Crossroads.Gameplay
     }
 
     /// <summary>Fired on every enemy FSM transition (task: enemy state feedback).</summary>
+    /// <summary>Player verbs the presentation layer reacts to (audio, VFX). Polish pass.</summary>
+    public enum PlayerAction { Attack = 0, Dodge = 1, Interact = 2, Respawn = 3, Footstep = 4 }
+
+    public struct PlayerActionEvent
+    {
+        public PlayerAction action;
+        public bool connected;      // Attack: at least one enemy in the arc
+    }
+
     public struct EnemyStateChangedEvent
     {
         public string enemyId;
