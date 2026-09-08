@@ -50,6 +50,7 @@ namespace Crossroads.Tests
             Console.WriteLine("[ArtProductionTests] art production pass --------------------------------------------------");
 
             TestLoadingScreen();
+            TestVfx();
             TestIntroCinematic();
             TestChapterCards();
             TestArtLibraryFallback();
@@ -59,6 +60,54 @@ namespace Crossroads.Tests
             failed = _failed;
             foreach (var line in Log) Console.WriteLine(line);
             Console.WriteLine("[ArtProductionTests] " + _passed + " passed, " + _failed + " failed");
+        }
+
+        // ---------------------------------------------------------------- vfx pool
+        private static void TestVfx()
+        {
+            // alpha curve: 0 at spawn, peaks mid-life, 0 at death, never negative/over 1
+            CheckNear(Crossroads.Gameplay.VfxMath.AlphaOverLife(0f), 0f, 0.001f, "vfx: alpha starts at zero");
+            CheckNear(Crossroads.Gameplay.VfxMath.AlphaOverLife(1f), 0f, 0.001f, "vfx: alpha ends at zero");
+            float peak = 0f;
+            for (int i = 0; i <= 20; i++) peak = Math.Max(peak, Crossroads.Gameplay.VfxMath.AlphaOverLife(i / 20f));
+            Check(peak > 0.5f && peak <= 1f, "vfx: alpha peaks mid-life within (0.5, 1]");
+            // size curve: monotonic pop-out, bounded
+            Check(Crossroads.Gameplay.VfxMath.SizeOverLife(0f) < Crossroads.Gameplay.VfxMath.SizeOverLife(0.25f), "vfx: size pops out");
+            CheckNear(Crossroads.Gameplay.VfxMath.SizeOverLife(1f), 1f, 0.001f, "vfx: size settles at 1");
+            // step: gravity pulls down, drag slows, life expires
+            UnityEngine.Vector3 pos = UnityEngine.Vector3.zero;
+            UnityEngine.Vector3 vel = new UnityEngine.Vector3(2f, 2f, 0f);
+            float life = 0.5f;
+            float y0 = pos.y;
+            bool alive = Crossroads.Gameplay.VfxMath.Step(ref pos, ref vel, ref life, 0.1f);
+            Check(alive && life < 0.5f, "vfx: step consumes life while alive");
+            Check(pos.y < y0 + 0.2f, "vfx: gravity bounds the rise");
+            bool died = false;
+            for (int i = 0; i < 30; i++)
+            {
+                if (!Crossroads.Gameplay.VfxMath.Step(ref pos, ref vel, ref life, 0.1f)) { died = true; break; }
+            }
+            Check(died, "vfx: particle expires instead of living forever");
+            // layers: contiguous, non-overlapping, cover the pool
+            int a0, aN, h0, hN, d0, dN;
+            Crossroads.Gameplay.VfxMath.LayerRange(0, out a0, out aN);
+            Crossroads.Gameplay.VfxMath.LayerRange(1, out h0, out hN);
+            Crossroads.Gameplay.VfxMath.LayerRange(2, out d0, out dN);
+            Check(a0 == 0 && h0 == a0 + aN && d0 == h0 + hN, "vfx: pool layers are contiguous");
+            Check(aN + hN + dN <= Crossroads.Gameplay.VfxMath.PoolSize, "vfx: layers fit the pool");
+            CheckEq(Crossroads.Gameplay.VfxMath.LayerOfSlot(aN), 1, "vfx: first hit slot maps to layer 1");
+            // cursor wraps inside its layer
+            int cursor = Crossroads.Gameplay.VfxMath.NextCursor(d0 + dN - 1, 2);
+            CheckEq(cursor, d0, "vfx: dust cursor wraps to the layer start");
+            // palettes match the HudTheme ability colours
+            Check(Crossroads.Gameplay.VfxMath.ColorForLine("ember").r > 0.9f, "vfx: ember is warm red");
+            Check(Crossroads.Gameplay.VfxMath.ColorForLine("tide").g > 0.7f, "vfx: tide is cyan-green");
+            Check(Crossroads.Gameplay.VfxMath.ColorForLine("stone").b < 0.5f, "vfx: stone is gold");
+            // ability id -> line mapping (used by the director)
+            CheckEq(Crossroads.Gameplay.VfxDirector.LineOfAbility("cinder_burst"), "ember", "vfx: cinder maps to ember");
+            CheckEq(Crossroads.Gameplay.VfxDirector.LineOfAbility("riptide"), "tide", "vfx: riptide maps to tide");
+            CheckEq(Crossroads.Gameplay.VfxDirector.LineOfAbility("tremor_stomp"), "stone", "vfx: tremor maps to stone");
+            CheckEq(Crossroads.Gameplay.VfxDirector.LineOfAbility("choir_song"), "hollow", "vfx: unknown maps to hollow");
         }
 
         // ---------------------------------------------------------------- loading screen

@@ -116,3 +116,33 @@ device capture remains the final sign-off step (see ART_GAPS → Verification).
 
 Acceptance: CODE ✓ (all gates green). VISUAL — the player-facing screens no longer
 present as prototype (see screenshots); final device sign-off listed in ART_GAPS.
+
+
+---
+
+## 12. Art-gap closure pass (post-report execution)
+
+Executed the remaining plan in priority order; environment-honest notes inline.
+
+1. **Unity editor / device verification (Phases 1-2 of the plan): blocked by a credential
+   only the repo owner can add.** The GitHub Actions Unity builder (game-ci) is manual-
+   dispatch and the repo has **0 secrets** - every past run died on "Missing Unity License
+   File". Unblock: add a `UNITY_LICENSE` (or `UNITY_EMAIL`+`UNITY_PASSWORD`) secret, then
+   run the `android-apk` workflow - it compiles the project with real Unity 6 and uploads
+   the APK as an artifact. No code changes needed.
+2. **VFX (closed):** `VfxMath` (pure pool simulation) + `VfxDirector` (64 pooled quads,
+   URP/Unlit with MaterialPropertyBlock tinting, self-disabling without a shader):
+   line-coloured ability bursts on `AbilityUsedEvent`, crit-sized hit sparks on
+   `CombatantDamagedEvent`, hall dust motes. Presentation-only (watches events, writes
+   nothing). 19 new tests.
+3. **Room signatures (closed):** 3 new authored meshes - sculpted pier-water plane with
+   baked ripples (last_summer), octagonal arena dais with corner posts (dax_arena),
+   scaffolding with deck and braces (long_wall). +3 renderers.
+4. **Audio (upgraded):** all 11 designed-synth clips rebuilt as v2 recipes (ignition
+   transients, echo tails, scattered micro-events, arpeggio/bass/percussion beds).
+   Still labelled procedural in AUDIO_STATUS.json - honest, not "recorded".
+5. **LOD variants:** skipped per plan (conditional on device profiling, which is blocked).
+
+**Gates after the pass:** 2120/2120 tests (+19 VFX), compile 0 errors, validation
+PASSED (0 warnings), budget PASSED - 812/820 active renderers, ~169/420 batched draw
+calls, 62/64 ticking behaviours, 27 clips / 2.8 MB audio, every asset meta'd.

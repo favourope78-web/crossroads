@@ -94,6 +94,21 @@ def lowpass_sweep(x, c0, c1):
     return y
 
 
+def bandpass(x, lo, hi):
+    return lowpass(highpass(x, lo), hi)
+
+
+def delay_tail(x, seconds=0.09, feedback=0.35, mix=0.3):
+    """Cheap feedback delay for short reverb-ish tails."""
+    d = int(SR * seconds)
+    out = x.copy()
+    tap = x.copy()
+    for _ in range(3):
+        tap = np.concatenate([np.zeros(d), tap[:-d] * feedback]) if len(tap) > d else tap * 0
+        out = out + tap * mix
+    return out
+
+
 def highpass(x, cutoff):
     return x - lowpass(x, cutoff)
 
@@ -170,33 +185,77 @@ def sfx_enemy_defeat():
 
 
 def sfx_ability_ember():
-    dur = 0.65
-    crackle = highpass(noise(dur), 1500) * (rng.uniform(0, 1, int(SR * dur)) > 0.94) * env(int(SR * dur), 0.01, 0.35, 0.1, 0.2)
-    warm = (sine(sweep(220, 110, dur), dur) + 0.5 * sine(sweep(330, 165, dur), dur)) * env(int(SR * dur), 0.02, 0.3, 0.3, 0.25)
-    return norm(soft(warm, 1.5) + crackle * 0.8, 0.9)
+    """Ignition transient + flame roar + sub thump + crackle shower + ember tail."""
+    dur = 0.8
+    n = int(SR * dur)
+    ignition = highpass(noise(0.05), 2500) * env(int(SR * 0.05), 0.001, 0.02, 0.0, 0.03)
+    ignition = np.concatenate([ignition, np.zeros(n - len(ignition))])
+    roar = bandpass(noise(dur), 300, 1800) * env(n, 0.015, 0.28, 0.35, 0.3)
+    sub = soft(sine(sweep(150, 55, 0.35, 0.7), 0.35) * 2.2, 2.2) * env(int(SR * 0.35), 0.002, 0.12, 0.2, 0.18)
+    sub = np.concatenate([sub, np.zeros(n - len(sub))])
+    crackle = highpass(noise(dur), 2200) * (rng.uniform(0, 1, n) > 0.93) * env(n, 0.03, 0.4, 0.15, 0.3)
+    pops = np.zeros(n)
+    for pos in (0.18, 0.29, 0.41, 0.55, 0.67):
+        i = int(pos * SR)
+        seg = sine(sweep(rng.uniform(900, 1600), 300, 0.045), 0.045) * env(int(SR * 0.045), 0.001, 0.03, 0.0, 0.02)
+        pops[i:i + len(seg)] += seg * 0.35
+    x = soft(roar, 1.4) * 0.9 + ignition * 0.8 + sub + crackle * 0.7 + pops
+    return norm(delay_tail(x, 0.07, 0.3, 0.25), 0.9)
 
 
 def sfx_ability_tide():
-    dur = 0.75
+    """Water whoosh both ways + droplet arpeggio + splash transient + glassy shimmer."""
+    dur = 0.85
+    n = int(SR * dur)
+    whoosh = lowpass_sweep(noise(dur), 500, 4200) * env(n, 0.08, 0.25, 0.3, 0.3)
+    backwash = np.zeros(n)
+    bw = lowpass_sweep(noise(0.5), 3800, 700) * env(int(SR * 0.5), 0.15, 0.2, 0.2, 0.25)
+    backwash[int(0.3 * SR):int(0.3 * SR) + len(bw)] += bw * 0.7
+    splash = highpass(noise(0.09), 1600) * env(int(SR * 0.09), 0.001, 0.05, 0.0, 0.04)
+    splash = np.concatenate([splash, np.zeros(n - len(splash))])
+    drops = np.zeros(n)
+    for k, pos in enumerate((0.12, 0.2, 0.28, 0.37, 0.47, 0.58, 0.7)):
+        f = 900 + 180 * k + rng.uniform(-60, 60)
+        i = int(pos * SR)
+        seg = sine(sweep(f, f * 0.55, 0.06), 0.06) * env(int(SR * 0.06), 0.001, 0.035, 0.0, 0.025)
+        drops[i:i + len(seg)] += seg * (0.3 - 0.02 * k)
     chord = sum(sine(f, dur, rng.uniform(0, 6.28)) * w for f, w in
-                ((523.25, 1.0), (659.25, 0.7), (783.99, 0.6), (1046.5, 0.35), (1318.5, 0.2)))
-    shimmer = chord * (1 + 0.15 * sine(9.0, dur)) * env(int(SR * dur), 0.05, 0.3, 0.4, 0.35)
-    rise = lowpass_sweep(noise(dur), 800, 5000) * env(int(SR * dur), 0.1, 0.3, 0.2, 0.3) * 0.25
-    return norm(shimmer + rise, 0.85)
+                ((523.25, 0.5), (659.25, 0.35), (783.99, 0.3))) * env(n, 0.12, 0.35, 0.45, 0.35)
+    x = whoosh * 0.8 + backwash + splash * 0.6 + drops + chord
+    return norm(delay_tail(x, 0.06, 0.28, 0.2), 0.85)
 
 
 def sfx_ability_stone():
-    dur = 0.6
-    impact = soft(sine(sweep(90, 38, dur, 0.5), dur) * 2.0, 2.5) * env(int(SR * dur), 0.002, 0.25, 0.3, 0.3)
-    rubble = lowpass(noise(dur), 600) * env(int(SR * dur), 0.005, 0.2, 0.15, 0.3)
-    return norm(impact + rubble * 0.6, 0.95)
+    """Deep impact + grinding layer + random rubble rattles + aftershock thud."""
+    dur = 0.75
+    n = int(SR * dur)
+    impact = soft(sine(sweep(95, 36, 0.45, 0.5), 0.45) * 2.2, 2.5) * env(int(SR * 0.45), 0.002, 0.18, 0.25, 0.22)
+    impact = np.concatenate([impact, np.zeros(n - len(impact))])
+    grind = bandpass(noise(dur), 90, 500) * env(n, 0.01, 0.2, 0.25, 0.35) * 0.8
+    rattles = np.zeros(n)
+    for pos, f in ((0.08, 700), (0.14, 520), (0.23, 610), (0.31, 440), (0.44, 560), (0.58, 400)):
+        i = int(pos * SR)
+        seg = bandpass(noise(0.07), 250, 1400) * env(int(SR * 0.07), 0.002, 0.03, 0.05, 0.03)
+        seg *= 0.25 + 0.2 * sine(f * 0.01, 0.07)
+        rattles[i:i + len(seg)] += seg * 0.5
+    aftershock = soft(sine(sweep(70, 42, 0.3, 0.6), 0.3) * 1.8, 2.0) * env(int(SR * 0.3), 0.25, 0.1, 0.15, 0.15)
+    aftershock = np.concatenate([np.zeros(int(SR * 0.42)), aftershock, np.zeros(n - int(SR * 0.72))])[:n]
+    x = impact + grind + rattles + aftershock
+    return norm(delay_tail(x, 0.08, 0.32, 0.22), 0.95)
 
 
 def sfx_ability_hollow():
-    dur = 0.8
-    d = sum(sine(f, dur) for f in (110, 113.5, 164.8, 171.0, 220.0)) / 5
-    swell = d * env(int(SR * dur), 0.25, 0.2, 0.7, 0.3)
-    return norm(soft(swell * 2.0, 1.8) + highpass(noise(dur), 4000) * 0.05 * env(int(SR * dur), 0.3, 0.1, 0.5, 0.3), 0.85)
+    """Reverse-swell into a hollow hit: tritone drone, air whisper, metallic ring, echo pips."""
+    dur = 0.9
+    n = int(SR * dur)
+    d = sum(sine(f, dur) for f in (55, 56.7, 78.4, 110.9, 156.8)) / 5
+    swell = d * env(n, 0.35, 0.25, 0.8, 0.25)          # slow reverse-ish swell
+    whisper = bandpass(noise(dur), 1200, 6000) * env(n, 0.3, 0.15, 0.6, 0.25) * 0.3
+    hit = soft(sine(sweep(180, 60, 0.22, 0.8), 0.22) * 2.0, 2.0) * env(int(SR * 0.22), 0.28, 0.08, 0.1, 0.12)
+    hit = np.concatenate([np.zeros(int(SR * 0.28)), hit, np.zeros(n - int(SR * 0.5))])[:n]
+    ring = (sine(1244.5, dur) + 0.5 * sine(1247.0, dur)) * env(n, 0.3, 0.2, 0.4, 0.4) * 0.12
+    x = soft(swell * 2.0, 1.8) + whisper + hit + ring
+    return norm(delay_tail(x, 0.11, 0.4, 0.3), 0.85)
 
 
 def sfx_ui_tap():
@@ -255,36 +314,71 @@ def sfx_footstep():
 
 # ---------------------------------------------------------------- ambient loops (8 s)
 def amb_hall():
+    """Hall: deep floor hum + air bed + light-shaft shimmer + distant metal groans."""
     dur = 8.0
+    n = int(SR * dur)
     hum = (sine(55, dur) + 0.4 * sine(110, dur) + 0.15 * sine(165, dur)) * (0.8 + 0.2 * sine(0.23, dur))
     air = lowpass(noise(dur), 900) * (0.5 + 0.5 * (0.5 + 0.5 * sine(0.11, dur)))
-    flicker = highpass(noise(dur), 3500) * (rng.uniform(0, 1, int(SR * dur)) > 0.996) * 0.35
-    return loopable(norm(hum * 0.5 + air * 0.35 + flicker, 0.45))
+    shaft = bandpass(noise(dur), 2600, 7000) * (0.5 + 0.5 * sine(0.07, dur)) * 0.06   # light-shaft hiss
+    flicker = highpass(noise(dur), 3500) * (rng.uniform(0, 1, n) > 0.996) * 0.35
+    groans = np.zeros(n)
+    for pos, f in ((1.9, 92.0), (5.2, 104.6)):
+        i = int(pos * SR)
+        seg = soft(sine(sweep(f, f * 0.92, 1.4, 0.7), 1.4) * 1.6, 1.8) * env(int(SR * 1.4), 0.5, 0.4, 0.5, 0.4)
+        groans[i:i + len(seg)] += seg[:max(0, n - i)] * 0.16
+    x = hum * 0.5 + air * 0.35 + flicker + shaft + groans
+    return loopable(norm(x, 0.45))
 
 
 def amb_dusk_wind():
+    """Dusk wind: two gust layers crossfading + high leaf rustle + a low moan under."""
     dur = 8.0
-    lfo = 0.5 + 0.5 * sine(0.09, dur) * sine(0.17, dur, 1.3)
-    wind = lowpass_sweep(noise(dur), 400, 1400) * (0.4 + 0.6 * lfo)
-    return loopable(norm(wind, 0.4))
+    n = int(SR * dur)
+    gust_a = lowpass(noise(dur), 700) * (0.4 + 0.6 * (0.5 + 0.5 * sine(0.09, dur)))
+    gust_b = lowpass(noise(dur), 1100) * (0.3 + 0.7 * (0.5 + 0.5 * sine(0.147, dur, 0.8)))
+    leaves = bandpass(noise(dur), 3000, 8000) * (0.15 + 0.85 * (0.5 + 0.5 * sine(0.19, dur, 1.7))) * 0.12
+    moan = sine(sweep(72, 64, dur, 0.9), dur) * (0.3 + 0.2 * sine(0.05, dur)) * 0.18
+    x = gust_a * 0.8 + gust_b * 0.6 + leaves + moan
+    return loopable(norm(x, 0.4))
 
 
 def amb_water():
+    """Shrine water: laps + gurgling stream band + scattered drips with echo tails."""
     dur = 8.0
+    n = int(SR * dur)
     lap = lowpass(noise(dur), 1200) * (0.3 + 0.7 * (0.5 + 0.5 * sine(0.35, dur)))
-    bubbles = highpass(noise(dur), 2200) * (rng.uniform(0, 1, int(SR * dur)) > 0.993) * 0.5
-    drip = np.zeros(int(SR * dur))
-    for pos in (1.3, 3.9, 6.1):
-        seg = sine(sweep(1800, 900, 0.08), 0.08) * env(int(SR * 0.08), 0.001, 0.05, 0.0, 0.03)
-        i = int(pos * SR); drip[i:i + len(seg)] += seg * 0.3
-    return loopable(norm(lap * 0.5 + lowpass(bubbles, 3000) + drip, 0.42))
+    gurgle = bandpass(noise(dur), 350, 900) * (0.4 + 0.6 * (0.5 + 0.5 * sine(0.6, dur, 2.2))) * 0.35
+    bubbles = highpass(noise(dur), 2200) * (rng.uniform(0, 1, n) > 0.993) * 0.5
+    drip = np.zeros(n)
+    for pos in (0.8, 1.3, 2.6, 3.9, 4.4, 5.7, 6.1, 7.3):
+        f = rng.uniform(1400, 2100)
+        seg = sine(sweep(f, f * 0.5, 0.09), 0.09) * env(int(SR * 0.09), 0.001, 0.05, 0.0, 0.04)
+        seg = delay_tail(seg, 0.12, 0.35, 0.3)
+        i = int(pos * SR)
+        drip[i:i + len(seg)] += seg[:max(0, n - i)] * 0.3
+    x = lap * 0.5 + gurgle + lowpass(bubbles, 3000) + drip
+    return loopable(norm(x, 0.42))
 
 
 def amb_hollow():
+    """Hollow places: beating tritone drone + breath + deep sub sweeps + cavern pips."""
     dur = 8.0
+    n = int(SR * dur)
     d = sum(sine(f, dur) for f in (55, 56.7, 82.4, 84.9, 110.0)) / 5
     breath = lowpass(noise(dur), 500) * (0.5 + 0.5 * sine(0.14, dur))
-    return loopable(norm(soft(d * 1.6, 1.5) * 0.6 + breath * 0.25, 0.45))
+    subs = np.zeros(n)
+    for pos, f0, f1 in ((1.6, 40, 48), (4.8, 44, 38)):
+        i = int(pos * SR)
+        seg = sine(sweep(f0, f1, 2.2, 0.8), 2.2) * env(int(SR * 2.2), 0.8, 0.5, 0.6, 0.7)
+        subs[i:i + len(seg)] += seg[:max(0, n - i)] * 0.22
+    pips = np.zeros(n)
+    for pos, f in ((2.4, 1568), (5.9, 1244.5)):
+        i = int(pos * SR)
+        seg = (sine(f, 0.5) + 0.4 * sine(f * 1.005, 0.5)) * env(int(SR * 0.5), 0.02, 0.3, 0.2, 0.35)
+        seg = delay_tail(seg, 0.16, 0.42, 0.35)
+        pips[i:i + len(seg)] += seg[:max(0, n - i)] * 0.1
+    x = soft(d * 1.6, 1.5) * 0.6 + breath * 0.25 + subs + pips
+    return loopable(norm(x, 0.45))
 
 
 # ---------------------------------------------------------------- music beds (placeholders, 8 s)
@@ -303,39 +397,77 @@ A3, C4, D4, E4, F4, G4, A4, B4, C5, E5 = 220.0, 261.63, 293.66, 329.63, 349.23, 
 
 
 def mus_calm():
+    """Calm: warm pad + soft pentatonic arpeggio with echo + gentle bass movement."""
+    dur = 8.0
+    n = int(SR * dur)
     x = pad([(A3, C4, E4), (F4 / 2, A3, C4), (C4, E4, G4), (G4 / 2, B4 / 2, D4)], 2.0)
-    x = lowpass(x, 1800)
+    arp_notes = [A4, C5, E5, A4, C5, E5, G4, C5]     # one per bar-second, soft plucks
+    arp = np.zeros(n)
+    for k, f in enumerate(arp_notes):
+        i = int((k + 0.5) * SR)
+        seg = (sine(f, 0.5) + 0.3 * sine(f * 2, 0.5)) * env(int(SR * 0.5), 0.01, 0.25, 0.1, 0.3)
+        seg = delay_tail(seg, 0.28, 0.3, 0.25)
+        arp[i:i + len(seg)] += seg[:max(0, n - i)] * 0.22
+    bass = np.zeros(n)
+    for k, f in enumerate((A3 / 2, F4 / 4, C4 / 2, G4 / 4)):
+        i = int(k * 2 * SR)
+        seg = sine(f, 1.9) * env(int(SR * 1.9), 0.3, 0.8, 0.7, 0.5)
+        bass[i:i + len(seg)] += seg[:max(0, n - i)] * 0.3
+    x = lowpass(x, 1800) + arp + bass
     return loopable(norm(x, 0.4), 0.8)
 
 
 def mus_tension():
+    """Tension: pulse + beating drone + high clock tick + swell + low booms on turns."""
     dur = 8.0
     n = int(SR * dur)
     x = np.zeros(n)
-    beat = 0.5  # 120 bpm eighth pulses
+    beat = 0.5
     for k in range(int(dur / beat)):
         f = 55.0 if k % 4 != 3 else 58.27
         seg = soft(sine(f, beat) * 1.8, 2.0) * env(int(SR * beat), 0.005, 0.2, 0.3, 0.2)
         i = int(k * beat * SR); x[i:i + len(seg)] += seg
     drone = (sine(110, dur) + sine(113.0, dur)) * 0.15 * (0.6 + 0.4 * sine(0.25, dur))
-    return loopable(norm(x * 0.6 + drone, 0.45), 0.4)
+    tick = highpass(noise(dur), 5000) * 0.05 * (np.sin(2 * np.pi * 2 * t(dur)) > 0.94)   # clock grain
+    swell = bandpass(noise(dur), 200, 900) * (0.5 + 0.5 * sine(0.125 * np.pi, dur)) * 0.2
+    booms = np.zeros(n)
+    for pos in (1.95, 5.95):
+        i = int(pos * SR)
+        seg = soft(sine(sweep(80, 40, 0.7, 0.8), 0.7) * 1.8, 2.0) * env(int(SR * 0.7), 0.02, 0.3, 0.3, 0.3)
+        booms[i:i + len(seg)] += seg[:max(0, n - i)] * 0.3
+    x = x * 0.6 + drone + tick + swell + booms
+    return loopable(norm(x, 0.45), 0.4)
 
 
 def mus_combat():
+    """Combat: driving pattern + kick/hat/snare + moving bass + end-of-loop tom fill."""
     dur = 8.0
     n = int(SR * dur)
     x = np.zeros(n)
-    step = 0.25  # 240 bpm eighths
+    step = 0.25
     pattern = [A3 / 2, A3 / 2, C4 / 2, A3 / 2, E4 / 2, A3 / 2, G4 / 2, F4 / 2]
+    bass_pat = [A3 / 2, A3 / 2, A3 / 2, C4 / 2, E4 / 2, E4 / 2, G4 / 2, F4 / 2]
     for k in range(int(dur / step)):
+        i = int(k * step * SR)
         f = pattern[k % 8]
         seg = soft(sine(f, step) * 2.2, 2.4) * env(int(SR * step), 0.003, 0.08, 0.35, 0.08)
-        i = int(k * step * SR); x[i:i + len(seg)] += seg
+        x[i:i + len(seg)] += seg
         if k % 2 == 0:
             kick = sine(sweep(120, 45, 0.15), 0.15) * env(int(SR * 0.15), 0.001, 0.08, 0.0, 0.06)
             x[i:i + len(kick)] += kick * 0.8
+        if k % 8 == 4:  # backbeat snare
+            sn = bandpass(noise(0.12), 900, 3200) * env(int(SR * 0.12), 0.001, 0.05, 0.05, 0.05)
+            x[i:i + len(sn)] += sn * 0.45
+        b = soft(sine(bass_pat[k % 8] / 2, step) * 1.6, 1.8) * env(int(SR * step), 0.01, 0.1, 0.4, 0.1)
+        x[i:i + len(b)] += b * 0.35
+    fill = np.zeros(n)
+    for k in range(4):  # last beat: rising toms
+        i = int((7.0 + k * 0.25) * SR)
+        tom = sine(sweep(160 + 40 * k, 90 + 20 * k, 0.2, 0.8), 0.2) * env(int(SR * 0.2), 0.002, 0.1, 0.1, 0.08)
+        fill[i:i + len(tom)] += tom * 0.5
     hat = highpass(noise(dur), 6000) * 0.12 * (np.sin(2 * np.pi * 4 * t(dur)) > 0.92)
-    return loopable(norm(x * 0.55 + hat, 0.5), 0.3)
+    x = x * 0.55 + hat + fill
+    return loopable(norm(x, 0.5), 0.3)
 
 
 # ---------------------------------------------------------------- meta + registry

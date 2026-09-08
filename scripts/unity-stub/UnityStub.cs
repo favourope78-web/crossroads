@@ -501,6 +501,15 @@ namespace UnityEngine
     public class MeshFilter : Component { }
     public class MeshRenderer : Renderer { }
 
+    public class MaterialPropertyBlock
+    {
+        private readonly System.Collections.Generic.Dictionary<string, object> _vals = new System.Collections.Generic.Dictionary<string, object>();
+        public void SetColor(string name, Color c) { _vals[name] = c; }
+        public void SetFloat(string name, float f) { _vals[name] = f; }
+        public void SetVector(string name, Vector3 v) { _vals[name] = v; }
+        public Color GetColor(string name) { return _vals.ContainsKey(name) ? (Color)_vals[name] : Color.white; }
+    }
+
     public class Renderer : Component
     {
         public Material material { get; set; }
@@ -508,6 +517,7 @@ namespace UnityEngine
         public bool enabled = true;
         public UnityEngine.Rendering.ShadowCastingMode shadowCastingMode;
         public bool receiveShadows = true;
+        public void SetPropertyBlock(MaterialPropertyBlock block) { }
     }
 
     public class Material : Object

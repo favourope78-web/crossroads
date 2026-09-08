@@ -187,3 +187,61 @@ if __name__ == "__main__":
     build_barricade()
     build_market_stall()
     print("ALL DRESSING CLUSTERS BUILT")
+
+# ---------------------------------------------------------------- 9. pier water (sculpted)
+def build_pier_water():
+    fresh()
+    m_structure(); m_accent()
+    bpy.ops.mesh.primitive_plane_add(size=1, location=(0, 0, 0))
+    o = bpy.context.active_object
+    o.name = "Water"
+    o.scale = (11.0, 7.0, 1.0)
+    bpy.ops.object.modifier_add(type="SUBSURF")
+    o.modifiers["Subdivision"].levels = 3
+    bpy.ops.object.modifier_apply(modifier="Subdivision")
+    # bake gentle ripples
+    import math as _m
+    mesh = o.data
+    for v in mesh.vertices:
+        wx = o.matrix_world @ v.co
+        v.co.z += 0.045 * _m.sin(wx.x * 1.4) + 0.03 * _m.sin(wx.y * 2.1 + 1.3) + 0.015 * _m.sin((wx.x + wx.y) * 3.2)
+    o.data.materials.append(bpy.data.materials["Accent"])
+    export(join_all("SM_Dress_PierWater"), "SM_Dress_PierWater.fbx")
+
+# ---------------------------------------------------------------- 10. arena ring
+def build_arena_ring():
+    fresh()
+    m_structure(); m_accent()
+    bpy.ops.mesh.primitive_cylinder_add(vertices=8, radius=2.6, depth=0.3, location=(0, 0, 0.15))
+    dais = bpy.context.active_object
+    dais.data.materials.append(bpy.data.materials["Structure"])
+    bpy.ops.mesh.primitive_cylinder_add(vertices=8, radius=2.15, depth=0.14, location=(0, 0, 0.36))
+    inner = bpy.context.active_object
+    inner.data.materials.append(bpy.data.materials["Accent"])
+    for i in range(4):
+        a = i * math.pi / 2 + math.pi / 4
+        x, y = 2.35 * math.cos(a), 2.35 * math.sin(a)
+        cyl("Post%d" % i, (x, y, 0.85), 0.06, 1.0)
+        box("Cap%d" % i, (x, y, 1.38), (0.22, 0.22, 0.1), mat="Accent")
+    export(join_all("SM_Dress_ArenaRing"), "SM_Dress_ArenaRing.fbx")
+
+# ---------------------------------------------------------------- 11. wall scaffolding
+def build_scaffolding():
+    fresh()
+    m_structure(); m_accent()
+    w, h = 3.6, 2.8
+    for x in (-w / 2, w / 2):
+        cyl("Standard%s" % ("L" if x < 0 else "R"), (x, 0, h / 2), 0.05, h)
+        cyl("Brace%s" % ("L" if x < 0 else "R"), (x, 0.5, h / 2), 0.04, h)
+    for y in (0.0, 0.55):
+        box("PlankY%d" % int(y * 10), (0, y, 1.15), (w + 0.2, 0.1, 0.06), mat="Accent")
+    box("Deck", (0, 0.28, 2.1), (w + 0.2, 0.62, 0.07))
+    box("Ledge", (0, 0.28, 2.16), (w + 0.35, 0.7, 0.05), mat="Accent")
+    cyl("Diag", (0, -0.05, 1.4), 0.035, 3.7, rot=(math.radians(62), 0, 0))
+    export(join_all("SM_Dress_Scaffolding"), "SM_Dress_Scaffolding.fbx")
+
+if __name__ == "__main__" and os.environ.get("DRESSING_SIGNATURES_ONLY"):
+    build_pier_water()
+    build_arena_ring()
+    build_scaffolding()
+    print("SIGNATURES BUILT")

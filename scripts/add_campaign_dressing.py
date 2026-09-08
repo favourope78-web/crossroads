@@ -29,6 +29,7 @@ import os
 CLUSTERS = [
     "SM_Dress_LanternPair", "SM_Dress_CrateStack", "SM_Dress_Planter", "SM_Dress_BannerWall",
     "SM_Dress_PierSet", "SM_Dress_ShrineSet", "SM_Dress_Barricade", "SM_Dress_MarketStall",
+    "SM_Dress_PierWater", "SM_Dress_ArenaRing", "SM_Dress_Scaffolding",
 ]
 
 # room id -> (cluster, offset from room anchor, yaw, structure mat, accent mat, collider size)
@@ -112,6 +113,16 @@ def build(g):
                   "  m_SortingOrder: 0\n"
                   "  m_AdditionalVertexStreams: {fileID: 0}" % (rid, gid, cast, 1 if static else 0, mats))
 
+    # room signatures (art production pass, ART_GAPS "room-specific pieces"):
+    #   last_summer -> sculpted pier water at the deck edge
+    #   dax_arena   -> low octagonal arena ring (focal point, under the step offset)
+    #   long_wall   -> scaffolding against the north wall
+    SIGNATURES = {
+        "last_summer": ("SM_Dress_PierWater", (3.2, 0, 5.2), 15, 0.5, ["M_Env_Water"], None),
+        "dax_arena":   ("SM_Dress_ArenaRing", (0, 0, -1.0), 22, 1.0, ["M_Hall_Concrete", "M_Hall_Metal"], (5.2, 0.3, 5.2)),
+        "long_wall":   ("SM_Dress_Scaffolding", (0, 0, 5.4), 180, 1.0, ["M_Env_PlantBox", "M_Hall_Metal"], (3.9, 2.9, 1.2)),
+    }
+
     placed = 0
     for room, (cluster, off, yaw, struct_mat, accent_mat, col) in DRESSING.items():
         ax, az = ANCHORS[room]
@@ -122,6 +133,19 @@ def build(g):
         emit_meshfilter(ids["meshfilter"], gid, REG[cluster])
         emit_renderer_multi(ids["renderer"], gid, [REG[struct_mat], REG[accent_mat]])
         g["emit_boxcollider"](ids["col"], gid, col, (0, col[1] / 2.0, 0))
+        root_gids.append(gid)
+        placed += 1
+
+    for room, (mesh, off, yaw, scale, mats, col) in SIGNATURES.items():
+        ax, az = ANCHORS[room]
+        pos = (ax + off[0], off[1], az + off[2])
+        comps = ["transform", "meshfilter", "renderer"] + (["col"] if col else [])
+        gid, ids = emit_gameobject("Signature_%s" % room, comps, static_flags=STATIC_KIT)
+        emit_transform(ids["transform"], gid, pos, (0, yaw, 0), (scale, scale, scale))
+        emit_meshfilter(ids["meshfilter"], gid, REG[mesh])
+        emit_renderer_multi(ids["renderer"], gid, [REG[m] for m in mats])
+        if col:
+            g["emit_boxcollider"](ids["col"], gid, col, (0, col[1] / 2.0, 0))
         root_gids.append(gid)
         placed += 1
 

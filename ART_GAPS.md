@@ -7,8 +7,8 @@ listed here is considered shipped production art.
 ## Environment
 | Gap | Status | Plan |
 |-----|--------|------|
-| LOD1/LOD2 meshes for the 8 dressing clusters | Not built (clusters are already low-poly, single merged mesh; static-batched) | Add decimated LOD variants + LODGroup if profiling on device shows a cost |
-| Unique interior architecture per campaign room (rooms currently share the hall kit vocabulary) | Ships as themed clusters + per-room env lighting; rooms are deliberately same-city architecture | Author 2-3 room-specific signature pieces (pier water plane, arena ring) |
+| LOD1/LOD2 meshes for the dressing clusters + signatures | Skipped BY PLAN (conditional on device profiling, which is blocked on the UNITY_LICENSE secret) - clusters are one low-poly merged mesh each, static-batched | Add + LODGroup if device profiling shows a cost |
+| Unique interior architecture per campaign room | **Closed:** signature pieces shipped - sculpted pier water (last_summer), octagonal arena ring (dax_arena), wall scaffolding (long_wall) + themed clusters + per-room env lighting in all 13 rooms | - |
 | Exterior terrain beyond the plaza ring | Ground plane + skyline towers ship; no rolling terrain | Heightfield ring if the campaign ever goes outdoors |
 
 ## Characters
@@ -20,13 +20,13 @@ listed here is considered shipped production art.
 ## VFX
 | Gap | Status | Plan |
 |-----|--------|------|
-| Particle-based ability bursts (ember sparks, tide splash) | Ships with emissive materials + camera feedback + damage numbers; no GPU particles | Author 3 small particle systems (one per ability line) once device perf is measured |
-| Weather / ambient particles (dust motes in hall shafts) | Not built | One cheap dust system in the hall only |
+| Particle-based ability bursts | **Closed:** `VfxDirector` + `VfxMath` - one 64-quad pooled runtime system (line-coloured ability bursts, crit hit sparks, hall dust motes), 19 headless tests; +1 ticking behaviour (62/64) | - |
+| Weather / ambient particles | **Closed:** hall dust motes included in VfxDirector (12-mote layer, buoyant drift) | - |
 
 ## Audio
 | Gap | Status | Plan |
 |-----|--------|------|
-| 11 procedural placeholder clips (noted by validate_assets: 27 clips, 16 recorded CC0) | Ship as-is, they are mixed low | Replace with recorded versions |
+| 11 designed-synth clips (4 ability palettes, 4 ambients, 3 music beds) | **Upgraded** to designed v2 recipes (layered transients, echo tails, event scatter, arps/percussion); still honestly labelled procedural - no licensed recordings exist for the Fracture-specific palettes | Optional: commission/record final versions |
 | Voice-over | Not built | Out of scope for this pass |
 
 ## UI

@@ -128,6 +128,8 @@ VISUAL_PASS_SCRIPTS = [
     "Assets/_Project/Scripts/UI/LoadingScreenUI.cs",
     "Assets/_Project/Scripts/UI/IntroCinematicUI.cs",
     "Assets/_Project/Scripts/UI/ChapterTransitionUI.cs",
+    "Assets/_Project/Scripts/Gameplay/World/VfxMath.cs",
+    "Assets/_Project/Scripts/Gameplay/World/VfxDirector.cs",
 ]
 for i, rel in enumerate(VISUAL_PASS_SCRIPTS):
     key = rel.rsplit("/", 1)[1]
@@ -1362,6 +1364,25 @@ emit_monobehaviour(audio_ids["audio"], audio_gid, REG["GameAudio.cs"],
     "\n".join("  %s: %s" % (f, clip_ref(k)) for f, k in AUDIO_FIELDS)
     + "\n  sfxVolume: 0.9\n  ambientVolume: 0.55\n  musicVolume: 0.45\n  ambientCrossfade: 1.6\n  musicCrossfade: 1.2\n  combatCooldown: 4")
 root_gids.append(audio_gid)
+
+# ================================================================
+# ART PRODUCTION PASS: runtime VFX director (ability bursts / hit sparks / hall dust)
+# ================================================================
+vfx_gid, vfx_ids = emit_gameobject("VfxDirector", ["transform", "vfx"])
+emit_transform(vfx_ids["transform"], vfx_gid, (0, 0, 0), (0, 0, 0), (1, 1, 1))
+add_block("--- !u!114 &%d\nMonoBehaviour:\n"
+          "  m_ObjectHideFlags: 0\n"
+          "  m_CorrespondingSourceObject: {fileID: 0}\n"
+          "  m_PrefabInstance: {fileID: 0}\n"
+          "  m_PrefabAsset: {fileID: 0}\n"
+          "  m_GameObject: {fileID: %d}\n"
+          "  m_Enabled: 1\n"
+          "  m_EditorHideFlags: 0\n"
+          "  m_Script: {fileID: 11500000, guid: %s, type: 3}\n"
+          "  m_Name: \n"
+          "  m_EditorTagIdentifier: \n"
+          "  m_Enabled: 1\n" % (vfx_ids["vfx"], vfx_gid, REG["VfxDirector.cs"]))
+root_gids.append(vfx_gid)
 
 # ================================================================
 # ART PRODUCTION PASS: original keyart/stills + scene-bound ArtLibrary
