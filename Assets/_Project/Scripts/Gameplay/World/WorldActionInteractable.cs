@@ -25,6 +25,10 @@ namespace Crossroads.Gameplay
         [Tooltip("All must pass to actually use it (ability, item, flag, objective, world state...).")]
         [SerializeField] private List<DecisionConditionData> conditions = new List<DecisionConditionData>();
 
+        // mini-map: usable world actions read as gold points of interest (visual pass)
+        private void OnEnable() { WorldMarkers.Register(this, MarkerKind.PointOfInterest); }
+        private void OnDisable() { WorldMarkers.Unregister(this); }
+
         [Tooltip("Toast shown when the player tries but the conditions do not pass.")]
         [SerializeField] private string lockedNotice = "Nothing happens.";
 

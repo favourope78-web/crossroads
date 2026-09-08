@@ -15,6 +15,10 @@ namespace Crossroads.Gameplay
 
         public string EncounterId { get { return encounterId; } }
 
+        // mini-map: story markers read as gold points of interest (visual pass)
+        private void OnEnable() { WorldMarkers.Register(this, MarkerKind.PointOfInterest); }
+        private void OnDisable() { WorldMarkers.Unregister(this); }
+
         public override void OnInteract(GameObject player)
         {
             if (string.IsNullOrEmpty(encounterId)) return;

@@ -14,10 +14,27 @@ namespace UnityEngine
 {
     public class Object
     {
+        private static int _nextInstanceID = 46000;
+        private int _instanceID;
+        public int GetInstanceID() { if (_instanceID == 0) _instanceID = _nextInstanceID++; return _instanceID; }
         public string name = "";
-        public static void Destroy(Object o) { }
+        public static void Destroy(Object o) { StubDestroy(o); }
         public static void Destroy(Object o, float t) { }
-        public static void DestroyImmediate(Object o) { }
+        public static void DestroyImmediate(Object o) { StubDestroy(o); }
+        private static void StubDestroy(Object o)
+        {
+            // mirror Unity: destroying a GameObject tears down its components (OnDestroy runs)
+            var go = o as GameObject;
+            if (go == null) return;
+            foreach (var c in go.GetComponentsInChildren<Component>(false)) StubOnDestroy(c);
+        }
+        private static void StubOnDestroy(Component c)
+        {
+            var m = c.GetType().GetMethod("OnDestroy",
+                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic,
+                null, Type.EmptyTypes, null);
+            if (m != null && m.ReturnType == typeof(void)) m.Invoke(c, null);
+        }
         public static T FindObjectOfType<T>() where T : Object { return null; }
         public static T FindFirstObjectByType<T>() where T : Object { return null; }
         public static T[] FindObjectsByType<T>(FindObjectsSortMode mode) where T : Object { return new T[0]; }
@@ -30,8 +47,16 @@ namespace UnityEngine
 
     public class Component : Object
     {
-        public GameObject gameObject { get { return null; } }
-        public Transform transform { get { return null; } }
+        public GameObject gameObject { get; internal set; }
+        public Transform transform
+        {
+            get
+            {
+                if (this is Transform) return (Transform)this;
+                var g = gameObject;
+                return g == null ? null : g.FindTransform();
+            }
+        }
         public bool enabled { get; set; }
         public T GetComponent<T>() { return default(T); }
         public T GetComponentInChildren<T>() { return default(T); }
@@ -65,20 +90,66 @@ namespace UnityEngine
 
     public class GameObject : Object
     {
-        public Transform transform { get { return null; } }
+        private readonly System.Collections.Generic.List<Component> _components = new System.Collections.Generic.List<Component>();
+        public Transform transform
+        {
+            get
+            {
+                foreach (var c in _components) if (c is Transform) return (Transform)c;
+                return null;
+            }
+        }
         public int layer;
         public static GameObject CreatePrimitive(PrimitiveType type) { return new GameObject(type.ToString()); }
         public string tag = "Untagged";
         public bool activeSelf { get; private set; }
         public GameObject() { }
         public GameObject(string name) { this.name = name; }
-        public GameObject(string name, params Type[] components) { this.name = name; }
-        public T GetComponent<T>() { return default(T); }
-        public T GetComponentInChildren<T>() { return default(T); }
-        public T[] GetComponentsInChildren<T>(bool includeInactive) { return new T[0]; }
-        public T GetComponentInParent<T>() { return default(T); }
-        public T AddComponent<T>() where T : Component, new() { return new T(); }
+        public GameObject(string name, params Type[] components) : this(name)
+        {
+            foreach (var t in components)
+            {
+                var c = (Component)System.Activator.CreateInstance(t);
+                c.gameObject = this;
+                _components.Add(c);
+                StubAwake(c);
+            }
+        }
+        public T GetComponent<T>()
+        {
+            foreach (var c in _components) if (c is T) return (T)(object)c;
+            return default(T);
+        }
+        public T GetComponentInChildren<T>() { return GetComponent<T>(); }
+        public T[] GetComponentsInChildren<T>(bool includeInactive)
+        {
+            var list = new System.Collections.Generic.List<T>();
+            foreach (var c in _components) if (c is T) list.Add((T)(object)c);
+            return list.ToArray();
+        }
+        public T GetComponentInParent<T>() { return GetComponent<T>(); }
+        public T AddComponent<T>() where T : Component, new()
+        {
+            var c = new T();
+            c.gameObject = this;
+            _components.Add(c);
+            StubAwake(c);
+            return c;
+        }
+        private static void StubAwake(Component c)
+        {
+            // mirror Unity: AddComponent runs Awake immediately (when the type defines one)
+            var m = c.GetType().GetMethod("Awake",
+                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic,
+                null, Type.EmptyTypes, null);
+            if (m != null && m.ReturnType == typeof(void)) m.Invoke(c, null);
+        }
         public void SetActive(bool v) { activeSelf = v; }
+        internal Transform FindTransform()
+        {
+            foreach (var c in _components) if (c is Transform) return (Transform)c;
+            return null;
+        }
         public static GameObject FindGameObjectWithTag(string t) { return null; }
         public static GameObject Find(string name) { return null; }
     }
@@ -105,6 +176,7 @@ namespace UnityEngine
     public class RectTransform : Transform
     {
         public void SetAsLastSibling() { }
+        public void SetAsFirstSibling() { }
         public Vector2 anchorMin, anchorMax, pivot, offsetMin, offsetMax, sizeDelta, anchoredPosition;
         public Rect rect { get { return new Rect(0f, 0f, 460f, 520f); } }
     }
@@ -192,6 +264,11 @@ namespace UnityEngine
         public static Color black { get { return new Color(0, 0, 0, 1); } }
         public Color(float r, float g, float b, float a = 1f) { this.r = r; this.g = g; this.b = b; this.a = a; }
         public static Color operator *(Color c, float f) { return new Color(c.r * f, c.g * f, c.b * f, c.a * f); }
+        public static Color Lerp(Color a, Color b, float t)
+        {
+            t = Mathf.Clamp01(t);
+            return new Color(a.r + (b.r - a.r) * t, a.g + (b.g - a.g) * t, a.b + (b.b - a.b) * t, a.a + (b.a - a.a) * t);
+        }
     }
 
     public struct Rect
@@ -221,7 +298,36 @@ namespace UnityEngine
         public static T GetBuiltinResource<T>(string path) where T : Object { return null; }
     }
 
-    public class Sprite : Object { }
+    public class Sprite : Object
+    {
+        public Rect textureRect;
+        public static Sprite Create(Texture2D texture, Rect rect, Vector2 pivot, float pixelsPerUnit, uint extrude, uint meshType)
+        {
+            var s = new Sprite();
+            s.textureRect = rect;
+            return s;
+        }
+        public static Sprite Create(Texture2D texture, Rect rect, Vector2 pivot, float pixelsPerUnit)
+        {
+            return Create(texture, rect, pivot, pixelsPerUnit, 0, 0);
+        }
+    }
+
+    public enum FilterMode { Point = 0, Bilinear = 1, Trilinear = 2 }
+    public enum TextureWrapMode { Repeat = 0, Clamp = 1 }
+
+    public class Texture2D : Object
+    {
+        public int width, height;
+        public FilterMode filterMode = FilterMode.Bilinear;
+        public TextureWrapMode wrapMode = TextureWrapMode.Repeat;
+        private UnityEngine.Color[] _pixels;
+        public Texture2D(int w, int h) { width = w; height = h; _pixels = new UnityEngine.Color[w * h]; }
+        public void SetPixel(int x, int y, UnityEngine.Color c) { if (x >= 0 && y >= 0 && x < width && y < height) _pixels[y * width + x] = c; }
+        public void SetPixels(UnityEngine.Color[] colors) { if (colors != null && colors.Length == _pixels.Length) _pixels = (UnityEngine.Color[])colors.Clone(); }
+        public UnityEngine.Color[] GetPixels() { return _pixels; }
+        public void Apply() { }
+    }
 
     public static class Debug
     {
@@ -232,6 +338,7 @@ namespace UnityEngine
 
     public static class Application
     {
+        public static void Quit() { }
         public static string persistentDataPath = ".";
         public static int targetFrameRate = -1;
     }
@@ -282,7 +389,7 @@ namespace UnityEngine
         public static int FloorToInt(float a) { return (int)Math.Floor(a); }
     }
 
-    public enum KeyCode { E = 101, Space = 32, F = 102, LeftShift = 303 }
+    public enum KeyCode { E = 101, Space = 32, F = 102, F3 = 284, LeftShift = 303 }
 
     public static class Input
     {
@@ -472,7 +579,13 @@ namespace UnityEngine
         public static void SetQualityLevel(int index, bool applyExpensiveChanges) { _level = index; }
         public static int vSyncCount;
     }
-    public class Camera : Behaviour { public static Camera main; }
+    public class Camera : Behaviour
+    {
+        public static Camera main;
+        public float fieldOfView = 60f;
+        public Vector3 WorldToScreenPoint(Vector3 worldPoint) { return new Vector3(worldPoint.x, worldPoint.y, worldPoint.z); }
+        public bool PixelRectContains(Vector3 screenPoint) { return true; }
+    }
 
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
     public class RequireComponent : Attribute { public RequireComponent(Type t) { } }
@@ -522,7 +635,20 @@ namespace UnityEngine.UI
         public bool raycastTarget = true;
     }
 
-    public class Image : Graphic { public Sprite sprite; }
+    public class Image : Graphic
+    {
+        public Sprite sprite;
+        // real uGUI filled-image API (radial cooldown sweeps, bar fills)
+        public Type type = Type.Simple;
+        public FillMethod fillMethod = FillMethod.Radial360;
+        public int fillOrigin = 0;
+        public bool fillClockwise = true;
+        public float fillAmount = 1f;
+        public bool preserveAspect = false;
+
+        public enum Type { Simple, Sliced, Tiled, Filled }
+        public enum FillMethod { Horizontal, Vertical, Radial90, Radial180, Radial360 }
+    }
 
     public class Text : Graphic
     {

@@ -1506,6 +1506,18 @@ namespace Crossroads.Tests
             _passed += campaignContentPassed;
             _failed += campaignContentFailed;
 
+            // visual transformation pass (presentation layer)
+            int visualPassed, visualFailed;
+            VisualPassTests.RunAll(out visualPassed, out visualFailed);
+            _passed += visualPassed;
+            _failed += visualFailed;
+
+            // art production pass (loading/intro/chapter cards/art fallbacks)
+            int artPassed, artFailed;
+            ArtProductionTests.RunAll(out artPassed, out artFailed);
+            _passed += artPassed;
+            _failed += artFailed;
+
             Console.WriteLine("======================================");
             foreach (var line in Log) Console.WriteLine(line);
             foreach (var line in WorldTests.GetLog()) Console.WriteLine(line);
@@ -1514,6 +1526,8 @@ namespace Crossroads.Tests
             foreach (var line in CampaignTests.GetLog()) Console.WriteLine(line);
             foreach (var line in LocationTests.GetLog()) Console.WriteLine(line);
             foreach (var line in CampaignContentTests.GetLog()) Console.WriteLine(line);
+            foreach (var line in VisualPassTests.GetLog()) Console.WriteLine(line);
+            foreach (var line in ArtProductionTests.GetLog()) Console.WriteLine(line);
             Console.WriteLine("======================================");
             Console.WriteLine("RESULT: {0} passed, {1} failed", _passed, _failed);
             return _failed == 0 ? 0 : 1;

@@ -16,6 +16,10 @@ namespace Crossroads.Prototype
 
         private void Awake() { _start = transform.localPosition; }
 
+        // mini-map: doors read as gold points of interest (visual pass)
+        private void OnEnable() { Crossroads.Gameplay.WorldMarkers.Register(this, Crossroads.Gameplay.MarkerKind.PointOfInterest); }
+        private void OnDisable() { Crossroads.Gameplay.WorldMarkers.Unregister(this); }
+
         /// <summary>True when the door is (or is sliding to) open.</summary>
         public bool IsOpen { get { return _open; } }
 

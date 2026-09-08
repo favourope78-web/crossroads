@@ -7,24 +7,22 @@ using UnityEngine.UI;
 namespace Crossroads.UI
 {
     /// <summary>
-    /// Combat feedback HUD (task: health display, damage feedback, ability feedback,
-    /// enemy state feedback, defeat feedback). Fully event-driven (refreshes on combat
-    /// events only - no per-frame work beyond a damage-flash fade):
-    ///   - player health bar (bottom-left, above the INTERACT zone) + status chips
-    ///   - ATTACK + DODGE touch buttons (bottom-right, under POWERS; >=88dp targets)
-    ///   - enemy name / state / health bar (top-center) while an enemy is engaged
-    ///   - red flash on player damage, white flash on hits landed, toasts on defeats
+    /// Combat feedback HUD (VISUAL_TARGET §6). The player's own health now lives in the
+    /// always-on PlayerHUD (top-left); this component owns the fight:
+    ///   - tracked enemy plate (top-centre): name + health bar while engaged
+    ///   - player status chips (under the PlayerHUD cluster)
+    ///   - red edge flash when the player is hit, white flash on hits landed
+    ///   - defeat toasts
+    /// Fully event-driven; the only per-frame work is two fading flashes.
     /// </summary>
     public class CombatHUD : MonoBehaviour
     {
-        private Text _hpLabel;
-        private Image _hpFill;
-        private Image _hpPanel;
-        private Text _statusLine;
         private GameObject _enemyRoot;
         private Text _enemyLabel;
-        private Text _enemyState;
         private Image _enemyFill;
+        private Image _enemyFlashOverlay;
+        private Text _statusLine;
+        private Image _hurtVignette;
         private float _playerFlash;
         private float _enemyFlash;
         private string _trackedEnemyId = "";
@@ -41,71 +39,71 @@ namespace Crossroads.UI
 
         private void Build(RectTransform parent)
         {
-            // ---- player health (bottom-left, above the INTERACT zone) ----
-            _hpPanel = RuntimeMenuFactory.CreatePanel("PlayerHealth", parent, RuntimeMenuFactory.Panel);
-            var hrect = _hpPanel.rectTransform;
-            hrect.anchorMin = new Vector2(0f, 0f);
-            hrect.anchorMax = new Vector2(0f, 0f);
-            hrect.pivot = new Vector2(0f, 0f);
-            hrect.offsetMin = new Vector2(60f, 24f);
-            hrect.offsetMax = new Vector2(60f + 520f, 24f + 104f);
+            // ---- hurt vignette (fullscreen red edge flash on player damage) ----
+            var vigGo = new GameObject("HurtFlash");
+            var vrect = vigGo.AddComponent<RectTransform>();
+            vrect.SetParent(parent, false);
+            vrect.anchorMin = Vector2.zero;
+            vrect.anchorMax = Vector2.one;
+            vrect.offsetMin = Vector2.zero;
+            vrect.offsetMax = Vector2.zero;
+            _hurtVignette = vigGo.AddComponent<Image>();
+            _hurtVignette.color = new Color(0.55f, 0.08f, 0.05f, 0f);
+            _hurtVignette.raycastTarget = false;
 
-            _hpFill = RuntimeMenuFactory.CreatePanel("Fill", hrect, new Color(0.32f, 0.78f, 0.55f, 0.95f));
-            var frect = _hpFill.rectTransform;
-            frect.anchorMin = new Vector2(0f, 0f);
-            frect.anchorMax = new Vector2(1f, 1f);
-            frect.offsetMin = new Vector2(10f, 10f);
-            frect.offsetMax = new Vector2(-10f, -10f);
-
-            _hpLabel = RuntimeMenuFactory.CreateText("Label", hrect, "ARI  100/100", 34, RuntimeMenuFactory.TextMain, TextAnchor.MiddleCenter, FontStyle.Bold);
-            RuntimeMenuFactory.Stretch(_hpLabel.rectTransform, 12f, 12f, 8f, 8f);
-
-            _statusLine = RuntimeMenuFactory.CreateText("Statuses", hrect, "", 26, RuntimeMenuFactory.Tide, TextAnchor.UpperLeft);
+            // ---- player status chips (top-left, under the PlayerHUD cluster) ----
+            _statusLine = RuntimeMenuFactory.CreateText("Statuses", parent, "", 26, HudTheme.Tide, TextAnchor.UpperLeft);
             var srect = _statusLine.rectTransform;
-            srect.anchorMin = new Vector2(0f, 1f);
-            srect.anchorMax = new Vector2(1f, 1f);
-            srect.pivot = new Vector2(0.5f, 1f);
-            srect.offsetMin = new Vector2(14f, -78f);
-            srect.offsetMax = new Vector2(-14f, -2f);
+            srect.anchorMin = srect.anchorMax = new Vector2(0f, 1f);
+            srect.pivot = new Vector2(0f, 1f);
+            srect.offsetMin = new Vector2(60f, -262f);
+            srect.offsetMax = new Vector2(640f, -214f);
+            _statusLine.raycastTarget = false;
 
-            // ATTACK + DODGE touch buttons live in MobileControlsUI now (the mobile control
-            // rig) so they appear ONLY while a fight is actually active and never overlap
-            // the joystick / look pad. This HUD keeps bars, statuses and feedback.
-
-            // ---- enemy bar (top-center, appears while engaged) ----
-            _enemyRoot = RuntimeMenuFactory.CreatePanel("EnemyBar", parent, RuntimeMenuFactory.Panel).gameObject;
+            // ---- enemy plate (top-centre, appears while engaged) ----
+            _enemyRoot = RuntimeMenuFactory.CreatePanel("EnemyBar", parent, new Color(0.04f, 0.06f, 0.09f, 0.9f)).gameObject;
             var erect = _enemyRoot.GetComponent<RectTransform>();
-            erect.anchorMin = new Vector2(0.5f, 1f);
-            erect.anchorMax = new Vector2(0.5f, 1f);
+            erect.anchorMin = erect.anchorMax = new Vector2(0.5f, 1f);
             erect.pivot = new Vector2(0.5f, 1f);
-            erect.offsetMin = new Vector2(-350f, -150f);
-            erect.offsetMax = new Vector2(350f, -60f);
+            erect.offsetMin = new Vector2(-360f, -132f);
+            erect.offsetMax = new Vector2(360f, -46f);
 
-            _enemyFill = RuntimeMenuFactory.CreatePanel("Fill", erect, new Color(0.86f, 0.36f, 0.26f, 0.95f));
-            var efrect = _enemyFill.rectTransform;
-            efrect.anchorMin = new Vector2(0f, 0f);
-            efrect.anchorMax = new Vector2(1f, 1f);
-            efrect.offsetMin = new Vector2(8f, 8f);
-            efrect.offsetMax = new Vector2(-8f, -44f);
+            var flash = RuntimeMenuFactory.CreatePanel("Flash", erect, new Color(1f, 1f, 1f, 0f));
+            _enemyFlashOverlay = flash;
+            var flrect = flash.rectTransform;
+            flrect.anchorMin = Vector2.zero;
+            flrect.anchorMax = Vector2.one;
+            flrect.offsetMin = Vector2.zero;
+            flrect.offsetMax = Vector2.zero;
+            flash.raycastTarget = false;
 
-            _enemyLabel = RuntimeMenuFactory.CreateText("Name", erect, "", 30, RuntimeMenuFactory.TextMain, TextAnchor.UpperLeft, FontStyle.Bold);
+            _enemyLabel = RuntimeMenuFactory.CreateText("Name", erect, "", 30, HudTheme.TextMain, TextAnchor.UpperLeft, FontStyle.Bold);
             var elrect = _enemyLabel.rectTransform;
-            elrect.anchorMin = new Vector2(0f, 1f);
-            elrect.anchorMax = new Vector2(1f, 1f);
-            elrect.pivot = new Vector2(0.5f, 1f);
-            elrect.offsetMin = new Vector2(16f, -40f);
-            elrect.offsetMax = new Vector2(-16f, -2f);
+            elrect.anchorMin = elrect.anchorMax = new Vector2(0f, 1f);
+            elrect.pivot = new Vector2(0f, 1f);
+            elrect.offsetMin = new Vector2(24f, -38f);
+            elrect.offsetMax = new Vector2(-24f, -2f);
+            _enemyLabel.raycastTarget = false;
 
-            _enemyState = RuntimeMenuFactory.CreateText("State", erect, "", 26, RuntimeMenuFactory.Stone, TextAnchor.LowerLeft);
-            var esrect = _enemyState.rectTransform;
-            esrect.anchorMin = new Vector2(0f, 0f);
-            esrect.anchorMax = new Vector2(1f, 0f);
-            esrect.pivot = new Vector2(0.5f, 0f);
-            esrect.offsetMin = new Vector2(16f, 6f);
-            esrect.offsetMax = new Vector2(-16f, 40f);
+            var barBack = RuntimeMenuFactory.CreatePanel("BarBack", erect, new Color(0.03f, 0.045f, 0.07f, 0.95f));
+            var brect = barBack.rectTransform;
+            brect.anchorMin = brect.anchorMax = new Vector2(0f, 0f);
+            brect.pivot = new Vector2(0f, 0f);
+            brect.offsetMin = new Vector2(24f, 12f);
+            brect.offsetMax = new Vector2(-24f, 30f);
+            barBack.raycastTarget = false;
+
+            _enemyFill = RuntimeMenuFactory.CreatePanel("Fill", brect, new Color(0.86f, 0.36f, 0.26f, 0.95f));
+            var efrect = _enemyFill.rectTransform;
+            efrect.anchorMin = efrect.anchorMax = new Vector2(0f, 0.5f);
+            efrect.pivot = new Vector2(0f, 0.5f);
+            efrect.sizeDelta = new Vector2(676f, 12f);
+            efrect.anchoredPosition = Vector2.zero;
+            _enemyFill.type = Image.Type.Filled;
+            _enemyFill.fillMethod = Image.FillMethod.Horizontal;
+            _enemyFill.raycastTarget = false;
 
             _enemyRoot.SetActive(false);
-            RefreshPlayerBar(1f, 1f, 0f);
         }
 
         private void OnEnable()
@@ -132,7 +130,6 @@ namespace Crossroads.UI
             if (e.isPlayer)
             {
                 _playerFlash = 0.5f;
-                RefreshPlayerBar(e.remainingHealth, e.maxHealth, e.amount);
             }
             else
             {
@@ -144,7 +141,7 @@ namespace Crossroads.UI
 
         private void OnHealed(CombatantHealedEvent e)
         {
-            if (e.isPlayer) RefreshPlayerBar(e.remainingHealth, e.maxHealth, 0f);
+            // healing feedback rides the floating numbers (DamageNumberUI); nothing here
         }
 
         private void OnDefeated(CombatantDefeatedEvent e)
@@ -161,7 +158,6 @@ namespace Crossroads.UI
                 {
                     _trackedEnemyId = e.enemyId;
                     _trackedEnemyName = e.displayName;
-                    _enemyState.text = "destroyed";
                     RefreshEnemyBar(0f, 1f);
                     _enemyBarUntil = Time.unscaledTime + 2.5f;
                 }
@@ -178,7 +174,6 @@ namespace Crossroads.UI
         {
             if (e.state == EnemyState.Dormant || e.state == EnemyState.Idle) return;
             TrackEnemy(e.enemyId, "");
-            _enemyState.text = e.stateLabel;
             if (e.state == EnemyState.Defeat) RefreshEnemyBar(0f, 1f);
             _enemyBarUntil = Time.unscaledTime + 6f;
         }
@@ -197,23 +192,10 @@ namespace Crossroads.UI
         }
 
         // ---------------------------------------------------------------- refresh (event-driven)
-        private void RefreshPlayerBar(float hp, float maxHp, float lastHit)
-        {
-            float frac = maxHp > 0f ? Mathf.Clamp01(hp / maxHp) : 1f;
-            _hpFill.rectTransform.offsetMax = new Vector2(-10f - (1f - frac) * 500f, -10f);
-            _hpFill.color = frac > 0.5f ? new Color(0.32f, 0.78f, 0.55f, 0.95f)
-                : frac > 0.25f ? new Color(0.85f, 0.68f, 0.32f, 0.95f)
-                : new Color(0.86f, 0.36f, 0.26f, 0.95f);
-            _sb.Length = 0;
-            _sb.Append("ARI  ").Append(Mathf.CeilToInt(hp)).Append('/').Append(Mathf.CeilToInt(maxHp));
-            if (lastHit > 0f) _sb.Append("   -").Append(Mathf.CeilToInt(lastHit));
-            _hpLabel.text = _sb.ToString();
-        }
-
         private void RefreshEnemyBar(float hp, float maxHp)
         {
             float frac = maxHp > 0f ? Mathf.Clamp01(hp / maxHp) : 0f;
-            _enemyFill.rectTransform.offsetMax = new Vector2(-8f - (1f - frac) * 676f, -44f);
+            _enemyFill.fillAmount = frac;
             _enemyRoot.SetActive(true);
         }
 
@@ -221,33 +203,52 @@ namespace Crossroads.UI
         {
             var player = GameObject.FindGameObjectWithTag("Player");
             var controller = player != null ? player.GetComponent<PlayerCombatController>() : null;
-            var combatant = controller != null ? controller.Combatant : null;
-            if (combatant == null) { _statusLine.text = ""; return; }
+            if (controller == null || controller.Combatant == null)
+            {
+                _statusLine.text = "";
+                return;
+            }
             _sb.Length = 0;
-            var statuses = combatant.Statuses;
+            var statuses = controller.Combatant.Statuses;
             for (int i = 0; i < statuses.Count; i++)
             {
-                if (_sb.Length > 0) _sb.Append(" · ");
-                _sb.Append(statuses[i].definition.name);
+                if (statuses[i] == null || statuses[i].definition == null) continue;
+                if (_sb.Length > 0) _sb.Append("  \u00B7  ");
+                _sb.Append(statuses[i].definition.id.ToUpperInvariant());
             }
             _statusLine.text = _sb.ToString();
         }
 
-        // ---------------------------------------------------------------- fade upkeep
-
         private void Update()
         {
-            // flash fades + enemy-bar auto-hide only (no allocations)
+            // hurt vignette fade
             if (_playerFlash > 0f)
             {
                 _playerFlash -= Time.unscaledDeltaTime;
-                _hpPanel.color = _playerFlash > 0f
-                    ? new Color(0.35f, 0.08f, 0.06f, 0.92f)
-                    : RuntimeMenuFactory.Panel;
+                float a = Mathf.Clamp01(_playerFlash) * 0.32f;
+                Color c = _hurtVignette.color;
+                c.a = a;
+                _hurtVignette.color = c;
             }
-            if (_enemyRoot.activeSelf && Time.unscaledTime > _enemyBarUntil && _enemyFlash <= 0f)
+            else if (_hurtVignette.color.a > 0f)
+            {
+                Color c = _hurtVignette.color;
+                c.a = Mathf.Max(0f, c.a - Time.unscaledDeltaTime * 1.6f);
+                _hurtVignette.color = c;
+            }
+
+            // enemy hit flash
+            if (_enemyFlash > 0f)
+            {
+                _enemyFlash -= Time.unscaledDeltaTime;
+                Color c = _enemyFlashOverlay.color;
+                c.a = Mathf.Clamp01(_enemyFlash) * 0.35f;
+                _enemyFlashOverlay.color = c;
+            }
+
+            // enemy plate auto-hide after the fight goes quiet
+            if (_enemyRoot.activeSelf && Time.unscaledTime > _enemyBarUntil)
                 _enemyRoot.SetActive(false);
-            if (_enemyFlash > 0f) _enemyFlash -= Time.unscaledDeltaTime;
         }
     }
 }

@@ -1618,7 +1618,7 @@ namespace Crossroads.Narrative
                 encounters = new List<string> { "p1_tutorial", "p1_kite", "p1_pier", "p1_summer_end" },
                 objectives = new List<string> { "obj_tut_move", "obj_tut_talk" },
                 worldStateChanges = L(Ef(EffectType.SetWorldState, "market", "intact", 0), Ef(EffectType.AddCodex, "p1_pier_memory", "", 0)),
-                environment = new LocationEnvironmentData { profile = "summer_gold", ambient = "5a4a30", fog = "3d3220", fogDensity = 0.012f, sun = "ffd9a0", sunIntensity = 1.15f }
+                environment = new LocationEnvironmentData { profile = "summer_gold", ambient = "c2a982", fog = "c9b490", fogDensity = 0.008f, sun = "ffe3b0", sunIntensity = 1.35f }
             });
             content.locations.Add(new LocationDefinitionData
             {
@@ -1630,7 +1630,7 @@ namespace Crossroads.Narrative
                 encounters = new List<string> { "c1_fracture_open", "c1_mentor_lesson", "c1_dax_spar", "c1_dax_after" },
                 objectives = new List<string> { "obj_fn_arenas", "obj_fn_civilians" },
                 worldStateChanges = L(Ef(EffectType.SetWorldState, "spire", "sealed", 0), Ef(EffectType.AddCodex, "c1_fracture_night", "", 0)),
-                environment = new LocationEnvironmentData { profile = "fracture_violet", ambient = "2a1f3d", fog = "1c1530", fogDensity = 0.05f, sun = "b58cff", sunIntensity = 0.7f }
+                environment = new LocationEnvironmentData { profile = "night_watch", ambient = "6d7fa0", fog = "5c6f92", fogDensity = 0.012f, sun = "aebfe0", sunIntensity = 0.95f }
             });
             content.locations.Add(new LocationDefinitionData
             {
@@ -1642,7 +1642,7 @@ namespace Crossroads.Narrative
                 encounters = new List<string> { "c1_first_echo_intro", "c1_first_echo_fallen" },
                 objectives = new List<string> { "obj_us_descent" },
                 worldStateChanges = L(Ef(EffectType.AddCodex, "c1_under_spire_arrival", "", 0)),
-                environment = new LocationEnvironmentData { profile = "spire_root", ambient = "1e2a3a", fog = "141c28", fogDensity = 0.04f, sun = "9fd8ff", sunIntensity = 0.8f }
+                environment = new LocationEnvironmentData { profile = "spire_violet", ambient = "8a7fb0", fog = "7a6fa8", fogDensity = 0.012f, sun = "d0c4f0", sunIntensity = 1.0f }
             });
             content.locations.Add(new LocationDefinitionData
             {
@@ -1654,7 +1654,7 @@ namespace Crossroads.Narrative
                 encounters = new List<string> { "i2_archivist", "c2_mentor_interlude", "c2_mara_talk", "c2_mara_after" },
                 objectives = new List<string> { "obj_i2_consult" },
                 worldStateChanges = L(Ef(EffectType.AddCodex, "c2_interlude", "", 0)),
-                environment = new LocationEnvironmentData { profile = "camp_dusk", ambient = "3a3040", fog = "2a2230", fogDensity = 0.02f, sun = "f2b48c", sunIntensity = 0.9f }
+                environment = new LocationEnvironmentData { profile = "camp_dawn", ambient = "b8a494", fog = "a89a90", fogDensity = 0.009f, sun = "ffd9a8", sunIntensity = 1.25f }
             });
             content.locations.Add(new LocationDefinitionData
             {
@@ -1666,7 +1666,7 @@ namespace Crossroads.Narrative
                 encounters = new List<string> { "c2_docks_open", "c2_docks_shed", "c2_mara_pressure" },
                 objectives = new List<string> { "obj_docks_assault" },
                 worldStateChanges = L(Ef(EffectType.SetWorldState, "docks", "contested", 0), Ef(EffectType.AddCodex, "c2_docks_arrival", "", 0)),
-                environment = new LocationEnvironmentData { profile = "docks_rust", ambient = "3d2e24", fog = "2a1f18", fogDensity = 0.035f, sun = "ff9a5c", sunIntensity = 0.9f }
+                environment = new LocationEnvironmentData { profile = "sea_air", ambient = "8aa2b0", fog = "8aa8b8", fogDensity = 0.01f, sun = "e8f4f8", sunIntensity = 1.2f }
             });
             content.locations.Add(new LocationDefinitionData
             {
@@ -1678,7 +1678,7 @@ namespace Crossroads.Narrative
                 encounters = new List<string> { "c2_sanctuary_open", "c2_mara_pressure" },
                 objectives = new List<string> { "obj_sanctuary_hold", "obj_sanctuary_recover" },
                 worldStateChanges = L(Ef(EffectType.AddCodex, "c2_sanctuary_arrival", "", 0)),
-                environment = new LocationEnvironmentData { profile = "sanctum_teal", ambient = "1f3a40", fog = "16292e", fogDensity = 0.045f, sun = "8fe0e8", sunIntensity = 0.85f }
+                environment = new LocationEnvironmentData { profile = "soft_light", ambient = "a8c0b8", fog = "9ab8b0", fogDensity = 0.008f, sun = "e0fff0", sunIntensity = 1.25f }
             });
             content.locations.Add(new LocationDefinitionData
             {
@@ -1690,7 +1690,7 @@ namespace Crossroads.Narrative
                 encounters = new List<string> { "c2_wall_open", "c2_mara_pressure" },
                 objectives = new List<string> { "obj_wall_hold", "obj_wall_recover" },
                 worldStateChanges = L(Ef(EffectType.AddCodex, "c2_wall_arrival", "", 0)),
-                environment = new LocationEnvironmentData { profile = "wall_grey", ambient = "34383c", fog = "24282c", fogDensity = 0.03f, sun = "d8dde2", sunIntensity = 0.95f }
+                environment = new LocationEnvironmentData { profile = "overcast", ambient = "9aa2a8", fog = "98a2ac", fogDensity = 0.011f, sun = "e8ecf0", sunIntensity = 1.05f }
             });
             content.locations.Add(new LocationDefinitionData
             {
@@ -1702,7 +1702,7 @@ namespace Crossroads.Narrative
                 encounters = new List<string> { "c2_dax_confront", "c2_dax_duel_end", "c2_dax_hunter_fallen" },
                 objectives = new List<string> { "obj_dax" },
                 worldStateChanges = L(Ef(EffectType.AddCodex, "c2_amphitheatre", "", 0)),
-                environment = new LocationEnvironmentData { profile = "arena_dusk", ambient = "3a2a2a", fog = "2a1c1c", fogDensity = 0.025f, sun = "ffb08a", sunIntensity = 0.8f }
+                environment = new LocationEnvironmentData { profile = "arena_heat", ambient = "c09880", fog = "b89888", fogDensity = 0.01f, sun = "ffce9a", sunIntensity = 1.3f }
             });
             content.locations.Add(new LocationDefinitionData
             {
@@ -1714,7 +1714,7 @@ namespace Crossroads.Narrative
                 encounters = new List<string> { "i3_archivist", "i3_shrine", "i3_hollow_shrine", "c3_mara_reckoning" },
                 objectives = new List<string> { "obj_i3_consult" },
                 worldStateChanges = L(Ef(EffectType.AddCodex, "c3_interlude", "", 0)),
-                environment = new LocationEnvironmentData { profile = "reckoning_blue", ambient = "1c2436", fog = "121826", fogDensity = 0.03f, sun = "a9c8ff", sunIntensity = 0.85f }
+                environment = new LocationEnvironmentData { profile = "ashen_dusk", ambient = "a08a80", fog = "987f78", fogDensity = 0.011f, sun = "f0b890", sunIntensity = 1.15f }
             });
             content.locations.Add(new LocationDefinitionData
             {
@@ -1726,7 +1726,7 @@ namespace Crossroads.Narrative
                 encounters = new List<string> { "c3_market_open" },
                 objectives = new List<string> { "obj_market" },
                 worldStateChanges = L(Ef(EffectType.AddCodex, "c3_market_arrival", "", 0)),
-                environment = new LocationEnvironmentData { profile = "market_ember", ambient = "3a2e22", fog = "2a2018", fogDensity = 0.03f, sun = "ffc48a", sunIntensity = 0.95f }
+                environment = new LocationEnvironmentData { profile = "market_warm", ambient = "b8a488", fog = "b0a090", fogDensity = 0.008f, sun = "ffe0b8", sunIntensity = 1.3f }
             });
             content.locations.Add(new LocationDefinitionData
             {
@@ -1738,7 +1738,7 @@ namespace Crossroads.Narrative
                 encounters = new List<string> { "c3_ascent_open" },
                 objectives = new List<string> { "obj_ascent" },
                 worldStateChanges = L(Ef(EffectType.SetWorldState, "spire", "breached", 0), Ef(EffectType.AddCodex, "c3_ascent_arrival", "", 0)),
-                environment = new LocationEnvironmentData { profile = "ascent_white", ambient = "2c3440", fog = "1c2430", fogDensity = 0.02f, sun = "eaf4ff", sunIntensity = 1f }
+                environment = new LocationEnvironmentData { profile = "thin_air", ambient = "9ab0c8", fog = "a8c0d8", fogDensity = 0.012f, sun = "eaf4ff", sunIntensity = 1.25f }
             });
             content.locations.Add(new LocationDefinitionData
             {
@@ -1750,7 +1750,7 @@ namespace Crossroads.Narrative
                 encounters = new List<string> { "c3_cm_open", "c3_cm_transition", "c3_cm_phase2", "c3_cm_phase3", "c3_final_decision" },
                 objectives = new List<string> { "obj_choirmaster" },
                 worldStateChanges = L(Ef(EffectType.AddCodex, "c3_heart_arrival", "", 0)),
-                environment = new LocationEnvironmentData { profile = "heart_gold", ambient = "3a3020", fog = "2a2214", fogDensity = 0.02f, sun = "ffe2a0", sunIntensity = 1.1f }
+                environment = new LocationEnvironmentData { profile = "hollow_violet", ambient = "7f6fa8", fog = "6f5fa0", fogDensity = 0.013f, sun = "c8b8f0", sunIntensity = 1.0f }
             });
             content.locations.Add(new LocationDefinitionData
             {
@@ -1762,7 +1762,7 @@ namespace Crossroads.Narrative
                 encounters = new List<string> { "ep_epilogue" },
                 objectives = new List<string> { "obj_epilogue" },
                 worldStateChanges = L(Ef(EffectType.AddCodex, "ep_arrival", "", 0)),
-                environment = new LocationEnvironmentData { profile = "after_dawn", ambient = "4a4a50", fog = "34343a", fogDensity = 0.012f, sun = "fff1dc", sunIntensity = 1.2f }
+                environment = new LocationEnvironmentData { profile = "new_dawn", ambient = "b0b8c0", fog = "a8b4c4", fogDensity = 0.007f, sun = "fff0d8", sunIntensity = 1.35f }
             });
         }
     }

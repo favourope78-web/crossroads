@@ -41,6 +41,12 @@ namespace Crossroads.Prototype
         [SerializeField] private float combatDistanceScale = 1.12f;
         [SerializeField] private float combatPitchBias = 6f;
 
+        [Header("Gameplay framing (visual pass)")]
+        [Tooltip("Constant over-the-shoulder side offset so the world centre stays open (metres).")]
+        [SerializeField] private float gameplayShoulderOffset = 0.32f;
+        [Tooltip("Decaying hit impulse: amplitude in metres at full strength.")]
+        [SerializeField] private float impulseDecay = 2.6f;
+
         private Transform _target;
         private Vector3 _posVelocity;
         private float _yaw;
@@ -51,11 +57,20 @@ namespace Crossroads.Prototype
         private float _nextHeadroomProbe;
         private float _cinematic;      // 0 = gameplay framing, 1 = dialogue framing
         private float _combatBlend;    // 0 = calm, 1 = combat
+        private float _impulse;        // decaying combat-feedback amplitude (visual pass)
         private bool _snapNextFrame;
 
         // headless-test seams (read by MobileExperienceTests through the stub)
         public float Cinematic { get { return _cinematic; } }
         public float CombatBlend { get { return _combatBlend; } }
+        public float Impulse { get { return _impulse; } }
+
+        /// <summary>Combat feedback: adds a small decaying positional impulse (metres).</summary>
+        public void AddImpulse(float strength)
+        {
+            if (strength <= 0f) return;
+            _impulse = Mathf.Min(_impulse + strength, 0.4f); // comfort clamp
+        }
 
         private void Start()
         {
@@ -159,14 +174,23 @@ namespace Crossroads.Prototype
             float heightBias = CameraRigMath.IndoorHeightBias(_headroom, 0.35f);
             Vector3 offset = CameraRigMath.OrbitOffset(_yaw, framedPitch, _distance, heightBias);
             Vector3 desiredPos = pivot + offset;
-            if (_cinematic > 0.001f)
             {
-                // over-the-shoulder: slide sideways (camera-right) so the NPC reads on the other third
+                // over-the-shoulder framing: a constant gameplay side offset keeps the player
+                // on one third and the world centre open; dialogue eases further over
                 Vector3 right = Vector3.Cross(Vector3.up, -back);
-                desiredPos += right * (dialogueSideOffset * _cinematic);
+                float shoulder = Mathf.Lerp(gameplayShoulderOffset, dialogueSideOffset, _cinematic);
+                desiredPos += right * shoulder;
             }
             float smoothing = Mathf.Lerp(s.cameraSmoothing, s.cameraSmoothing * 1.8f, _cinematic);
-            transform.position = Vector3.SmoothDamp(transform.position, desiredPos, ref _posVelocity, smoothing);
+            Vector3 finalPos = desiredPos;
+            if (_impulse > 0.0001f)
+            {
+                // decaying combat impulse: two fast sines -> organic nudge, no rotation shake
+                float t = Time.time * 34f;
+                finalPos += new Vector3(Mathf.Sin(t * 1.13f), Mathf.Sin(t * 0.71f) * 0.6f, Mathf.Cos(t * 0.93f)) * (_impulse * 0.35f);
+                _impulse = Mathf.Max(0f, _impulse - impulseDecay * dt);
+            }
+            transform.position = Vector3.SmoothDamp(transform.position, finalPos, ref _posVelocity, smoothing);
 
             Vector3 toPivot = pivot - transform.position;
             if (toPivot.sqrMagnitude > 0.001f)

@@ -259,7 +259,7 @@ namespace Crossroads.Tests
             Check(Arrivals[Arrivals.Count - 1].firstVisit, "first arrival flagged");
             Check(Arrivals[Arrivals.Count - 1].checkpointId == "annex_spawn",
                 "arrival carries the checkpoint anchor id (scene side)");
-            CheckEq(Arrivals[Arrivals.Count - 1].envProfile, "ember_low",
+            CheckEq(Arrivals[Arrivals.Count - 1].envProfile, "annex_steel",
                 "arrival carries the environment profile (content -> event -> scene)");
 
             loc.CanTravel("tidewell", out block);

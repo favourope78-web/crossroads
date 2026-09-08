@@ -1504,7 +1504,7 @@ namespace Crossroads.Narrative
                     encounters = new List<string> { EncounterFirstLight, EncounterSera, EncounterMaraConfide, EncounterSeraEcho },
                     objectives = new List<string>(),
                     worldStateChanges = new List<DecisionEffectData>(),
-                    environment = new LocationEnvironmentData { profile = "hall_dawn", ambient = "3a4450", fog = "2b333d", fogDensity = 0.015f, sun = "cfe6f2", sunIntensity = 1.05f }
+                    environment = new LocationEnvironmentData { profile = "hall_dawn", ambient = "99a8c2", fog = "8fa1b8", fogDensity = 0.006f, sun = "fcdfc7", sunIntensity = 1.3f }
                 },
                 new LocationDefinitionData
                 {
@@ -1530,7 +1530,7 @@ namespace Crossroads.Narrative
                     {
                         new DecisionEffectData { type = EffectType.SetWorldState, key = AreaAnnex, value = "reached" }
                     },
-                    environment = new LocationEnvironmentData { profile = "ember_low", ambient = "46372e", fog = "31241d", fogDensity = 0.03f, sun = "ffb27a", sunIntensity = 0.85f }
+                    environment = new LocationEnvironmentData { profile = "annex_steel", ambient = "8a99ad", fog = "7e8ea6", fogDensity = 0.008f, sun = "e8f0fa", sunIntensity = 1.15f }
                 },
                 new LocationDefinitionData
                 {
@@ -1552,7 +1552,7 @@ namespace Crossroads.Narrative
                     {
                         new DecisionEffectData { type = EffectType.SetWorldState, key = AreaTidewell, value = "lit" }
                     },
-                    environment = new LocationEnvironmentData { profile = "tide_glass", ambient = "2e4a52", fog = "22383f", fogDensity = 0.045f, sun = "bfeaf2", sunIntensity = 0.9f }
+                    environment = new LocationEnvironmentData { profile = "tidewell_shrine", ambient = "7fb3b8", fog = "6fa8b0", fogDensity = 0.01f, sun = "d8fff4", sunIntensity = 1.2f }
                 }
             });
 

@@ -148,5 +148,12 @@ namespace Crossroads.UI
             GameServices.ResetRun();
 #endif
         }
+
+        /// <summary>Dev gate: show/hide the diagnostic panel without rebuilding it.</summary>
+        public void SetVisible(bool visible)
+        {
+            if (_root != null && _root.activeSelf != visible) _root.SetActive(visible);
+            enabled = visible; // the periodic refresh only matters while visible
+        }
     }
 }

@@ -2,7 +2,7 @@
 # Headless test runner (all suites). Usage: bash scripts/run_tests.sh
 cd "$(dirname "$0")/decision_system_tests" || exit 1
 mcs -langversion:latest -define:ENABLE_LEGACY_INPUT_MANAGER -out:FlowTests.exe \
-  TestJson.cs FlowTests.cs WorldTests.cs CombatTests.cs MobileExperienceTests.cs CampaignTests.cs LocationTests.cs \
+  TestJson.cs FlowTests.cs WorldTests.cs CombatTests.cs MobileExperienceTests.cs CampaignTests.cs LocationTests.cs VisualPassTests.cs ArtProductionTests.cs \
   $( [ -f CampaignContentTests.cs ] && echo CampaignContentTests.cs ) \
   ../unity-stub/UnityStub.cs \
   ../../Assets/_Project/Scripts/Core/*.cs \

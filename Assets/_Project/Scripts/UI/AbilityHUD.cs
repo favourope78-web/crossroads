@@ -37,15 +37,17 @@ namespace Crossroads.UI
         // ---------------------------------------------------------------- construction
         private void Build(RectTransform parent)
         {
-            // [POWERS] toggle - bottom-right, mirrored geometry of the INTERACT button
-            var togglePanel = RuntimeMenuFactory.CreatePanel("PowersButton", parent, RuntimeMenuFactory.Panel);
+            // [POWERS] sheet toggle - a slim pill above the ability hotbar (visual pass:
+            // quick-fire buttons live in AbilityHotbarHUD; this opens the full sheet)
+            var togglePanel = RuntimeMenuFactory.CreatePanel("PowersButton", parent, new Color(0.05f, 0.075f, 0.11f, 0.85f));
+            togglePanel.sprite = UiShapes.Pill;
             _toggleRoot = togglePanel.gameObject;
             var trect = togglePanel.rectTransform;
             trect.anchorMin = new Vector2(1f, 0f);
             trect.anchorMax = new Vector2(1f, 0f);
             trect.pivot = new Vector2(1f, 0f);
-            trect.offsetMin = new Vector2(-380f, 150f);
-            trect.offsetMax = new Vector2(-60f, 260f);
+            trect.offsetMin = new Vector2(-70f - 300f, 690f);
+            trect.offsetMax = new Vector2(-70f, 690f + 76f);
 
             var tbtn = togglePanel.gameObject.AddComponent<Button>();
             tbtn.targetGraphic = togglePanel;
@@ -55,7 +57,7 @@ namespace Crossroads.UI
             tbtn.colors = tcolors;
             tbtn.onClick.AddListener(ToggleSheet);
 
-            _toggleLabel = RuntimeMenuFactory.CreateText("Label", trect, "POWERS", 38, RuntimeMenuFactory.TextMain, TextAnchor.MiddleCenter, FontStyle.Bold);
+            _toggleLabel = RuntimeMenuFactory.CreateText("Label", trect, "\u2699  POWERS", 32, RuntimeMenuFactory.TextMain, TextAnchor.MiddleCenter, FontStyle.Bold);
             RuntimeMenuFactory.Stretch(_toggleLabel.rectTransform, 20f, 20f, 12f, 12f);
 
             // sheet

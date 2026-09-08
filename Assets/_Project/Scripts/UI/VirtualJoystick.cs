@@ -55,6 +55,7 @@ namespace Crossroads.UI
             ring.anchorMin = ring.anchorMax = new Vector2(0.5f, 0.42f);
             ring.anchoredPosition = Vector2.zero;
             var ringImage = ringGo.AddComponent<Image>();
+            ringImage.sprite = UiShapes.Ring;
             ringImage.color = RingIdle;
             ringImage.raycastTarget = false;
 
@@ -65,6 +66,7 @@ namespace Crossroads.UI
             knob.anchorMin = knob.anchorMax = new Vector2(0.5f, 0.42f);
             knob.anchoredPosition = Vector2.zero;
             var knobImage = knobGo.AddComponent<Image>();
+            knobImage.sprite = UiShapes.Circle;
             knobImage.color = KnobIdle;
             knobImage.raycastTarget = false;
 

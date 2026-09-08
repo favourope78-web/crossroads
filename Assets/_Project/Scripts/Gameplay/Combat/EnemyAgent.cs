@@ -85,12 +85,14 @@ namespace Crossroads.Gameplay
         {
             Subscribe(false);
             CombatDirector.Unregister(this);
+            Crossroads.Gameplay.WorldMarkers.Unregister(this);
         }
 
         private void Subscribe(bool on)
         {
             if (on)
             {
+                Crossroads.Gameplay.WorldMarkers.Register(this, Crossroads.Gameplay.MarkerKind.Enemy);
                 EventBus.Subscribe<DecisionResolvedEvent>(OnStateEvent);
                 EventBus.Subscribe<FlagChangedEvent>(OnStateEvent);
                 EventBus.Subscribe<AreaUnlockedEvent>(OnStateEvent);
@@ -100,6 +102,7 @@ namespace Crossroads.Gameplay
             }
             else
             {
+                Crossroads.Gameplay.WorldMarkers.Unregister(this);
                 EventBus.Unsubscribe<DecisionResolvedEvent>(OnStateEvent);
                 EventBus.Unsubscribe<FlagChangedEvent>(OnStateEvent);
                 EventBus.Unsubscribe<AreaUnlockedEvent>(OnStateEvent);

@@ -23,6 +23,7 @@ namespace Crossroads.Gameplay.Input
         public float audioVolume = 1.0f;          // 0..1
         public int qualityLevel = 1;              // 0 Low / 1 Balanced / 2 High
         public int showTouchControls = 0;         // 0 Auto / 1 Always / 2 Never
+        public int devOverlays = -1;              // -1 follow build default / 0 off / 1 on (dev gate)
 
         /// <summary>Clamps every field into its sane range (defensive against hand-edited files).</summary>
         public void ApplyClamps()
@@ -35,6 +36,7 @@ namespace Crossroads.Gameplay.Input
             audioVolume = Mathf.Clamp(audioVolume, 0f, 1f);
             qualityLevel = Mathf.Clamp(qualityLevel, 0, 2);
             showTouchControls = Mathf.Clamp(showTouchControls, 0, 2);
+            devOverlays = Mathf.Clamp(devOverlays, -1, 1);
         }
     }
 
@@ -47,6 +49,9 @@ namespace Crossroads.Gameplay.Input
         public const int Quality = 3;
         public const int ButtonScale = 4;
         public const int InvertLookY = 5;
+        public const int ControlOpacity = 6;
+        public const int LeftHanded = 7;
+        public const int TouchVisibility = 8;
     }
 
     /// <summary>
@@ -58,8 +63,10 @@ namespace Crossroads.Gameplay.Input
         public static bool Apply(InputSettings s, int settingId, int direction)
         {
             if (s == null || direction == 0) return false;
-            float before = 0f; bool beforeBool = false; bool isBool = settingId == SettingId.InvertLookY;
-            if (isBool) beforeBool = s.invertLookY; else before = ValueOf(s, settingId);
+            bool isBool = settingId == SettingId.InvertLookY || settingId == SettingId.LeftHanded;
+            float before = 0f; bool beforeBool = false;
+            if (isBool) beforeBool = settingId == SettingId.LeftHanded ? s.leftHanded : s.invertLookY;
+            else before = ValueOf(s, settingId);
 
             switch (settingId)
             {
@@ -81,8 +88,19 @@ namespace Crossroads.Gameplay.Input
                 case SettingId.InvertLookY:
                     s.invertLookY = !s.invertLookY;
                     break;
+                case SettingId.ControlOpacity:
+                    s.controlOpacity = Mathf.Clamp(s.controlOpacity + 0.15f * direction, 0.35f, 1f);
+                    break;
+                case SettingId.LeftHanded:
+                    s.leftHanded = !s.leftHanded;
+                    break;
+                case SettingId.TouchVisibility:
+                    s.showTouchControls = s.showTouchControls >= 2 ? 0 : s.showTouchControls + 1;
+                    break;
             }
-            return isBool ? s.invertLookY != beforeBool : ValueOf(s, settingId) != before;
+            if (isBool) return (settingId == SettingId.LeftHanded ? s.leftHanded : s.invertLookY) != beforeBool;
+            if (settingId == SettingId.TouchVisibility) return true; // cycled int with no clamp band
+            return ValueOf(s, settingId) != before;
         }
 
         private static float ValueOf(InputSettings s, int id)
@@ -94,6 +112,7 @@ namespace Crossroads.Gameplay.Input
                 case SettingId.Volume: return s.audioVolume;
                 case SettingId.Quality: return s.qualityLevel;
                 case SettingId.ButtonScale: return s.buttonScale;
+                case SettingId.ControlOpacity: return s.controlOpacity;
                 default: return 0f;
             }
         }

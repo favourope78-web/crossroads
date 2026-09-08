@@ -116,8 +116,10 @@ namespace Crossroads.Gameplay
                 transform.Rotate(0f, Mathf.Sign(delta) * pivotTurnSpeed * Time.deltaTime, 0f);
             }
 
-            // shared humanoid vocabulary: 0 idle, 0.5 walk, 1 run (ability speed boosts blend into the run)
-            float speedParam = moving ? Mathf.Clamp(0.5f * ExternalSpeedMultiplier, 0.5f, 1f) : 0f;
+            // shared humanoid vocabulary: 0 idle, 0.5 walk, 1 run (visual pass: analog run -
+            // gentle joystick tilt walks, full tilt runs, ability speed boosts blend into the run)
+            float magnitude = input.sqrMagnitude > 0.001f ? Mathf.Clamp01(input.magnitude) : 0f;
+            float speedParam = moving ? Mathf.Clamp((0.5f + 0.5f * magnitude) * ExternalSpeedMultiplier, 0.5f, 1f) : 0f;
             _animator.SetFloat(SpeedHash, speedParam, 0.15f, Time.deltaTime);
             _animator.SetBool(TurningHash, pivoting);
 

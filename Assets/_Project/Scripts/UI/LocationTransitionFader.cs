@@ -75,11 +75,57 @@ namespace Crossroads.UI
             rect.offsetMin = rect.offsetMax = Vector2.zero;
             _overlay.rectTransform.SetAsLastSibling();
 
-            // loading card: location name + a one-line hint, centred; invisible with the overlay
+            // ---- loading card (visual pass): emblem + location name + rotating hint ----
+            var emblem = RuntimeMenuFactory.CreateText("Emblem", rect, "\u25C8", 56,
+                new Color(0.30f, 0.85f, 0.95f, 0.9f), TextAnchor.MiddleCenter);
+            RuntimeMenuFactory.Stretch(emblem.rectTransform, 80f, 80f, 300f, 232f);
+
+            var rule = RuntimeMenuFactory.CreatePanel("Rule", rect, new Color(0.30f, 0.85f, 0.95f, 0.35f));
+            var ruleRect = rule.rectTransform;
+            ruleRect.anchorMin = ruleRect.anchorMax = new Vector2(0.5f, 0.5f);
+            ruleRect.pivot = new Vector2(0.5f, 0.5f);
+            ruleRect.sizeDelta = new Vector2(280f, 3f);
+            ruleRect.anchoredPosition = new Vector2(0f, 200f);
+
             _title = RuntimeMenuFactory.CreateText("Title", rect, "", 64, RuntimeMenuFactory.TextMain, TextAnchor.MiddleCenter, FontStyle.Bold);
-            RuntimeMenuFactory.Stretch(_title.rectTransform, 80f, 80f, 0f, 60f);
+            RuntimeMenuFactory.Stretch(_title.rectTransform, 80f, 80f, 128f, 60f);
+
             _subtitle = RuntimeMenuFactory.CreateText("Subtitle", rect, "", 30, RuntimeMenuFactory.Accent, TextAnchor.MiddleCenter);
-            RuntimeMenuFactory.Stretch(_subtitle.rectTransform, 80f, 80f, 120f, 0f);
+            RuntimeMenuFactory.Stretch(_subtitle.rectTransform, 80f, 80f, 208f, 0f);
+
+            _tip = RuntimeMenuFactory.CreateText("Tip", rect, "", 26, new Color(0.60f, 0.66f, 0.72f, 1f),
+                TextAnchor.MiddleCenter, FontStyle.Italic);
+            RuntimeMenuFactory.Stretch(_tip.rectTransform, 140f, 140f, 60f, 0f);
+
+            _spinner = RuntimeMenuFactory.CreateText("Spinner", rect, "\u25C8", 30,
+                new Color(0.30f, 0.85f, 0.95f, 0.8f), TextAnchor.MiddleCenter);
+            _spinner.rectTransform.anchorMin = _spinner.rectTransform.anchorMax = new Vector2(0.5f, 0f);
+            _spinner.rectTransform.pivot = new Vector2(0.5f, 0f);
+            _spinner.rectTransform.anchoredPosition = new Vector2(0f, 90f);
+            _spinner.rectTransform.sizeDelta = new Vector2(60f, 60f);
+        }
+
+        private Text _tip;
+        private Text _spinner;
+        private float _spinPhase;
+        private int _tipIndex;
+
+        /// <summary>One-line flavour hints cycled by arrival (authored, no ids/paths).</summary>
+        internal static readonly string[] Tips =
+        {
+            "the hall remembers every choice you make in it",
+            "gentle tilt on the stick walks - full tilt runs",
+            "the compass ring shows who waits for you nearby",
+            "abilities recharge faster when you trust the hall",
+            "your choices decide which doors the city opens",
+            "dodge through danger - the hall lends you its grace",
+        };
+
+        /// <summary>Deterministic tip pick (headless-testable).</summary>
+        public static string PickTip(int index)
+        {
+            if (Tips == null || Tips.Length == 0) return "";
+            return Tips[((index % Tips.Length) + Tips.Length) % Tips.Length];
         }
 
         private void OnEnable() { EventBus.Subscribe<LocationArrivedEvent>(OnArrived); }
@@ -102,8 +148,9 @@ namespace Crossroads.UI
             if (_title != null)
             {
                 _title.text = string.IsNullOrEmpty(e.name) ? "" : e.name;
-                _subtitle.text = e.firstVisit ? "— new location —" : "";
+                _subtitle.text = e.firstVisit ? "\u2014 new location \u2014" : "";
             }
+            if (_tip != null) _tip.text = PickTip(_tipIndex++);
             // The move + relight happen at full black (mid-fade) so the camera never shows the
             // pop; a zero-length fade applies them right away.
             if (fadeSeconds <= 0f) { MidFade(); }
@@ -164,6 +211,14 @@ namespace Crossroads.UI
         {
             if (_group == null || _phase == 0f) return;
             float step = Time.unscaledDeltaTime > 0f ? Time.unscaledDeltaTime : 0.016f; // pause-proof
+            if (_spinner != null && _group.alpha > 0.15f)
+            {
+                // breathing spinner while the card is on screen (pure text alpha pulse)
+                _spinPhase += step * 2.4f;
+                Color c = _spinner.color;
+                c.a = 0.35f + 0.45f * (0.5f + 0.5f * Mathf.Sin(_spinPhase));
+                _spinner.color = c;
+            }
             if (_phase > 0f)
             {
                 _phase -= step;
@@ -189,6 +244,7 @@ namespace Crossroads.UI
                 {
                     _phase = 0f; _group.alpha = 0f; _group.blocksRaycasts = false;
                     if (_title != null) { _title.text = ""; _subtitle.text = ""; }
+                    if (_tip != null) _tip.text = "";
                     _pending = default(LocationArrivedEvent);
                 }
             }

@@ -54,7 +54,8 @@ namespace Crossroads.UI
 
         private void Build(RectTransform parent)
         {
-            var sheetPanel = RuntimeMenuFactory.CreatePanel("DialogueSheet", parent, RuntimeMenuFactory.Panel);
+            var sheetPanel = RuntimeMenuFactory.CreatePanel("DialogueSheet", parent, new Color(0.035f, 0.055f, 0.085f, 0.95f));
+            sheetPanel.sprite = UiShapes.RoundRect; // rounded glass (visual pass)
             _sheet = sheetPanel.rectTransform;
             _sheet.anchorMin = new Vector2(0f, 0f);
             _sheet.anchorMax = new Vector2(1f, 0f);
@@ -120,7 +121,36 @@ namespace Crossroads.UI
             _choiceArea = RuntimeMenuFactory.CreateRect("Choices", _sheet);
             RuntimeMenuFactory.Stretch(_choiceArea, 44f, 44f, 250f, 100f);
 
+            // ---- letterbox bars (cinematic dialogue framing, visual pass) ----
+            _letterTop = RuntimeMenuFactory.CreatePanel("LetterTop", parent, new Color(0.008f, 0.014f, 0.024f, 0.72f));
+            _letterTop.rectTransform.anchorMin = new Vector2(0f, 1f);
+            _letterTop.rectTransform.anchorMax = new Vector2(1f, 1f);
+            _letterTop.rectTransform.pivot = new Vector2(0.5f, 1f);
+            _letterTop.rectTransform.offsetMin = new Vector2(0f, -72f);
+            _letterTop.rectTransform.offsetMax = new Vector2(0f, 0f);
+            _letterTop.raycastTarget = false;
+
+            _letterBottom = RuntimeMenuFactory.CreatePanel("LetterBottom", parent, new Color(0.008f, 0.014f, 0.024f, 0.72f));
+            _letterBottom.rectTransform.anchorMin = new Vector2(0f, 0f);
+            _letterBottom.rectTransform.anchorMax = new Vector2(1f, 0f);
+            _letterBottom.rectTransform.pivot = new Vector2(0.5f, 0f);
+            _letterBottom.rectTransform.offsetMin = new Vector2(0f, 0f);
+            _letterBottom.rectTransform.offsetMax = new Vector2(0f, 56f);
+            _letterBottom.raycastTarget = false;
+
+            _letterTop.gameObject.SetActive(false);
+            _letterBottom.gameObject.SetActive(false);
+
             HideSilently();
+        }
+
+        private Image _letterTop;
+        private Image _letterBottom;
+
+        private void SetLetterbox(bool on)
+        {
+            if (_letterTop != null) _letterTop.gameObject.SetActive(on);
+            if (_letterBottom != null) _letterBottom.gameObject.SetActive(on);
         }
 
         // ------------------------------------------------------------------ events
@@ -147,6 +177,7 @@ namespace Crossroads.UI
             _timedOut = false;
             _timeLimit = 0f;
             ClearChoices();
+            SetLetterbox(true); // cinematic framing while talking (visual pass)
             _sheet.gameObject.SetActive(true);
             _sheet.sizeDelta = new Vector2(0f, 400f);
             _slideTarget = 1f;
@@ -201,6 +232,7 @@ namespace Crossroads.UI
             _running = false;
             _decisionMode = false;
             _slideTarget = 0f; // Update slides the sheet out, then deactivates it
+            SetLetterbox(false);
         }
 
         /// <summary>Speaker -> line colour (UI parity with the character palette; narration = cyan).</summary>
@@ -310,15 +342,43 @@ namespace Crossroads.UI
             for (int i = 0; i < n; i++)
             {
                 DecisionChoiceView choice = choices[i];
-                var btn = RuntimeMenuFactory.CreateButton("Choice_" + choice.optionId, _choiceArea, choice.text, 34,
-                    RuntimeMenuFactory.PanelSoft, RuntimeMenuFactory.TextMain);
-                var rect = ((Image)btn.targetGraphic).rectTransform;
+                var btn = RuntimeMenuFactory.CreateButton("Choice_" + choice.optionId, _choiceArea, "", 34,
+                    new Color(0.075f, 0.105f, 0.15f, 0.97f), RuntimeMenuFactory.TextMain);
+                var img = (Image)btn.targetGraphic;
+                img.sprite = UiShapes.RoundRect; // rounded decision card (visual pass)
+                var rect = img.rectTransform;
                 float y = 100f + i * (slotH + gap);
                 rect.anchorMin = new Vector2(0f, 0f);
                 rect.anchorMax = new Vector2(1f, 0f);
                 rect.pivot = new Vector2(0.5f, 0f);
                 rect.offsetMin = new Vector2(44f, y);
                 rect.offsetMax = new Vector2(-44f, y + slotH);
+
+                // decision-coloured edge + arrow glyph: reads as a selectable path, not a dev list
+                var edge = RuntimeMenuFactory.CreatePanel("Edge", rect, new Color(0.85f, 0.68f, 0.32f, 0.9f));
+                var erect = edge.rectTransform;
+                erect.anchorMin = erect.anchorMax = new Vector2(0f, 0.5f);
+                erect.pivot = new Vector2(0f, 0.5f);
+                erect.sizeDelta = new Vector2(7f, slotH - 22f);
+                erect.anchoredPosition = new Vector2(16f, 0f);
+                edge.raycastTarget = false;
+
+                var arrow = RuntimeMenuFactory.CreateText("Arrow", rect, "\u25B8", 34, new Color(0.85f, 0.68f, 0.32f, 1f),
+                    TextAnchor.MiddleCenter, FontStyle.Bold);
+                arrow.rectTransform.anchorMin = arrow.rectTransform.anchorMax = new Vector2(1f, 0.5f);
+                arrow.rectTransform.pivot = new Vector2(1f, 0.5f);
+                arrow.rectTransform.offsetMin = new Vector2(-90f, -34f);
+                arrow.rectTransform.offsetMax = new Vector2(-30f, 34f);
+                arrow.raycastTarget = false;
+
+                var label = RuntimeMenuFactory.CreateText("Label", rect, choice.text, 34, RuntimeMenuFactory.TextMain,
+                    TextAnchor.MiddleLeft, FontStyle.Bold);
+                label.rectTransform.anchorMin = label.rectTransform.anchorMax = new Vector2(0f, 0.5f);
+                label.rectTransform.pivot = new Vector2(0f, 0.5f);
+                label.rectTransform.offsetMin = new Vector2(48f, -52f);
+                label.rectTransform.offsetMax = new Vector2(-110f, 52f);
+                label.raycastTarget = false;
+
                 string optionId = choice.optionId;
                 btn.onClick.AddListener(() => OnChoice(optionId));
                 if (i > 0) btn.gameObject.SetActive(false); // revealed by the stagger in Update
@@ -400,6 +460,7 @@ namespace Crossroads.UI
             ApplySlide(0f);
             _sheet.gameObject.SetActive(false);
             _running = false;
+            SetLetterbox(false);
         }
     }
 }

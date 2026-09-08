@@ -8,22 +8,15 @@ using UnityEngine.UI;
 namespace Crossroads.UI
 {
     /// <summary>
-    /// Pause + settings overlay (task 8): Resume, look sensitivity, camera distance, audio
-    /// volume, graphics quality. Settings apply LIVE and persist immediately to
-    /// player_settings.json (own file - never bumps the save schema). Pause freezes
-    /// simulation time (Time.timeScale = 0) so world, combat and cameras stop together;
-    /// unscaled UI keeps working. Small -/+ steppers instead of sliders: more reliable
-    /// touch targets, no extra dependencies.
+    /// PAUSE MENU (VISUAL_TARGET §7): RESUME / SETTINGS / SAVE &amp; CLOSE / MAIN MENU.
+    /// Pause freezes simulation time (Time.timeScale = 0) so world, combat and cameras
+    /// stop together; unscaled UI keeps working. Settings live in the shared
+    /// SettingsPanelUI (same panel as the main menu) - one code path, one look.
     /// </summary>
     public class PauseMenuUI : MonoBehaviour
     {
-        public enum Setting { Sensitivity, CameraDistance, Volume, Quality }
-
         private GameObject _panel;
-        private Text _sensValue;
-        private Text _distValue;
-        private Text _volValue;
-        private Text _qualityValue;
+        private Text _saveChip;
         private bool _open;
 
         public bool IsOpen { get { return _open; } }
@@ -37,79 +30,57 @@ namespace Crossroads.UI
 
         private void Build(RectTransform parent)
         {
-            _panel = RuntimeMenuFactory.CreatePanel("PausePanel", parent, new Color(0.03f, 0.05f, 0.08f, 0.96f)).gameObject;
+            _panel = RuntimeMenuFactory.CreatePanel("PausePanel", parent, new Color(0.02f, 0.035f, 0.06f, 0.94f)).gameObject;
             var rect = _panel.GetComponent<RectTransform>();
             rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 0.5f);
             rect.pivot = new Vector2(0.5f, 0.5f);
-            rect.sizeDelta = new Vector2(900f, 860f);
+            rect.sizeDelta = new Vector2(760f, 640f);
             rect.anchoredPosition = Vector2.zero;
             _panel.SetActive(false);
 
+            var edge = RuntimeMenuFactory.CreatePanel("Edge", rect, new Color(0.30f, 0.85f, 0.95f, 0.5f));
+            var erect = edge.rectTransform;
+            erect.anchorMin = erect.anchorMax = new Vector2(0f, 0.5f);
+            erect.pivot = new Vector2(0f, 0.5f);
+            erect.sizeDelta = new Vector2(5f, 560f);
+            erect.anchoredPosition = Vector2.zero;
+
             var title = RuntimeMenuFactory.CreateText("Title", rect, "PAUSED", 56, RuntimeMenuFactory.TextMain,
                 TextAnchor.MiddleCenter, FontStyle.Bold);
-            RuntimeMenuFactory.Stretch(title.rectTransform, 0f, 0f, 640f, 20f);
+            title.rectTransform.anchorMin = title.rectTransform.anchorMax = new Vector2(0.5f, 1f);
+            title.rectTransform.pivot = new Vector2(0.5f, 1f);
+            title.rectTransform.offsetMin = new Vector2(-320f, -96f);
+            title.rectTransform.offsetMax = new Vector2(320f, -32f);
 
-            var resume = RuntimeMenuFactory.CreateButton("Resume", rect, "RESUME", 40,
-                new Color(0.10f, 0.42f, 0.48f, 0.95f), RuntimeMenuFactory.TextMain);
-            var rrect = ((Image)resume.targetGraphic).rectTransform;
-            rrect.anchorMin = rrect.anchorMax = new Vector2(0.5f, 0f);
-            rrect.pivot = new Vector2(0.5f, 0f);
-            rrect.sizeDelta = new Vector2(520f, 130f);
-            rrect.anchoredPosition = new Vector2(0f, 40f);
+            _saveChip = RuntimeMenuFactory.CreateText("SaveChip", rect, "", 24, RuntimeMenuFactory.TextDim,
+                TextAnchor.MiddleCenter, FontStyle.Italic);
+            _saveChip.rectTransform.anchorMin = _saveChip.rectTransform.anchorMax = new Vector2(0.5f, 1f);
+            _saveChip.rectTransform.pivot = new Vector2(0.5f, 1f);
+            _saveChip.rectTransform.offsetMin = new Vector2(-320f, -134f);
+            _saveChip.rectTransform.offsetMax = new Vector2(320f, -96f);
+
+            var resume = BuildButton(rect, "Resume", "RESUME", 0, new Color(0.10f, 0.42f, 0.48f, 0.95f));
             resume.onClick.AddListener(Close);
 
-            _sensValue = BuildStepper(rect, 0, "Look sensitivity",
-                delegate { Nudge(Setting.Sensitivity, -1); }, delegate { Nudge(Setting.Sensitivity, +1); });
-            _distValue = BuildStepper(rect, 1, "Camera distance",
-                delegate { Nudge(Setting.CameraDistance, -1); }, delegate { Nudge(Setting.CameraDistance, +1); });
-            _volValue = BuildStepper(rect, 2, "Audio volume",
-                delegate { Nudge(Setting.Volume, -1); }, delegate { Nudge(Setting.Volume, +1); });
-            _qualityValue = BuildStepper(rect, 3, "Graphics quality",
-                delegate { Nudge(Setting.Quality, -1); }, delegate { Nudge(Setting.Quality, +1); });
+            var settings = BuildButton(rect, "Settings", "SETTINGS", 1, new Color(0.13f, 0.19f, 0.26f, 0.95f));
+            settings.onClick.AddListener(OnSettingsPressed);
 
-            var saveBtn = RuntimeMenuFactory.CreateButton("SaveClose", rect, "SAVE & CLOSE", 32,
-                new Color(0.16f, 0.30f, 0.20f, 0.95f), RuntimeMenuFactory.TextMain);
-            var srect = ((Image)saveBtn.targetGraphic).rectTransform;
-            srect.anchorMin = srect.anchorMax = new Vector2(0.5f, 0f);
-            srect.pivot = new Vector2(0.5f, 0f);
-            srect.sizeDelta = new Vector2(520f, 100f);
-            srect.anchoredPosition = new Vector2(0f, 190f);
+            var saveBtn = BuildButton(rect, "SaveClose", "SAVE & CLOSE", 2, new Color(0.16f, 0.30f, 0.20f, 0.95f));
             saveBtn.onClick.AddListener(SaveAndClose);
 
-            RefreshValues();
+            var menuBtn = BuildButton(rect, "MainMenu", "MAIN MENU", 3, new Color(0.13f, 0.19f, 0.26f, 0.95f));
+            menuBtn.onClick.AddListener(OnMainMenuPressed);
         }
 
-        private Text BuildStepper(RectTransform parent, int row, string label,
-            UnityEngine.Events.UnityAction onMinus, UnityEngine.Events.UnityAction onPlus)
+        private Button BuildButton(RectTransform parent, string name, string label, int index, Color bg)
         {
-            float top = -120f - row * 118f;
-            var text = RuntimeMenuFactory.CreateText("Label_" + row, parent, label, 30, RuntimeMenuFactory.TextDim,
-                TextAnchor.MiddleLeft, FontStyle.Bold);
-            RuntimeMenuFactory.Stretch(text.rectTransform, 40f, 430f, top, top - 92f);
-
-            var minus = RuntimeMenuFactory.CreateButton("Minus_" + row, parent, "-", 40,
-                new Color(0.10f, 0.16f, 0.22f, 0.95f), RuntimeMenuFactory.TextMain);
-            var mrect = ((Image)minus.targetGraphic).rectTransform;
-            mrect.anchorMin = mrect.anchorMax = new Vector2(1f, 1f);
-            mrect.pivot = new Vector2(1f, 1f);
-            mrect.sizeDelta = new Vector2(96f, 92f);
-            mrect.anchoredPosition = new Vector2(-300f, top);
-            minus.onClick.AddListener(onMinus);
-
-            var value = RuntimeMenuFactory.CreateText("Value_" + row, parent, "", 30, RuntimeMenuFactory.TextMain,
-                TextAnchor.MiddleCenter, FontStyle.Bold);
-            RuntimeMenuFactory.Stretch(value.rectTransform, -260f, 160f, top, top - 92f);
-
-            var plus = RuntimeMenuFactory.CreateButton("Plus_" + row, parent, "+", 40,
-                new Color(0.10f, 0.16f, 0.22f, 0.95f), RuntimeMenuFactory.TextMain);
-            var prect = ((Image)plus.targetGraphic).rectTransform;
-            prect.anchorMin = prect.anchorMax = new Vector2(1f, 1f);
-            prect.pivot = new Vector2(1f, 1f);
-            prect.sizeDelta = new Vector2(96f, 92f);
-            prect.anchoredPosition = new Vector2(-40f, top);
-            plus.onClick.AddListener(onPlus);
-
-            return value;
+            var btn = RuntimeMenuFactory.CreateButton(name, parent, label, 36, bg, RuntimeMenuFactory.TextMain);
+            var r = ((Image)btn.targetGraphic).rectTransform;
+            r.anchorMin = r.anchorMax = new Vector2(0.5f, 0f);
+            r.pivot = new Vector2(0.5f, 0f);
+            r.sizeDelta = new Vector2(520f, 104f);
+            r.anchoredPosition = new Vector2(0f, 40f + (3 - index) * 122f);
+            return btn;
         }
 
         // ---------------------------------------------------------------- state machine
@@ -117,7 +88,7 @@ namespace Crossroads.UI
         {
             if (_open) return;
             _open = true;
-            RefreshValues();
+            RefreshSaveChip();
             _panel.SetActive(true);
             Time.timeScale = 0f;              // freeze world + combat + cameras together
         }
@@ -130,48 +101,33 @@ namespace Crossroads.UI
             Time.timeScale = 1f;
         }
 
+        private void RefreshSaveChip()
+        {
+            if (_saveChip == null) return;
+            _saveChip.text = GameServices.IsInitialized && GameServices.Save != null && GameServices.Save.Exists()
+                ? "autosave ready - your choices are remembered"
+                : "no autosave yet";
+        }
+
         private void SaveAndClose()
         {
-            ApplySideEffects();
-            InputSettingsStore.Save(InputSettingsStore.Current); // settings file
             if (GameServices.Progress != null) GameServices.PersistNow(autosaveMirror: true); // progress save
             Close();
         }
 
-        /// <summary>The single settings mutator: pure clamp via SettingsNudge, then refresh/apply/persist.</summary>
-        public void Nudge(Setting setting, int direction)
+        private void OnSettingsPressed()
         {
-            InputSettings s = InputSettingsStore.Current;
-            SettingsNudge.Apply(s, (int)setting, direction);
-            RefreshValues();
-            ApplySideEffects();
-            InputSettingsStore.Save(s); // live-persist: survives an app kill mid-session
+            var panel = FindFirstObjectByType<SettingsPanelUI>();
+            if (panel != null) panel.Open();
         }
 
-        /// <summary>Pushes settings into the systems that cache them (audio, framerate, rig scale/opacity).</summary>
-        private void ApplySideEffects()
+        private void OnMainMenuPressed()
         {
-            InputSettings s = InputSettingsStore.Current;
-            AudioListener.volume = s.audioVolume;
-            // Quality tiers are real (ProjectSettings: Low / Balanced / High, each bound to its own
-            // URP asset - shadows, render scale, MSAA). Index == the settings value by design.
-            // QualityTierApplier also swaps the post profile (Low = no bloom) and the fps cap.
-            int tier = Mathf.Clamp(s.qualityLevel, 0, QualitySettings.names.Length - 1);
-            Application.targetFrameRate = QualityTierApplier.TargetFrameRate(tier);
-            if (QualitySettings.GetQualityLevel() != tier) QualitySettings.SetQualityLevel(tier, true);
-            QualityTierApplier.ApplyTier(tier);
-            var rig = FindFirstObjectByType<MobileControlsUI>();
-            if (rig != null) rig.ApplySettings();
-        }
-
-        private void RefreshValues()
-        {
-            InputSettings s = InputSettingsStore.Current;
-            if (_sensValue != null) _sensValue.text = s.lookSensitivity.ToString("0.0");
-            if (_distValue != null) _distValue.text = s.cameraDistance.ToString("0.0") + " m";
-            if (_volValue != null) _volValue.text = s.audioVolume.ToString("0.0");
-            if (_qualityValue != null)
-                _qualityValue.text = s.qualityLevel == 0 ? "Low (30fps)" : s.qualityLevel == 1 ? "Balanced (60fps)" : "High (60fps)";
+            // quit-to-menu semantics: stay paused underneath, main menu takes the screen;
+            // CONTINUE from the menu resumes exactly like RESUME would
+            Close();
+            var menu = FindFirstObjectByType<MainMenuUI>();
+            if (menu != null) menu.Open();
         }
 
         private void OnDestroy()

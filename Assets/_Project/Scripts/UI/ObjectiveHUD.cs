@@ -125,5 +125,15 @@ namespace Crossroads.UI
             _body.supportRichText = true;
             _body.text = sb.ToString();
         }
+
+        /// <summary>Dev gate: the full diagnostic list hides in normal play.</summary>
+        public void SetVisible(bool visible)
+        {
+            if (_panel != null)
+            {
+                GameObject root = _panel.gameObject;
+                if (root.activeSelf != visible) root.SetActive(visible);
+            }
+        }
     }
 }

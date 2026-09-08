@@ -8525,7 +8525,7 @@
        "amount": 0
       }
      ],
-     "title": "Mara · Heartened",
+     "title": "Mara \u00b7 Heartened",
      "moodLine": "Mara stands easier since you told her how it felt.",
      "approachDistance": 1.2,
      "avoidDistance": -1.0,
@@ -8541,7 +8541,7 @@
        "amount": 8
       }
      ],
-     "title": "Mara · Warm",
+     "title": "Mara \u00b7 Warm",
      "moodLine": "Mara's eyes soften. She stays closer now.",
      "approachDistance": 1.3,
      "avoidDistance": -1,
@@ -8640,7 +8640,7 @@
        "amount": 0
       }
      ],
-     "title": "Sera · Shieldmate",
+     "title": "Sera \u00b7 Shieldmate",
      "moodLine": "'You put the Warden down.' Sera looks at you like the hall just changed its mind about you.",
      "approachDistance": 1.3,
      "avoidDistance": 0.0,
@@ -8656,7 +8656,7 @@
        "amount": 0
       }
      ],
-     "title": "Sera · Vanguard",
+     "title": "Sera \u00b7 Vanguard",
      "moodLine": "'The beacon's quiet. First time in days I can hear myself think.' Sera takes her watch by the annex gate.",
      "approachDistance": 1.4,
      "avoidDistance": 0.0,
@@ -8672,7 +8672,7 @@
        "amount": 0
       }
      ],
-     "title": "Sera · Steadied",
+     "title": "Sera \u00b7 Steadied",
      "moodLine": "'It held. You held it.' Sera's shoulders drop an inch.",
      "approachDistance": 1.5,
      "avoidDistance": 0.0,
@@ -8688,7 +8688,7 @@
        "amount": 0
       }
      ],
-     "title": "Sera · Warded",
+     "title": "Sera \u00b7 Warded",
      "moodLine": "Sera's eyes rest on your empty hands. 'The hall says you gave it back. I can hear it in the silence you leave.'",
      "approachDistance": 1.8,
      "avoidDistance": 0.0,
@@ -8704,7 +8704,7 @@
        "amount": 2
       }
      ],
-     "title": "Sera · Attuned",
+     "title": "Sera \u00b7 Attuned",
      "moodLine": "'Your echo rings twice as deep as it did.' She nods, almost approving.",
      "approachDistance": 1.5,
      "avoidDistance": 0.0,
@@ -8720,7 +8720,7 @@
        "amount": 0
       }
      ],
-     "title": "Sera · Grateful",
+     "title": "Sera \u00b7 Grateful",
      "moodLine": "Sera's guard drops. She steps closer, unafraid.",
      "approachDistance": 1.5,
      "avoidDistance": 0,
@@ -8736,7 +8736,7 @@
        "amount": 0
       }
      ],
-     "title": "Sera · Watchful",
+     "title": "Sera \u00b7 Watchful",
      "moodLine": "Sera keeps her distance. Your echo burns too bright.",
      "approachDistance": 0,
      "avoidDistance": 3.4,
@@ -8752,7 +8752,7 @@
        "amount": 0
       }
      ],
-     "title": "Sera · Intrigued",
+     "title": "Sera \u00b7 Intrigued",
      "moodLine": "Sera studies you sidelong, curious despite herself.",
      "approachDistance": 1.2,
      "avoidDistance": 0,
@@ -8839,7 +8839,7 @@
        "amount": 0
       }
      ],
-     "title": "Mara · Best Friend",
+     "title": "Mara \u00b7 Best Friend",
      "moodLine": "Mara grins with the kite string round her wrist. She is not letting go of it, or of you.",
      "approachDistance": 1.1,
      "avoidDistance": -1,
@@ -8855,7 +8855,7 @@
        "amount": 0
       }
      ],
-     "title": "Mara · Summer Friend",
+     "title": "Mara \u00b7 Summer Friend",
      "moodLine": "Mara squints at the sky, planning tomorrow already.",
      "approachDistance": -1,
      "avoidDistance": -1,
@@ -8955,7 +8955,7 @@
        "amount": 0
       }
      ],
-     "title": "Dax · Redeemed",
+     "title": "Dax \u00b7 Redeemed",
      "moodLine": "Dax stands easier now. The blazer is buttoned wrong and he does not care.",
      "approachDistance": 1.4,
      "avoidDistance": -1,
@@ -8971,7 +8971,7 @@
        "amount": 0
       }
      ],
-     "title": "Dax · Truce",
+     "title": "Dax \u00b7 Truce",
      "moodLine": "Dax nods once. It costs him, and he pays it.",
      "approachDistance": 1.6,
      "avoidDistance": -1,
@@ -8987,7 +8987,7 @@
        "amount": 1
       }
      ],
-     "title": "Dax · Wary",
+     "title": "Dax \u00b7 Wary",
      "moodLine": "Dax keeps his distance and his sharpness.",
      "approachDistance": -1,
      "avoidDistance": -1,
@@ -9003,7 +9003,7 @@
        "amount": 0
       }
      ],
-     "title": "Dax · Rival",
+     "title": "Dax \u00b7 Rival",
      "moodLine": "Dax will not look at you. The bruise you gave him is a promise.",
      "approachDistance": 2.6,
      "avoidDistance": 2.0,
@@ -9084,7 +9084,7 @@
        "amount": 0
       }
      ],
-     "title": "Kael · Estranged",
+     "title": "Kael \u00b7 Estranged",
      "moodLine": "Kael watches you like a report he has already filed.",
      "approachDistance": 3.0,
      "avoidDistance": -1,
@@ -9100,7 +9100,7 @@
        "amount": 20
       }
      ],
-     "title": "Kael · Sworn",
+     "title": "Kael \u00b7 Sworn",
      "moodLine": "Kael's coat is buttoned to the throat. He is ready when you are.",
      "approachDistance": 1.4,
      "avoidDistance": -1,
@@ -9185,7 +9185,7 @@
        "amount": 0
       }
      ],
-     "title": "Odalys · Estranged",
+     "title": "Odalys \u00b7 Estranged",
      "moodLine": "Odalys folds her hands. Whatever she wanted to say, she keeps.",
      "approachDistance": 3.0,
      "avoidDistance": -1,
@@ -9201,7 +9201,7 @@
        "amount": 20
       }
      ],
-     "title": "Odalys · Sworn",
+     "title": "Odalys \u00b7 Sworn",
      "moodLine": "Odalys's robe hem drips. She has been in the water for someone again.",
      "approachDistance": 1.2,
      "avoidDistance": -1,
@@ -9286,7 +9286,7 @@
        "amount": 0
       }
      ],
-     "title": "Bran · Estranged",
+     "title": "Bran \u00b7 Estranged",
      "moodLine": "Bran stands where he always stands. He does not turn.",
      "approachDistance": 3.2,
      "avoidDistance": -1,
@@ -9302,7 +9302,7 @@
        "amount": 20
       }
      ],
-     "title": "Bran · Sworn",
+     "title": "Bran \u00b7 Sworn",
      "moodLine": "Bran's collar is up, his feet are planted. He is a wall with an opinion.",
      "approachDistance": 1.8,
      "avoidDistance": -1,
@@ -9387,7 +9387,7 @@
        "amount": 0
       }
      ],
-     "title": "Archivist · Witness",
+     "title": "Archivist \u00b7 Witness",
      "moodLine": "The Archivist's light steadies. It has seen how this life ends.",
      "approachDistance": -1,
      "avoidDistance": -1,
@@ -9403,7 +9403,7 @@
        "amount": 25
       }
      ],
-     "title": "Archivist · Uneasy",
+     "title": "Archivist \u00b7 Uneasy",
      "moodLine": "The Archivist flickers when you come near. It keeps its distance in a way holograms should not need to.",
      "approachDistance": -1,
      "avoidDistance": -1,
@@ -9467,7 +9467,7 @@
        "amount": 0
       }
      ],
-     "title": "Mara · Lost",
+     "title": "Mara \u00b7 Lost",
      "moodLine": "",
      "approachDistance": 9.0,
      "avoidDistance": 9.0,
@@ -9483,7 +9483,7 @@
        "amount": 0
       }
      ],
-     "title": "Mara · Ally",
+     "title": "Mara \u00b7 Ally",
      "moodLine": "Mara has stopped asking if you're alright. She fights beside you instead.",
      "approachDistance": 1.2,
      "avoidDistance": -1,
@@ -9499,7 +9499,7 @@
        "amount": 50
       }
      ],
-     "title": "Mara · Bonded",
+     "title": "Mara \u00b7 Bonded",
      "moodLine": "Mara stands close enough to touch your sleeve. She does, once.",
      "approachDistance": 1.2,
      "avoidDistance": -1,
@@ -9515,7 +9515,7 @@
        "amount": 1
       }
      ],
-     "title": "Mara · Warm",
+     "title": "Mara \u00b7 Warm",
      "moodLine": "Mara watches the water, then you.",
      "approachDistance": -1,
      "avoidDistance": -1,
@@ -9589,7 +9589,7 @@
        "amount": 0
       }
      ],
-     "title": "Mara · Ally",
+     "title": "Mara \u00b7 Ally",
      "moodLine": "Mara checks her wraps and nods at the Spire. She's coming.",
      "approachDistance": 1.1,
      "avoidDistance": -1,
@@ -9605,7 +9605,7 @@
        "amount": 0
       }
      ],
-     "title": "Mara · Civilian",
+     "title": "Mara \u00b7 Civilian",
      "moodLine": "Mara stands at the barricade line. She is not coming, and she is not leaving either.",
      "approachDistance": 2.0,
      "avoidDistance": -1,
@@ -9621,7 +9621,7 @@
        "amount": 50
       }
      ],
-     "title": "Mara · Bonded",
+     "title": "Mara \u00b7 Bonded",
      "moodLine": "Mara stands close. She has always stood close.",
      "approachDistance": 1.1,
      "avoidDistance": -1,
@@ -15754,11 +15754,11 @@
    "worldStateChanges": [],
    "environment": {
     "profile": "hall_dawn",
-    "ambient": "3a4450",
-    "fog": "2b333d",
-    "fogDensity": 0.015,
-    "sun": "cfe6f2",
-    "sunIntensity": 1.05
+    "ambient": "99a8c2",
+    "fog": "8fa1b8",
+    "fogDensity": 0.006,
+    "sun": "fcdfc7",
+    "sunIntensity": 1.3
    }
   },
   {
@@ -15830,12 +15830,12 @@
     }
    ],
    "environment": {
-    "profile": "ember_low",
-    "ambient": "46372e",
-    "fog": "31241d",
-    "fogDensity": 0.03,
-    "sun": "ffb27a",
-    "sunIntensity": 0.85
+    "profile": "annex_steel",
+    "ambient": "8a99ad",
+    "fog": "7e8ea6",
+    "fogDensity": 0.008,
+    "sun": "e8f0fa",
+    "sunIntensity": 1.15
    }
   },
   {
@@ -15884,12 +15884,12 @@
     }
    ],
    "environment": {
-    "profile": "tide_glass",
-    "ambient": "2e4a52",
-    "fog": "22383f",
-    "fogDensity": 0.045,
-    "sun": "bfeaf2",
-    "sunIntensity": 0.9
+    "profile": "tidewell_shrine",
+    "ambient": "7fb3b8",
+    "fog": "6fa8b0",
+    "fogDensity": 0.01,
+    "sun": "d8fff4",
+    "sunIntensity": 1.2
    }
   },
   {
@@ -15934,11 +15934,11 @@
    ],
    "environment": {
     "profile": "summer_gold",
-    "ambient": "5a4a30",
-    "fog": "3d3220",
-    "fogDensity": 0.012,
-    "sun": "ffd9a0",
-    "sunIntensity": 1.15
+    "ambient": "c2a982",
+    "fog": "c9b490",
+    "fogDensity": 0.008,
+    "sun": "ffe3b0",
+    "sunIntensity": 1.35
    }
   },
   {
@@ -16005,12 +16005,12 @@
     }
    ],
    "environment": {
-    "profile": "fracture_violet",
-    "ambient": "2a1f3d",
-    "fog": "1c1530",
-    "fogDensity": 0.05,
-    "sun": "b58cff",
-    "sunIntensity": 0.7
+    "profile": "night_watch",
+    "ambient": "6d7fa0",
+    "fog": "5c6f92",
+    "fogDensity": 0.012,
+    "sun": "aebfe0",
+    "sunIntensity": 0.95
    }
   },
   {
@@ -16057,12 +16057,12 @@
     }
    ],
    "environment": {
-    "profile": "spire_root",
-    "ambient": "1e2a3a",
-    "fog": "141c28",
-    "fogDensity": 0.04,
-    "sun": "9fd8ff",
-    "sunIntensity": 0.8
+    "profile": "spire_violet",
+    "ambient": "8a7fb0",
+    "fog": "7a6fa8",
+    "fogDensity": 0.012,
+    "sun": "d0c4f0",
+    "sunIntensity": 1.0
    }
   },
   {
@@ -16120,12 +16120,12 @@
     }
    ],
    "environment": {
-    "profile": "camp_dusk",
-    "ambient": "3a3040",
-    "fog": "2a2230",
-    "fogDensity": 0.02,
-    "sun": "f2b48c",
-    "sunIntensity": 0.9
+    "profile": "camp_dawn",
+    "ambient": "b8a494",
+    "fog": "a89a90",
+    "fogDensity": 0.009,
+    "sun": "ffd9a8",
+    "sunIntensity": 1.25
    }
   },
   {
@@ -16179,12 +16179,12 @@
     }
    ],
    "environment": {
-    "profile": "docks_rust",
-    "ambient": "3d2e24",
-    "fog": "2a1f18",
-    "fogDensity": 0.035,
-    "sun": "ff9a5c",
-    "sunIntensity": 0.9
+    "profile": "sea_air",
+    "ambient": "8aa2b0",
+    "fog": "8aa8b8",
+    "fogDensity": 0.01,
+    "sun": "e8f4f8",
+    "sunIntensity": 1.2
    }
   },
   {
@@ -16232,12 +16232,12 @@
     }
    ],
    "environment": {
-    "profile": "sanctum_teal",
-    "ambient": "1f3a40",
-    "fog": "16292e",
-    "fogDensity": 0.045,
-    "sun": "8fe0e8",
-    "sunIntensity": 0.85
+    "profile": "soft_light",
+    "ambient": "a8c0b8",
+    "fog": "9ab8b0",
+    "fogDensity": 0.008,
+    "sun": "e0fff0",
+    "sunIntensity": 1.25
    }
   },
   {
@@ -16285,12 +16285,12 @@
     }
    ],
    "environment": {
-    "profile": "wall_grey",
-    "ambient": "34383c",
-    "fog": "24282c",
-    "fogDensity": 0.03,
-    "sun": "d8dde2",
-    "sunIntensity": 0.95
+    "profile": "overcast",
+    "ambient": "9aa2a8",
+    "fog": "98a2ac",
+    "fogDensity": 0.011,
+    "sun": "e8ecf0",
+    "sunIntensity": 1.05
    }
   },
   {
@@ -16346,12 +16346,12 @@
     }
    ],
    "environment": {
-    "profile": "arena_dusk",
-    "ambient": "3a2a2a",
-    "fog": "2a1c1c",
-    "fogDensity": 0.025,
-    "sun": "ffb08a",
-    "sunIntensity": 0.8
+    "profile": "arena_heat",
+    "ambient": "c09880",
+    "fog": "b89888",
+    "fogDensity": 0.01,
+    "sun": "ffce9a",
+    "sunIntensity": 1.3
    }
   },
   {
@@ -16404,12 +16404,12 @@
     }
    ],
    "environment": {
-    "profile": "reckoning_blue",
-    "ambient": "1c2436",
-    "fog": "121826",
-    "fogDensity": 0.03,
-    "sun": "a9c8ff",
-    "sunIntensity": 0.85
+    "profile": "ashen_dusk",
+    "ambient": "a08a80",
+    "fog": "987f78",
+    "fogDensity": 0.011,
+    "sun": "f0b890",
+    "sunIntensity": 1.15
    }
   },
   {
@@ -16455,12 +16455,12 @@
     }
    ],
    "environment": {
-    "profile": "market_ember",
-    "ambient": "3a2e22",
-    "fog": "2a2018",
-    "fogDensity": 0.03,
-    "sun": "ffc48a",
-    "sunIntensity": 0.95
+    "profile": "market_warm",
+    "ambient": "b8a488",
+    "fog": "b0a090",
+    "fogDensity": 0.008,
+    "sun": "ffe0b8",
+    "sunIntensity": 1.3
    }
   },
   {
@@ -16512,12 +16512,12 @@
     }
    ],
    "environment": {
-    "profile": "ascent_white",
-    "ambient": "2c3440",
-    "fog": "1c2430",
-    "fogDensity": 0.02,
+    "profile": "thin_air",
+    "ambient": "9ab0c8",
+    "fog": "a8c0d8",
+    "fogDensity": 0.012,
     "sun": "eaf4ff",
-    "sunIntensity": 1.0
+    "sunIntensity": 1.25
    }
   },
   {
@@ -16567,12 +16567,12 @@
     }
    ],
    "environment": {
-    "profile": "heart_gold",
-    "ambient": "3a3020",
-    "fog": "2a2214",
-    "fogDensity": 0.02,
-    "sun": "ffe2a0",
-    "sunIntensity": 1.1
+    "profile": "hollow_violet",
+    "ambient": "7f6fa8",
+    "fog": "6f5fa0",
+    "fogDensity": 0.013,
+    "sun": "c8b8f0",
+    "sunIntensity": 1.0
    }
   },
   {
@@ -16618,12 +16618,12 @@
     }
    ],
    "environment": {
-    "profile": "after_dawn",
-    "ambient": "4a4a50",
-    "fog": "34343a",
-    "fogDensity": 0.012,
-    "sun": "fff1dc",
-    "sunIntensity": 1.2
+    "profile": "new_dawn",
+    "ambient": "b0b8c0",
+    "fog": "a8b4c4",
+    "fogDensity": 0.007,
+    "sun": "fff0d8",
+    "sunIntensity": 1.35
    }
   }
  ]

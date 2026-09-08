@@ -52,6 +52,13 @@ namespace Crossroads.UI
 
         private void Toggle() { _expanded = !_expanded; Refresh(); }
 
+        /// <summary>Dev gate: the raw location list hides in normal play (WorldMapUI is the player-facing map).</summary>
+        public void SetVisible(bool visible)
+        {
+            RectTransform panel = _list != null ? _list.parent as RectTransform : null;
+            if (panel != null && panel.gameObject.activeSelf != visible) panel.gameObject.SetActive(visible);
+        }
+
         private void OnEnable()
         {
             EventBus.Subscribe<LocationArrivedEvent>(OnChanged);

@@ -67,15 +67,10 @@ namespace Crossroads.UI
             // joystick on the player's dominant thumb side
             _joystick = VirtualJoystick.Build(_root, !s.leftHanded ? false : true);
 
-            // ---- PAUSE (top-center-right, small, always available) ----
-            var pause = RuntimeMenuFactory.CreateButton("PauseButton", _root, "II", 34,
-                new Color(0.05f, 0.07f, 0.10f, 0.85f), RuntimeMenuFactory.TextMain);
-            var prect = ((Image)pause.targetGraphic).rectTransform;
-            prect.anchorMin = prect.anchorMax = new Vector2(0.5f, 1f);
-            prect.pivot = new Vector2(0.5f, 1f);
-            prect.anchoredPosition = new Vector2(s.leftHanded ? -770f : 770f, -18f);
-            prect.sizeDelta = new Vector2(110f, 110f);
-            pause.onClick.AddListener(OnPausePressed);
+            // ---- PAUSE + MAP (top corner cluster, always available) ----
+            float side = s.leftHanded ? -1f : 1f;
+            _pauseButton = BuildCornerButton("PauseButton", "\u275A\u275A", side, HudTheme.Corner, OnPausePressed);
+            _mapButton = BuildCornerButton("MapButton", "\u25A4", side, HudTheme.Corner + HudTheme.SmallButton + 14f, OnMapPressed);
 
             // ---- ATTACK + DODGE (bottom cluster on the look-pad side; hidden until combat) ----
             _attack = BuildActionButton("AttackButton", "ATK", 210f,
@@ -89,11 +84,67 @@ namespace Crossroads.UI
             ApplySettings();
         }
 
+        private GameObject _pauseButton;
+        private GameObject _mapButton;
+
+        /// <summary>Round glass corner button (pause / map) with an accent ring. edge = distance from that screen edge.</summary>
+        private GameObject BuildCornerButton(string name, string glyph, float side, float edge, UnityEngine.Events.UnityAction onClick)
+        {
+            var go = new GameObject(name);
+            var rect = go.AddComponent<RectTransform>();
+            rect.SetParent(_root, false);
+            rect.anchorMin = rect.anchorMax = new Vector2(side < 0f ? 0f : 1f, 1f);
+            rect.pivot = new Vector2(side < 0f ? 0f : 1f, 1f);
+            rect.anchoredPosition = new Vector2(side * edge, -HudTheme.Corner);
+            rect.sizeDelta = new Vector2(HudTheme.SmallButton, HudTheme.SmallButton);
+
+            var back = go.AddComponent<Image>();
+            back.sprite = UiShapes.Circle;
+            back.color = new Color(0.05f, 0.075f, 0.11f, 0.85f);
+            back.raycastTarget = true;
+
+            var ring = new GameObject("Ring");
+            var rrect = ring.AddComponent<RectTransform>();
+            rrect.SetParent(rect, false);
+            rrect.anchorMin = Vector2.zero;
+            rrect.anchorMax = Vector2.one;
+            rrect.offsetMin = Vector2.zero;
+            rrect.offsetMax = Vector2.zero;
+            var ringImg = ring.AddComponent<Image>();
+            ringImg.sprite = UiShapes.Ring;
+            ringImg.color = HudTheme.Stroke;
+            ringImg.raycastTarget = false;
+
+            var label = RuntimeMenuFactory.CreateText("Glyph", rect, glyph, 34, HudTheme.TextMain,
+                TextAnchor.MiddleCenter, FontStyle.Bold);
+            label.rectTransform.anchorMin = Vector2.zero;
+            label.rectTransform.anchorMax = Vector2.one;
+            label.rectTransform.offsetMin = Vector2.zero;
+            label.rectTransform.offsetMax = Vector2.zero;
+            label.raycastTarget = false;
+
+            var button = go.AddComponent<Button>();
+            button.targetGraphic = back;
+            var colors = button.colors;
+            colors.highlightedColor = new Color(0.30f, 0.85f, 0.95f, 0.35f);
+            colors.pressedColor = new Color(0.30f, 0.85f, 0.95f, 0.55f);
+            button.colors = colors;
+            button.onClick.AddListener(onClick);
+            return go;
+        }
+
+        private void OnMapPressed()
+        {
+            var bootstrap = FindFirstObjectByType<GameUIBootstrap>();
+            if (bootstrap != null) bootstrap.ToggleWorldMap();
+        }
+
         private GameObject BuildActionButton(string name, string label, float size, Color bg, UnityEngine.Events.UnityAction onClick)
         {
             InputSettings s = InputSettingsStore.Current;
-            var btn = RuntimeMenuFactory.CreateButton(name, _root, label, size >= 200f ? 44 : 32, bg, RuntimeMenuFactory.TextMain);
-            var rect = ((Image)btn.targetGraphic).rectTransform;
+            var go = new GameObject(name);
+            var rect = go.AddComponent<RectTransform>();
+            rect.SetParent(_root, false);
             float x = s.leftHanded ? -1f : 1f;
             rect.anchorMin = rect.anchorMax = new Vector2(x < 0f ? 0f : 1f, 0f);
             rect.pivot = new Vector2(x < 0f ? 0f : 1f, 0f);
@@ -101,8 +152,48 @@ namespace Crossroads.UI
             float lift = size >= 200f ? 190f : 64f;
             rect.anchoredPosition = new Vector2(x * margin, lift);
             rect.sizeDelta = new Vector2(size, size);
-            btn.onClick.AddListener(onClick);
-            return btn.gameObject;
+
+            var back = go.AddComponent<Image>();
+            back.sprite = UiShapes.Circle;
+            back.color = bg;
+            back.raycastTarget = true;
+
+            var ring = new GameObject("Ring");
+            var rrect = ring.AddComponent<RectTransform>();
+            rrect.SetParent(rect, false);
+            rrect.anchorMin = Vector2.zero;
+            rrect.anchorMax = Vector2.one;
+            rrect.offsetMin = Vector2.zero;
+            rrect.offsetMax = Vector2.zero;
+            var ringImg = ring.AddComponent<Image>();
+            ringImg.sprite = UiShapes.Ring;
+            ringImg.color = new Color(1f, 1f, 1f, 0.22f);
+            ringImg.raycastTarget = false;
+
+            var text = RuntimeMenuFactory.CreateText("Label", rect, label, size >= 200f ? 44 : 30,
+                RuntimeMenuFactory.TextMain, TextAnchor.MiddleCenter, FontStyle.Bold);
+            text.rectTransform.anchorMin = Vector2.zero;
+            text.rectTransform.anchorMax = Vector2.one;
+            text.rectTransform.offsetMin = Vector2.zero;
+            text.rectTransform.offsetMax = Vector2.zero;
+
+            var button = go.AddComponent<Button>();
+            button.targetGraphic = back;
+            var colors = button.colors;
+            colors.highlightedColor = new Color(RuntimeMenuFactory.Accent.r, RuntimeMenuFactory.Accent.g, RuntimeMenuFactory.Accent.b, 0.35f);
+            colors.pressedColor = new Color(RuntimeMenuFactory.Accent.r * 0.8f, RuntimeMenuFactory.Accent.g * 0.8f, RuntimeMenuFactory.Accent.b * 0.8f, 0.6f);
+            button.colors = colors;
+            button.onClick.AddListener(onClick);
+            return go;
+        }
+
+        /// <summary>GameUIBootstrap hides the whole rig behind the main menu (visual pass).</summary>
+        public void SetVisible(bool visible)
+        {
+            if (_root == null) return;
+            InputSettings s = InputSettingsStore.Current;
+            bool shown = visible && s.showTouchControls != 2;
+            if (_root.gameObject.activeSelf != shown) _root.gameObject.SetActive(shown);
         }
 
         /// <summary>Applies scale/opacity/visibility without rebuilding (called live by the pause menu).</summary>

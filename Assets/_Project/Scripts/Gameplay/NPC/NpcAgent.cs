@@ -78,12 +78,14 @@ namespace Crossroads.Gameplay
         private void OnDestroy()
         {
             Subscribe(false);
+            Crossroads.Gameplay.WorldMarkers.Unregister(this);
         }
 
         private void Subscribe(bool on)
         {
             if (on)
             {
+                Crossroads.Gameplay.WorldMarkers.Register(this, Crossroads.Gameplay.MarkerKind.Npc);
                 EventBus.Subscribe<BondChangedEvent>(OnLiveStateEvent);
                 EventBus.Subscribe<AffinityChangedEvent>(OnLiveStateEvent);
                 EventBus.Subscribe<FlagChangedEvent>(OnLiveStateEvent);
@@ -105,6 +107,7 @@ namespace Crossroads.Gameplay
             }
             else
             {
+                Crossroads.Gameplay.WorldMarkers.Unregister(this);
                 EventBus.Unsubscribe<BondChangedEvent>(OnLiveStateEvent);
                 EventBus.Unsubscribe<AffinityChangedEvent>(OnLiveStateEvent);
                 EventBus.Unsubscribe<FlagChangedEvent>(OnLiveStateEvent);

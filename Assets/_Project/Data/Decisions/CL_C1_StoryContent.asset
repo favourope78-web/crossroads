@@ -10879,11 +10879,11 @@ MonoBehaviour:
       worldStateChanges: []
       environment:
         profile: "hall_dawn"
-        ambient: "3a4450"
-        fog: "2b333d"
-        fogDensity: 0.015
-        sun: "cfe6f2"
-        sunIntensity: 1.05
+        ambient: "99a8c2"
+        fog: "8fa1b8"
+        fogDensity: 0.006
+        sun: "fcdfc7"
+        sunIntensity: 1.3
     - id: "annex"
       name: "North Annex"
       kind: 3
@@ -10930,12 +10930,12 @@ MonoBehaviour:
           value: "reached"
           amount: 0
       environment:
-        profile: "ember_low"
-        ambient: "46372e"
-        fog: "31241d"
-        fogDensity: 0.03
-        sun: "ffb27a"
-        sunIntensity: 0.85
+        profile: "annex_steel"
+        ambient: "8a99ad"
+        fog: "7e8ea6"
+        fogDensity: 0.008
+        sun: "e8f0fa"
+        sunIntensity: 1.15
     - id: "tidewell"
       name: "Tidewell Shrine"
       kind: 2
@@ -10968,12 +10968,12 @@ MonoBehaviour:
           value: "lit"
           amount: 0
       environment:
-        profile: "tide_glass"
-        ambient: "2e4a52"
-        fog: "22383f"
-        fogDensity: 0.045
-        sun: "bfeaf2"
-        sunIntensity: 0.9
+        profile: "tidewell_shrine"
+        ambient: "7fb3b8"
+        fog: "6fa8b0"
+        fogDensity: 0.01
+        sun: "d8fff4"
+        sunIntensity: 1.2
     - id: "last_summer"
       name: "The Last Summer"
       kind: 1
@@ -11006,11 +11006,11 @@ MonoBehaviour:
           amount: 0
       environment:
         profile: "summer_gold"
-        ambient: "5a4a30"
-        fog: "3d3220"
-        fogDensity: 0.012
-        sun: "ffd9a0"
-        sunIntensity: 1.15
+        ambient: "c2a982"
+        fog: "c9b490"
+        fogDensity: 0.008
+        sun: "ffe3b0"
+        sunIntensity: 1.35
     - id: "fracture_night"
       name: "Night of the Fracture"
       kind: 3
@@ -11057,12 +11057,12 @@ MonoBehaviour:
           value: ""
           amount: 0
       environment:
-        profile: "fracture_violet"
-        ambient: "2a1f3d"
-        fog: "1c1530"
-        fogDensity: 0.05
-        sun: "b58cff"
-        sunIntensity: 0.7
+        profile: "night_watch"
+        ambient: "6d7fa0"
+        fog: "5c6f92"
+        fogDensity: 0.012
+        sun: "aebfe0"
+        sunIntensity: 0.95
     - id: "under_spire"
       name: "Under the Spire"
       kind: 3
@@ -11094,12 +11094,12 @@ MonoBehaviour:
           value: ""
           amount: 0
       environment:
-        profile: "spire_root"
-        ambient: "1e2a3a"
-        fog: "141c28"
-        fogDensity: 0.04
-        sun: "9fd8ff"
-        sunIntensity: 0.8
+        profile: "spire_violet"
+        ambient: "8a7fb0"
+        fog: "7a6fa8"
+        fogDensity: 0.012
+        sun: "d0c4f0"
+        sunIntensity: 1.0
     - id: "interlude_becoming"
       name: "Interlude: Becoming"
       kind: 2
@@ -11141,12 +11141,12 @@ MonoBehaviour:
           value: ""
           amount: 0
       environment:
-        profile: "camp_dusk"
-        ambient: "3a3040"
-        fog: "2a2230"
-        fogDensity: 0.02
-        sun: "f2b48c"
-        sunIntensity: 0.9
+        profile: "camp_dawn"
+        ambient: "b8a494"
+        fog: "a89a90"
+        fogDensity: 0.009
+        sun: "ffd9a8"
+        sunIntensity: 1.25
     - id: "docks"
       name: "Contested Docks"
       kind: 3
@@ -11183,12 +11183,12 @@ MonoBehaviour:
           value: ""
           amount: 0
       environment:
-        profile: "docks_rust"
-        ambient: "3d2e24"
-        fog: "2a1f18"
-        fogDensity: 0.035
-        sun: "ff9a5c"
-        sunIntensity: 0.9
+        profile: "sea_air"
+        ambient: "8aa2b0"
+        fog: "8aa8b8"
+        fogDensity: 0.01
+        sun: "e8f4f8"
+        sunIntensity: 1.2
     - id: "sanctuary"
       name: "The Sanctuary"
       kind: 3
@@ -11221,12 +11221,12 @@ MonoBehaviour:
           value: ""
           amount: 0
       environment:
-        profile: "sanctum_teal"
-        ambient: "1f3a40"
-        fog: "16292e"
-        fogDensity: 0.045
-        sun: "8fe0e8"
-        sunIntensity: 0.85
+        profile: "soft_light"
+        ambient: "a8c0b8"
+        fog: "9ab8b0"
+        fogDensity: 0.008
+        sun: "e0fff0"
+        sunIntensity: 1.25
     - id: "long_wall"
       name: "The Long Wall"
       kind: 3
@@ -11259,12 +11259,12 @@ MonoBehaviour:
           value: ""
           amount: 0
       environment:
-        profile: "wall_grey"
-        ambient: "34383c"
-        fog: "24282c"
-        fogDensity: 0.03
-        sun: "d8dde2"
-        sunIntensity: 0.95
+        profile: "overcast"
+        ambient: "9aa2a8"
+        fog: "98a2ac"
+        fogDensity: 0.011
+        sun: "e8ecf0"
+        sunIntensity: 1.05
     - id: "dax_arena"
       name: "Dax Confrontation"
       kind: 3
@@ -11303,12 +11303,12 @@ MonoBehaviour:
           value: ""
           amount: 0
       environment:
-        profile: "arena_dusk"
-        ambient: "3a2a2a"
-        fog: "2a1c1c"
-        fogDensity: 0.025
-        sun: "ffb08a"
-        sunIntensity: 0.8
+        profile: "arena_heat"
+        ambient: "c09880"
+        fog: "b89888"
+        fogDensity: 0.01
+        sun: "ffce9a"
+        sunIntensity: 1.3
     - id: "interlude_reckoning"
       name: "Interlude: Reckoning"
       kind: 2
@@ -11345,12 +11345,12 @@ MonoBehaviour:
           value: ""
           amount: 0
       environment:
-        profile: "reckoning_blue"
-        ambient: "1c2436"
-        fog: "121826"
-        fogDensity: 0.03
-        sun: "a9c8ff"
-        sunIntensity: 0.85
+        profile: "ashen_dusk"
+        ambient: "a08a80"
+        fog: "987f78"
+        fogDensity: 0.011
+        sun: "f0b890"
+        sunIntensity: 1.15
     - id: "market"
       name: "The Old Market"
       kind: 3
@@ -11381,12 +11381,12 @@ MonoBehaviour:
           value: ""
           amount: 0
       environment:
-        profile: "market_ember"
-        ambient: "3a2e22"
-        fog: "2a2018"
-        fogDensity: 0.03
-        sun: "ffc48a"
-        sunIntensity: 0.95
+        profile: "market_warm"
+        ambient: "b8a488"
+        fog: "b0a090"
+        fogDensity: 0.008
+        sun: "ffe0b8"
+        sunIntensity: 1.3
     - id: "spire_ascent"
       name: "Ascent of the Spire"
       kind: 3
@@ -11421,12 +11421,12 @@ MonoBehaviour:
           value: ""
           amount: 0
       environment:
-        profile: "ascent_white"
-        ambient: "2c3440"
-        fog: "1c2430"
-        fogDensity: 0.02
+        profile: "thin_air"
+        ambient: "9ab0c8"
+        fog: "a8c0d8"
+        fogDensity: 0.012
         sun: "eaf4ff"
-        sunIntensity: 1.0
+        sunIntensity: 1.25
     - id: "choirmaster"
       name: "The Choirmaster"
       kind: 3
@@ -11461,12 +11461,12 @@ MonoBehaviour:
           value: ""
           amount: 0
       environment:
-        profile: "heart_gold"
-        ambient: "3a3020"
-        fog: "2a2214"
-        fogDensity: 0.02
-        sun: "ffe2a0"
-        sunIntensity: 1.1
+        profile: "hollow_violet"
+        ambient: "7f6fa8"
+        fog: "6f5fa0"
+        fogDensity: 0.013
+        sun: "c8b8f0"
+        sunIntensity: 1.0
     - id: "epilogue"
       name: "Epilogue: Vessa, After"
       kind: 1
@@ -11497,9 +11497,9 @@ MonoBehaviour:
           value: ""
           amount: 0
       environment:
-        profile: "after_dawn"
-        ambient: "4a4a50"
-        fog: "34343a"
-        fogDensity: 0.012
-        sun: "fff1dc"
-        sunIntensity: 1.2
+        profile: "new_dawn"
+        ambient: "b0b8c0"
+        fog: "a8b4c4"
+        fogDensity: 0.007
+        sun: "fff0d8"
+        sunIntensity: 1.35

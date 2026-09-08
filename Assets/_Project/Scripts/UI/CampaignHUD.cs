@@ -31,25 +31,35 @@ namespace Crossroads.UI
 
         private void Build(RectTransform parent)
         {
-            var panel = RuntimeMenuFactory.CreatePanel("CampaignBanner", parent, new Color(0.045f, 0.065f, 0.095f, 0.72f));
+            // slim chapter pill (visual pass): one line, no journal dump - the story log
+            // lives in the pause/journal surfaces, not on the gameplay screen
+            var panel = RuntimeMenuFactory.CreatePanel("CampaignBanner", parent, new Color(0.04f, 0.06f, 0.09f, 0.78f));
             _root = panel.gameObject;
             var rect = panel.rectTransform;
             rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 1f);
             rect.pivot = new Vector2(0.5f, 1f);
-            rect.offsetMin = new Vector2(-430f, -124f);
-            rect.offsetMax = new Vector2(430f, -16f);
+            rect.offsetMin = new Vector2(-470f, -86f);
+            rect.offsetMax = new Vector2(470f, -20f);
 
-            _chapter = RuntimeMenuFactory.CreateText("Chapter", rect, "", 30, RuntimeMenuFactory.Accent,
-                TextAnchor.MiddleCenter, FontStyle.Bold);
-            RuntimeMenuFactory.Stretch(_chapter.rectTransform, 20f, 190f, 10f, 62f);
+            var edge = RuntimeMenuFactory.CreatePanel("Edge", rect, new Color(0.30f, 0.85f, 0.95f, 0.5f));
+            var erect = edge.rectTransform;
+            erect.anchorMin = erect.anchorMax = new Vector2(0f, 0.5f);
+            erect.pivot = new Vector2(0f, 0.5f);
+            erect.sizeDelta = new Vector2(4f, 46f);
+            erect.anchoredPosition = Vector2.zero;
 
-            _beat = RuntimeMenuFactory.CreateText("Beat", rect, "", 24, RuntimeMenuFactory.TextMain,
-                TextAnchor.MiddleCenter, FontStyle.Bold);
-            RuntimeMenuFactory.Stretch(_beat.rectTransform, 20f, 190f, 58f, 32f);
+            _chapter = RuntimeMenuFactory.CreateText("Chapter", rect, "", 28, RuntimeMenuFactory.Accent,
+                TextAnchor.MiddleLeft, FontStyle.Bold);
+            RuntimeMenuFactory.Stretch(_chapter.rectTransform, 24f, 330f, 40f, 12f);
 
-            _story = RuntimeMenuFactory.CreateText("Story", rect, "", 20, RuntimeMenuFactory.TextDim,
+            _beat = RuntimeMenuFactory.CreateText("Beat", rect, "", 26, RuntimeMenuFactory.TextMain,
+                TextAnchor.MiddleRight, FontStyle.Bold);
+            RuntimeMenuFactory.Stretch(_beat.rectTransform, 24f, 24f, 40f, 12f);
+
+            _story = RuntimeMenuFactory.CreateText("Story", rect, "", 1, new Color(0f, 0f, 0f, 0f),
                 TextAnchor.MiddleCenter, FontStyle.Normal);
-            RuntimeMenuFactory.Stretch(_story.rectTransform, 20f, 190f, 30f, 8f);
+            RuntimeMenuFactory.Stretch(_story.rectTransform, 0f, 0f, 0f, 0f);
+            _story.text = "";
         }
 
         private void OnEnable()
@@ -93,18 +103,11 @@ namespace Crossroads.UI
             _chapter.text = _sb.ToString();
 
             _beat.text = string.IsNullOrEmpty(snap.currentBeatTitle)
-                ? "The story waits on your next move"
+                ? "the story waits on your next move"
                 : snap.currentBeatTitle;
 
-            // story log line + taken paths, one dim line
-            _sb.Length = 0;
-            if (snap.journal.Count > 0) _sb.Append(snap.journal[snap.journal.Count - 1]);
-            if (snap.pathLabels.Count > 0)
-            {
-                if (_sb.Length > 0) _sb.Append("   |   ");
-                _sb.Append("Path: ").Append(string.Join(" / ", snap.pathLabels.ToArray()));
-            }
-            _story.text = _sb.ToString();
+            // slim pill: journal + path labels are NOT dumped on the gameplay screen any more
+            _story.text = "";
         }
     }
 }

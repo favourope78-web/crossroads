@@ -31,13 +31,15 @@ namespace Crossroads.UI
 
         private void Build(RectTransform parent)
         {
-            var panel = RuntimeMenuFactory.CreatePanel("Toast", parent, new Color(RuntimeMenuFactory.Panel.r, RuntimeMenuFactory.Panel.g, RuntimeMenuFactory.Panel.b, 0.96f));
+            var panel = RuntimeMenuFactory.CreatePanel("Toast", parent, new Color(0.04f, 0.065f, 0.10f, 0.96f));
+            panel.sprite = UiShapes.RoundRect; // rounded glass (visual pass)
             var rect = panel.rectTransform;
-            rect.anchorMin = new Vector2(0.5f, 0f);
-            rect.anchorMax = new Vector2(0.5f, 0f);
-            rect.pivot = new Vector2(0.5f, 0f);
-            rect.offsetMin = new Vector2(-560f, 440f);
-            rect.offsetMax = new Vector2(560f, 700f);
+            // top-centre, under the chapter pill - never fights the dialogue sheet at the bottom
+            rect.anchorMin = new Vector2(0.5f, 1f);
+            rect.anchorMax = new Vector2(0.5f, 1f);
+            rect.pivot = new Vector2(0.5f, 1f);
+            rect.offsetMin = new Vector2(-560f, -300f);
+            rect.offsetMax = new Vector2(560f, -104f);
             _text = RuntimeMenuFactory.CreateText("Text", rect, "", 30, RuntimeMenuFactory.TextMain, TextAnchor.MiddleCenter);
             RuntimeMenuFactory.Stretch(_text.rectTransform, 28f, 28f, 14f, 14f);
             _panel = panel;
@@ -123,8 +125,9 @@ namespace Crossroads.UI
             float ease = 1f - (1f - _lift) * (1f - _lift);
             _group.alpha = _lift;
             var rect = _panel.rectTransform;
-            rect.offsetMin = new Vector2(-560f, 440f - 40f * (1f - ease));
-            rect.offsetMax = new Vector2(560f, 700f - 40f * (1f - ease));
+            // slides DOWN from under the chapter pill when arriving (top-centre anchor)
+            rect.offsetMin = new Vector2(-560f, -300f - 26f * (1f - ease));
+            rect.offsetMax = new Vector2(560f, -104f - 26f * (1f - ease));
             if (_lift <= 0f && _liftTarget <= 0f) _panel.gameObject.SetActive(false);
         }
     }

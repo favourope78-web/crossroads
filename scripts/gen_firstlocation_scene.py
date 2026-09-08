@@ -109,6 +109,31 @@ def tide_mat(name, base, emit):
     print("mat +", name)
 tide_mat("M_Tide_Pool", "0.05, g: 0.30, b: 0.34", "0.2, g: 0.75, b: 0.9")
 tide_mat("M_Tidewell_Stone", "0.10, g: 0.16, b: 0.17", "0.05, g: 0.35, b: 0.4")
+# visual transformation pass: new presentation-layer scripts (deterministic GUIDs 0x1b0..)
+VISUAL_PASS_SCRIPTS = [
+    "Assets/_Project/Scripts/UI/UiShapes.cs",
+    "Assets/_Project/Scripts/UI/UIDebugGate.cs",
+    "Assets/_Project/Scripts/UI/MiniMapMath.cs",
+    "Assets/_Project/Scripts/UI/MiniMapHUD.cs",
+    "Assets/_Project/Scripts/UI/PlayerHUD.cs",
+    "Assets/_Project/Scripts/UI/ObjectiveTrackerHUD.cs",
+    "Assets/_Project/Scripts/UI/AbilityHotbarHUD.cs",
+    "Assets/_Project/Scripts/UI/DamageNumberUI.cs",
+    "Assets/_Project/Scripts/UI/SettingsPanelUI.cs",
+    "Assets/_Project/Scripts/UI/MainMenuUI.cs",
+    "Assets/_Project/Scripts/UI/WorldMapUI.cs",
+    "Assets/_Project/Scripts/UI/CombatCameraFeedback.cs",
+    "Assets/_Project/Scripts/Gameplay/World/WorldMarkers.cs",
+    "Assets/_Project/Scripts/UI/ArtLibrary.cs",
+    "Assets/_Project/Scripts/UI/LoadingScreenUI.cs",
+    "Assets/_Project/Scripts/UI/IntroCinematicUI.cs",
+    "Assets/_Project/Scripts/UI/ChapterTransitionUI.cs",
+]
+for i, rel in enumerate(VISUAL_PASS_SCRIPTS):
+    key = rel.rsplit("/", 1)[1]
+    ensure(key, g32(0x1b0 + i))
+    write_meta_if_missing(os.path.join(ROOT, rel), MONO, REG[key])
+
 write_meta_if_missing(os.path.join(ROOT, "Assets/Game/Scripts/ThirdPersonCameraController.cs"), MONO, REG["ThirdPersonCameraController.cs"])
 write_meta_if_missing(os.path.join(ROOT, "Assets/Game/Scripts/FirstLocationBootstrap.cs"), MONO, REG["FirstLocationBootstrap.cs"])
 write_meta_if_missing(os.path.join(ROOT, "Assets/_Project/Scripts/Gameplay/Interaction/Interactable.cs"), MONO, REG["Interactable.cs"])
@@ -169,18 +194,18 @@ RenderSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 9
   m_Fog: 1
-  m_FogColor: {r: 0.36, g: 0.19, b: 0.24, a: 1}
+  m_FogColor: {r: 0.56, g: 0.63, b: 0.72, a: 1}
   m_FogMode: 3
-  m_FogDensity: 0.014
+  m_FogDensity: 0.006
   m_LinearFogStart: 0
   m_LinearFogEnd: 300
-  m_AmbientSkyColor: {r: 0.52, g: 0.30, b: 0.36, a: 1}
-  m_AmbientEquatorColor: {r: 0.34, g: 0.27, b: 0.34, a: 1}
-  m_AmbientGroundColor: {r: 0.14, g: 0.15, b: 0.19, a: 1}
-  m_AmbientIntensity: 1
+  m_AmbientSkyColor: {r: 0.60, g: 0.66, b: 0.76, a: 1}
+  m_AmbientEquatorColor: {r: 0.52, g: 0.52, b: 0.52, a: 1}
+  m_AmbientGroundColor: {r: 0.22, g: 0.22, b: 0.26, a: 1}
+  m_AmbientIntensity: 1.15
   m_AmbientMode: 1
-  m_SubtractiveShadowColor: {r: 0.42, g: 0.47, b: 0.5, a: 1}
-  m_SkyboxMaterial: {fileID: 0}
+  m_SubtractiveShadowColor: {r: 0.45, g: 0.49, b: 0.55, a: 1}
+  m_SkyboxMaterial: {fileID: 10402, guid: 0000000000000000e000000000000000, type: 0}
   m_HaloStrength: 0.5
   m_FlareStrength: 1
   m_FlareFadeSpeed: 3
@@ -504,7 +529,7 @@ for idx, e in enumerate(LAY["pieces"]):
 gid, ids = emit_gameobject("Directional Light", ["transform","light"], static_flags=1)
 ids["light"] = SUN_LIGHT_ID  # fixed id so RenderSettings.m_Sun can reference it (component list patched below)
 blocks[-1] = blocks[-1].replace("  - component: {fileID: %d}" % (fid[0]), "  - component: {fileID: %d}" % SUN_LIGHT_ID)
-emit_transform(ids["transform"], gid, (0,12,0), (42,-38,0), (1,1,1))
+emit_transform(ids["transform"], gid, (0,12,0), (40,-32,0), (1,1,1))
 add_block("""--- !u!108 &%d
 Light:
   m_ObjectHideFlags: 0
@@ -516,8 +541,8 @@ Light:
   serializedVersion: 10
   m_Type: 1
   m_Shape: 0
-  m_Color: {r: 0.98, g: 0.80, b: 0.72, a: 1}
-  m_Intensity: 1.15
+  m_Color: {r: 0.99, g: 0.88, b: 0.78, a: 1}
+  m_Intensity: 1.3
   m_Range: 10
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
@@ -582,8 +607,8 @@ Camera:
   m_GameObject: {fileID: %d}
   m_Enabled: 1
   serializedVersion: 2
-  m_ClearFlags: 2
-  m_BackGroundColor: {r: 0.30, g: 0.20, b: 0.19, a: 1}
+  m_ClearFlags: 1
+  m_BackGroundColor: {r: 0.56, g: 0.63, b: 0.72, a: 1}
   m_projectionMatrixMode: 1
   m_GateFitMode: 2
   m_FOVAxisMode: 0
@@ -1338,6 +1363,133 @@ emit_monobehaviour(audio_ids["audio"], audio_gid, REG["GameAudio.cs"],
     + "\n  sfxVolume: 0.9\n  ambientVolume: 0.55\n  musicVolume: 0.45\n  ambientCrossfade: 1.6\n  musicCrossfade: 1.2\n  combatCooldown: 4")
 root_gids.append(audio_gid)
 
+# ================================================================
+# ART PRODUCTION PASS: original keyart/stills + scene-bound ArtLibrary
+# ================================================================
+ART_DIR = os.path.join(ROOT, "Assets/Game/UI/Art")
+ART_META = """fileFormatVersion: 2
+guid: {g}
+TextureImporter:
+  internalIDToNameTable: []
+  externalObjects: {{}}
+  serializedVersion: 128
+  mipmapsettings:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 1
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {{x: 0.5, y: 0.5}}
+  spritePixelsToUnits: 100
+  spriteBorder: {{x: 0, y: 0, z: 0, w: 0}}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRowsAndColumns:
+    serializedVersion: 2
+    rows: 1
+    columns: 1
+  spritePixelsToUnits2: 100
+  maxTextureSize2: 2048
+  spriteBorder2: {{x: 0, y: 0, z: 0, w: 0}}
+  platformSettings:
+  - serializedVersion: 3
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 3
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: 50
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 1
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+"""
+ART_SPRITES = [
+    ("logo_crossroads.png", "Art_Logo"),
+    ("art_keyart_menu.png", "Art_KeyartMenu"),
+    ("art_still_fracture.png", "Art_StillFracture"),
+    ("art_still_pier.png", "Art_StillPier"),
+    ("art_still_city.png", "Art_StillCity"),
+    ("art_still_dawn.png", "Art_StillDawn"),
+]
+for _i, (_f, _key) in enumerate(ART_SPRITES):
+    ensure(_key, g32(0x220 + _i))
+    write_meta_if_missing(os.path.join(ART_DIR, _f), ART_META, REG[_key])
+_dir_meta = os.path.join(ROOT, "Assets/Game/UI/Art.meta")
+if not os.path.exists(_dir_meta) and os.path.isdir(ART_DIR):
+    for _di, _d in enumerate(["Assets/Game/UI", "Assets/Game/UI/Art"]):
+        _m = os.path.join(ROOT, _d + ".meta")
+        if not os.path.exists(_m):
+            _key = _d.replace("/", "_")
+            ensure(_key, g32(0x226 + _di))
+            open(_m, "w").write("fileFormatVersion: 2\nguid: %s\nfolderAsset: yes\nDefaultImporter:\n  externalObjects: {}\n  userData: \n  assetBundleName: \n  assetBundleVariant: \n" % REG[_key])
+
+def sprite_ref(key):
+    return "{fileID: 21300000, guid: %s, type: 3}" % REG[key]
+
+art_gid, art_ids = emit_gameobject("ArtLibrary", ["transform", "art"])
+emit_transform(art_ids["transform"], art_gid, (0, 0, 0), (0, 0, 0), (1, 1, 1))
+emit_monobehaviour(art_ids["art"], art_gid, REG["ArtLibrary.cs"],
+    "  logo: %s\n  keyartMenu: %s\n  stillFracture: %s\n  stillPier: %s\n  stillCity: %s\n  stillDawn: %s"
+    % (sprite_ref("Art_Logo"), sprite_ref("Art_KeyartMenu"), sprite_ref("Art_StillFracture"),
+       sprite_ref("Art_StillPier"), sprite_ref("Art_StillCity"), sprite_ref("Art_StillDawn")))
+root_gids.append(art_gid)
+
 def env_prefab(kit_dir, prefab_name, go_name, light_rgb, intensity):
     kd = os.path.join(ROOT, "Assets/Game/Locations", kit_dir)
     os.makedirs(kd, exist_ok=True)
@@ -1412,6 +1564,17 @@ Light:
 # ================================================================
 import gen_campaign_scene
 CAMPAIGN_KIT_DIRS = gen_campaign_scene.build(globals())
+
+# ================================================================
+# VISUAL TRANSFORMATION PASS: first-location dressing (scripts/add_visual_pass_content.py)
+# focal monument, vegetation, props, banners, exterior skyline - the quality benchmark
+# ================================================================
+import add_visual_pass_content
+VISUAL_PASS_STATS = add_visual_pass_content.build(globals())
+
+# art production pass: authored dressing clusters for every campaign room
+import add_campaign_dressing
+CAMPAIGN_DRESSING_STATS = add_campaign_dressing.build(globals())
 
 # ---- NPC relocation: Sera takes the annex gate after the beacon falls quiet ----
 loc_gid, loc_ids = emit_gameobject("Loc_Sera_AnnexGate", ["transform"])
